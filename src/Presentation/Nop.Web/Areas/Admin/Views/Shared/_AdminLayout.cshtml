@@ -1,4 +1,7 @@
 ﻿@using System.Globalization
+@using System.Text.Encodings.Web
+@using System.Web
+@using Microsoft.AspNetCore.Http
 @using Nop.Core.Domain.Customers
 @using Nop.Web.Framework.UI;
 @using Nop.Core;
@@ -8,7 +11,12 @@
 @using Nop.Services.Common
 @using Nop.Services.Customers
 @using Nop.Services.Security;
+@inject IWebHelper webHelper
+@inject IHttpContextAccessor httpContextAccessor
 @{
+    var request = httpContextAccessor.HttpContext.Request;
+    var rawUrl = request.Path + request.QueryString;
+
     var kendoVersion = "2014.1.318";
     var supportRtl = EngineContext.Current.Resolve<IWorkContext>().WorkingLanguage.Rtl &&
         !EngineContext.Current.Resolve<LocalizationSettings>().IgnoreRtlPropertyForAdminArea;
@@ -16,41 +24,41 @@
     //CSS resources
     if (supportRtl)
     {
-        Html.AppendCssFileParts("~/Administration/Content/styles.rtl.css");
-        Html.AppendCssFileParts("~/Administration/Content/adminLTE/AdminLTE-2.3.0.rtl.css");
-        Html.AppendCssFileParts("~/Administration/Content/bootstrap/css/bootstrap.rtl.css");
+        Html.AppendCssFileParts("~/Areas/Admin/Content/styles.rtl.css");
+        Html.AppendCssFileParts("~/Areas/Admin/Content/adminLTE/AdminLTE-2.3.0.rtl.css");
+        Html.AppendCssFileParts("~/Areas/Admin/Content/bootstrap/css/bootstrap.rtl.css");
     }
     else
     {
-        Html.AppendCssFileParts("~/Administration/Content/styles.css");
-        Html.AppendCssFileParts("~/Administration/Content/adminLTE/AdminLTE-2.3.0.min.css");
-        Html.AppendCssFileParts("~/Administration/Content/bootstrap/css/bootstrap.min.css");
+        Html.AppendCssFileParts("~/Areas/Admin/Content/styles.css");
+        Html.AppendCssFileParts("~/Areas/Admin/Content/adminLTE/AdminLTE-2.3.0.min.css");
+        Html.AppendCssFileParts("~/Areas/Admin/Content/bootstrap/css/bootstrap.min.css");
     }
 
-    Html.AppendCssFileParts(string.Format("~/Administration/Content/kendo/{0}/kendo.rtl.min.css", kendoVersion));
-    Html.AppendCssFileParts(string.Format("~/Administration/Content/kendo/{0}/kendo.default.min.css", kendoVersion));
-    Html.AppendCssFileParts(string.Format("~/Administration/Content/kendo/{0}/kendo.common.min.css", kendoVersion));
-    Html.AppendCssFileParts("~/Administration/Content/jquery-ui-themes/smoothness/jquery-ui-1.10.3.custom.min.css");
-    Html.AppendCssFileParts("~/Administration/Content/fontAwesome/css/font-awesome-4.6.3.min.css");
-    Html.AppendCssFileParts("~/Administration/Content/typeahead/typeahead.css");
-    Html.AppendCssFileParts("~/Administration/Content/bootstrap-touchspin/jquery.bootstrap-touchspin.min.css");
+    Html.AppendCssFileParts(string.Format("~/Areas/Admin/Content/kendo/{0}/kendo.rtl.min.css", kendoVersion));
+    Html.AppendCssFileParts(string.Format("~/Areas/Admin/Content/kendo/{0}/kendo.default.min.css", kendoVersion));
+    Html.AppendCssFileParts(string.Format("~/Areas/Admin/Content/kendo/{0}/kendo.common.min.css", kendoVersion));
+    Html.AppendCssFileParts("~/Areas/Admin/Content/jquery-ui-themes/smoothness/jquery-ui-1.10.3.custom.min.css");
+    Html.AppendCssFileParts("~/Areas/Admin/Content/fontAwesome/css/font-awesome-4.6.3.min.css");
+    Html.AppendCssFileParts("~/Areas/Admin/Content/typeahead/typeahead.css");
+    Html.AppendCssFileParts("~/Areas/Admin/Content/bootstrap-touchspin/jquery.bootstrap-touchspin.min.css");
     <!-- AdminLTE Skins (choose a skin from the css/skins) -->
-    Html.AppendCssFileParts("~/Administration/Content/adminLTE/skins/_all-skins.min.css");
+    Html.AppendCssFileParts("~/Areas/Admin/Content/adminLTE/skins/_all-skins.min.css");
 
     //scripts
-    Html.AppendScriptParts(string.Format("~/Administration/Scripts/kendo/{0}/kendo.web.min.js", kendoVersion));
-    Html.AppendScriptParts("~/Administration/Scripts/admin.search.js");
-    Html.AppendScriptParts("~/Administration/scripts/admin.navigation.js");
-    Html.AppendScriptParts("~/Administration/Scripts/admin.common.js");
-    Html.AppendScriptParts("~/Administration/Scripts/typeahead/typeahead.bundle.min.js");
-    Html.AppendScriptParts("~/Administration/Scripts/jquery-migrate-1.2.1.min.js");
-    Html.AppendScriptParts("~/Administration/Scripts/jquery-ui-1.10.3.custom.min.js");
-    Html.AppendScriptParts("~/Administration/Scripts/jquery.validate.unobtrusive.min.js");
-    Html.AppendScriptParts("~/Administration/Scripts/jquery.validate.min.js");
-    Html.AppendScriptParts("~/Administration/Scripts/adminLTE/app.min.js");
-    Html.AppendScriptParts("~/Administration/Scripts/bootstrap/bootstrap.min.js");
-    Html.AppendScriptParts("~/Administration/Scripts/bootstrap-touchspin/jquery.bootstrap-touchspin.min.js");
-    Html.AppendScriptParts("~/Administration/Scripts/jquery-1.10.2.min.js");
+    Html.AppendScriptParts(string.Format("~/Areas/Admin/Scripts/kendo/{0}/kendo.web.min.js", kendoVersion));
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/admin.search.js");
+    Html.AppendScriptParts("~/Areas/Admin/scripts/admin.navigation.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/admin.common.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/typeahead/typeahead.bundle.min.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/jquery-migrate-1.2.1.min.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/jquery-ui-1.10.3.custom.min.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/jquery.validate.unobtrusive.min.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/jquery.validate.min.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/adminLTE/app.min.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/bootstrap/bootstrap.min.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/bootstrap-touchspin/jquery.bootstrap-touchspin.min.js");
+    Html.AppendScriptParts("~/Areas/Admin/Scripts/jquery-1.10.2.min.js");
 
     //page title
     string adminPageTitle = !String.IsNullOrWhiteSpace(ViewBag.Title) ? ViewBag.Title + " / " : "";
@@ -96,7 +104,7 @@
                 <div>
                     <h1 class="throbber-header">@T("Common.Wait...")</h1>
                     <p>
-                        <img src="@Url.Content("~/administration/content/images/throbber-synchronizing.gif")" alt="" />
+                        <img src="@Url.Content("~/Areas/Admin/content/images/throbber-synchronizing.gif")" alt="" />
                     </p>
                 </div>
             </div>
@@ -128,7 +136,7 @@
                             @Html.Widget("admin_header_navbar_before", area: "Admin")
                             <ul class="nav navbar-nav">
                                 <li>
-                                    @Html.Action("LanguageSelector", "Common", new { area = "Admin" })
+                                    @*TODO @Html.Action("LanguageSelector", "Common", new { area = "Admin" })*@
                                 </li>
                                 @if (currentCustomer.IsRegistered())
                                 {
@@ -158,7 +166,7 @@
                                                 @using (Html.BeginForm("ClearCache", "Common", new { area = "Admin" }))
                                                 {
                                                     @Html.AntiForgeryToken()
-                                                    @Html.Hidden("returnurl", HttpContext.Current.Request.RawUrl)
+                                                    @Html.Hidden("returnurl", rawUrl)
                                                     <button type="submit" class="bg-light-blue">
                                                         <span>@T("Admin.Header.ClearCache")</span>
                                                     </button>
@@ -168,14 +176,14 @@
                                                 @using (Html.BeginForm("RestartApplication", "Common", new { area = "Admin" }))
                                                 {
                                                     @Html.AntiForgeryToken()
-                                                    @Html.Hidden("returnurl", HttpContext.Current.Request.RawUrl)
+                                                    @Html.Hidden("returnurl", rawUrl)
                                                     <button id="restart-application" type="submit" class="bg-light-blue">
                                                         <span>@T("Admin.Header.RestartApplication")</span>
                                                     </button>
                                                     <script type="text/javascript">
                                                         $(document).ready(function () {
                                                             $("#restart-application").click(function (e) {
-                                                                showThrobber('@Html.Raw(HttpUtility.JavaScriptStringEncode(T("Admin.Header.RestartApplication.Progress").Text))');
+                                                                showThrobber('@Html.Raw(JavaScriptEncoder.Default.Encode(T("Admin.Header.RestartApplication.Progress").Text))');
                                                             });
                                                         });
                                                     </script>

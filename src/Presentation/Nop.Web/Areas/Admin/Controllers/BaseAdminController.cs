@@ -1,6 +1,7 @@
-﻿#if NET451
+﻿
 using System.Text;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Newtonsoft.Json.Converters;
 using Nop.Core;
 using Nop.Core.Domain.Common;
@@ -8,17 +9,24 @@ using Nop.Core.Infrastructure;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
+using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Security;
 
 namespace Nop.Admin.Controllers
 {
-    [NopHttpsRequirement(SslRequirement.Yes)]
+
+    [Area("Admin")]
+    [HttpsRequirement(SslRequirement.Yes)]
+    #if NET451
+    [AdminAntiForgery]
     [AdminValidateIpAddress]
     [AdminAuthorize]
-    [AdminAntiForgery]
     [AdminVendorValidation]
+    #endif
     public abstract partial class BaseAdminController : BaseController
     {
+
+        #if NET451
         /// <summary>
         /// Initialize controller
         /// </summary>
@@ -124,6 +132,6 @@ namespace Nop.Admin.Controllers
             //return base.Json(data, contentType, contentEncoding, behavior);
         }
 
+#endif
     }
 }
-#endif

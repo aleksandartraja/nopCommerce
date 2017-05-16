@@ -3,7 +3,7 @@
 @using Nop.Services.Security
 
 @{
-    Html.AppendCssFileParts("~/Administration/Content/ionicons/css/ionicons-2.0.1.min.css");
+    Html.AppendCssFileParts("~/Areas/Admin/Content/ionicons/css/ionicons-2.0.1.min.css");
 
     //page title
     ViewBag.Title = T("Admin.Dashboard").Text;
@@ -25,7 +25,7 @@
 <div class="content">
     <div class="row">
         <div class="col-md-12">
-            @Html.Widget("admin_dashboard_top")
+            @*TODO @Html.Widget("admin_dashboard_top")
             @if (!Model.IsLoggedInAsVendor)
             {
                 <div class="row">
@@ -103,7 +103,7 @@
                     </div>
                 </div>
             }
-            @Html.Widget("admin_dashboard_bottom")
+            @Html.Widget("admin_dashboard_bottom")*@
         </div>
     </div>
 </div>

@@ -1,10 +1,13 @@
-﻿#if NET451
+﻿
 using System;
 using System.Linq;
 using System.Net;
+#if NET451
 using System.ServiceModel.Syndication;
 using System.Web.Mvc;
+#endif
 using System.Xml;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Admin.Infrastructure.Cache;
 using Nop.Admin.Models.Home;
 using Nop.Core;
@@ -33,9 +36,9 @@ namespace Nop.Admin.Controllers
         private readonly IReturnRequestService _returnRequestService;
         private readonly IWorkContext _workContext;
         private readonly ICacheManager _cacheManager;
-
+        
         #endregion
-
+        
         #region Ctor
 
         public HomeController(IStoreContext storeContext,
@@ -60,18 +63,18 @@ namespace Nop.Admin.Controllers
             this._workContext = workContext;
             this._cacheManager = cacheManager;
         }
-
+        
         #endregion
-
+        
         #region Methods
 
-        public virtual ActionResult Index()
+        public virtual IActionResult Index()
         {
             var model = new DashboardModel();
             model.IsLoggedInAsVendor = _workContext.CurrentVendor != null;
             return View(model);
         }
-
+        #if NET451
         [ChildActionOnly]
         public virtual ActionResult NopCommerceNews()
         {
@@ -179,8 +182,8 @@ namespace Nop.Admin.Controllers
 
             return PartialView(model);
         }
-
+        #endif
+        
         #endregion
     }
 }
-#endif

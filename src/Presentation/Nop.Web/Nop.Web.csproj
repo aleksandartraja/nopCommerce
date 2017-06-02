@@ -36,8 +36,4 @@
     <ProjectReference Include="Administration\Nop.Admin.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Areas\Admin\" />
-  </ItemGroup>
-
 </Project>

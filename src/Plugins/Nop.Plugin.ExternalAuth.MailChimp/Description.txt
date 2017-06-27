@@ -1,0 +1,9 @@
+﻿Group: ExternalAuth methods
+FriendlyName: MailChimp authentication
+SystemName: ExternalAuth.MailChimp
+Version: 1.00
+SupportedVersions: 4.00
+Author: nopCommerce team
+DisplayOrder: 5
+FileName: Nop.Plugin.ExternalAuth.MailChimp.dll
+Description: This plugin enables MailChimp authentication (login using MailChimp account)

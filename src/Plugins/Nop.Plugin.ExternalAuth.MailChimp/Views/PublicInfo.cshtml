@@ -1,0 +1,9 @@
+﻿@{
+    Layout = "";
+    Html.AddCssFileParts("~/Plugins/ExternalAuth.MailChimp/Content/styles.css");    
+}
+<div class="mailchimp-login-block">
+    <div class="buttons">
+        <a href="@Url.Action("Login", "MailChimpAuthentication", new { ReturnUrl = this.Context.Request.Query["ReturnUrl"] })" class="mailchimp-btn"></a>
+    </div>
+</div>

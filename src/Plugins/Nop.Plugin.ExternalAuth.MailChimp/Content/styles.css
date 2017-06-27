@@ -1,0 +1,7 @@
+﻿.mailchimp-btn {
+    display: inline-block;
+    width: 360px;
+    height: 45px;
+    background-image: url('images/signin.png');
+    background-repeat: no-repeat;
+}

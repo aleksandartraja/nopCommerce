@@ -109,6 +109,9 @@ namespace Nop.Plugin.ExternalAuth.MailChimp.Controllers
 
         public IActionResult Login(string returnUrl)
         {
+            if (!_externalAuthenticationService.ExternalAuthenticationMethodIsAvailable(PROVIDER_SYSTEM_NAME))
+                throw new NopException("MaiChimp authentication module cannot be loaded");
+
             var authenticationProperties = new AuthenticationProperties
             {
                 RedirectUri = Url.Action("LoginCallback", "MailChimpAuthentication", new { returnUrl = returnUrl })

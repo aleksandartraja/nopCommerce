@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using System.Threading.Tasks;
-using System;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class FaviconViewComponent : ViewComponent
+    public class FaviconViewComponent : NopViewComponent
     {
         private readonly ICommonModelFactory _commonModelFactory;
 
@@ -14,10 +13,10 @@ namespace Nop.Web.Components
             this._commonModelFactory = commonModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             var model = _commonModelFactory.PrepareFaviconModel();
-            if (String.IsNullOrEmpty(model.FaviconUrl))
+            if (string.IsNullOrEmpty(model.FaviconUrl))
                 return Content("");
             return View(model);
         }

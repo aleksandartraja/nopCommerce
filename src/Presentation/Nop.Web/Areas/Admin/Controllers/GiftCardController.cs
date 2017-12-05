@@ -2,8 +2,8 @@
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Orders;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
@@ -21,7 +21,7 @@ using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class GiftCardController : BaseAdminController
     {
@@ -41,7 +41,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public GiftCardController(IGiftCardService giftCardService,
             IPriceFormatter priceFormatter, IWorkflowMessageService workflowMessageService,
@@ -133,9 +133,11 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageGiftCards))
                 return AccessDeniedView();
 
-            var model = new GiftCardModel();
-            model.PrimaryStoreCurrencyCode = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId).CurrencyCode;
-           
+            var model = new GiftCardModel
+            {
+                PrimaryStoreCurrencyCode = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId).CurrencyCode
+            };
+
             return View(model);
         }
 
@@ -268,7 +270,7 @@ namespace Nop.Admin.Controllers
                 {
                     languageId = _localizationSettings.DefaultAdminLanguageId;
                 }
-                int queuedEmailId = _workflowMessageService.SendGiftCardNotification(giftCard, languageId);
+                var queuedEmailId = _workflowMessageService.SendGiftCardNotification(giftCard, languageId);
                 if (queuedEmailId > 0)
                 {
                     giftCard.IsRecipientNotified = true;

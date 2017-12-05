@@ -1,6 +1,7 @@
-﻿using FluentValidation.Attributes;
-using Nop.Web.Framework.Mvc.Models;
+﻿using System.ComponentModel.DataAnnotations;
+using FluentValidation.Attributes;
 using Nop.Web.Framework.Mvc.ModelBinding;
+using Nop.Web.Framework.Mvc.Models;
 using Nop.Web.Validators.Catalog;
 
 namespace Nop.Web.Models.Catalog
@@ -14,6 +15,7 @@ namespace Nop.Web.Models.Catalog
 
         public string ProductSeName { get; set; }
 
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Products.EmailAFriend.FriendEmail")]
         public string FriendEmail { get; set; }
 

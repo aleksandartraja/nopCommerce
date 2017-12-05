@@ -12,9 +12,8 @@
     Html.SetActiveMenuItemSystemName("Shipments");
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+
+<form asp-controller="Order" asp-action="ShipmentList" method="post">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Orders.Shipments.List")
@@ -30,7 +29,8 @@
                     <span class="sr-only">&nbsp;</span>
                 </button>
                 <ul class="dropdown-menu" role="menu">
-                    <li><button type="submit" name="exportpackagingslips-all">
+                    <li>
+                        <button type="submit" name="exportpackagingslips-all">
                             @T("Admin.Orders.Shipments.PrintPackagingSlips.All")
                         </button>
                     </li>
@@ -49,6 +49,7 @@
                 <i class="fa fa-check-square-o"></i>
                 @T("Admin.Orders.Shipments.DeliverySelected")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_order_shipment_list_buttons" })
         </div>
     </div>
     <div class="content">
@@ -60,68 +61,68 @@
                             <div class="col-md-5">
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.StartDate)
+                                        <nop-label asp-for="StartDate" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopEditorFor(model => model.StartDate)
+                                        <nop-editor asp-for="StartDate" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.EndDate)
+                                        <nop-label asp-for="EndDate" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopEditorFor(model => model.EndDate)
+                                        <nop-editor asp-for="EndDate" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.TrackingNumber)
+                                        <nop-label asp-for="TrackingNumber" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopEditorFor(model => model.TrackingNumber)
+                                        <nop-editor asp-for="TrackingNumber" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.WarehouseId)
+                                        <nop-label asp-for="WarehouseId" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopDropDownList("WarehouseId", Model.AvailableWarehouses)
+                                        <nop-select asp-for="WarehouseId" asp-items="Model.AvailableWarehouses" />
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-7">
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.CountryId)
+                                        <nop-label asp-for="CountryId" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopDropDownListFor(model => model.CountryId, Model.AvailableCountries)
+                                        <nop-select asp-for="CountryId" asp-items="Model.AvailableCountries" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.StateProvinceId)
+                                        <nop-label asp-for="StateProvinceId" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopDropDownListFor(model => model.StateProvinceId, Model.AvailableStates)
+                                        <nop-select asp-for="StateProvinceId" asp-items="Model.AvailableStates" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.City)
+                                        <nop-label asp-for="City" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopEditorFor(model => model.City)
+                                        <nop-editor asp-for="City" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.LoadNotShipped)
+                                        <nop-label asp-for="LoadNotShipped" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopEditorFor(model => model.LoadNotShipped)
+                                        <nop-editor asp-for="LoadNotShipped" />
                                     </div>
                                 </div>
                             </div>
@@ -141,7 +142,7 @@
                     <div class="panel-body">
                         <div id="shipments-grid"></div>
 
-                        <script>
+                        <script type="text/javascript">
                             $(document).ready(function () {
                                 $("#shipments-grid").kendoGrid({
                                     dataSource: {
@@ -294,9 +295,9 @@
 
                     $(document).ready(function() {
                         //load states when changing a country dropdownlist
-                        $("#@Html.FieldIdFor(model => model.CountryId)").change(function() {
+                        $("#@Html.IdFor(model => model.CountryId)").change(function() {
                             var selectedItem = $(this).val();
-                            var ddlStates = $("#@Html.FieldIdFor(model => model.StateProvinceId)");
+                            var ddlStates = $("#@Html.IdFor(model => model.StateProvinceId)");
                             $.ajax({
                                 cache: false,
                                 type: "GET",
@@ -314,8 +315,8 @@
                             });
                         });
 
-                        $("".concat("#@Html.FieldIdFor(model => model.TrackingNumber),",
-                            "#@Html.FieldIdFor(model => model.City)")).keydown(function(event) {
+                        $("".concat("#@Html.IdFor(model => model.TrackingNumber),",
+                            "#@Html.IdFor(model => model.City)")).keydown(function(event) {
                                 if (event.keyCode === 13) {
                                     $("#search-shipments").click();
                                     return false;
@@ -416,14 +417,14 @@
 
                     function additionalData() {
                         var data = {
-                            StartDate: $('#@Html.FieldIdFor(model => model.StartDate)').val(),
-                            EndDate: $('#@Html.FieldIdFor(model => model.EndDate)').val(),
-                            TrackingNumber: $('#@Html.FieldIdFor(model => model.TrackingNumber)').val(),
-                            CountryId: $('#@Html.FieldIdFor(model => model.CountryId)').val(),
-                            StateProvinceId: $('#@Html.FieldIdFor(model => model.StateProvinceId)').val(),
-                            City: $('#@Html.FieldIdFor(model => model.City)').val(),
-                            WarehouseId: $('#@Html.FieldIdFor(model => model.WarehouseId)').val(),
-                            LoadNotShipped: $('#@Html.FieldIdFor(model => model.LoadNotShipped)').is(':checked')
+                            StartDate: $('#@Html.IdFor(model => model.StartDate)').val(),
+                            EndDate: $('#@Html.IdFor(model => model.EndDate)').val(),
+                            TrackingNumber: $('#@Html.IdFor(model => model.TrackingNumber)').val(),
+                            CountryId: $('#@Html.IdFor(model => model.CountryId)').val(),
+                            StateProvinceId: $('#@Html.IdFor(model => model.StateProvinceId)').val(),
+                            City: $('#@Html.IdFor(model => model.City)').val(),
+                            WarehouseId: $('#@Html.IdFor(model => model.WarehouseId)').val(),
+                            LoadNotShipped: $('#@Html.IdFor(model => model.LoadNotShipped)').is(':checked')
                         };
                         addAntiForgeryToken(data);
                         return data;
@@ -449,23 +450,21 @@
             </div>
         </div>
     </div>
-}
+ </form>
 
 @*export selected (Excel). We don't use GET approach because it's limited to 2K-4K chars and won't work for large number of entities*@
-@using (Html.BeginForm("PdfPackagingSlipSelected", "Order", FormMethod.Post, new { id = "pdf-packaging-slip-selected-form" }))
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Order" asp-action="PdfPackagingSlipSelected" method="post" id="pdf-packaging-slip-selected-form">
     <input type="hidden" id="selectedIds" name="selectedIds" value="" />
-}
+</form>
 
 <script type="text/javascript">
-    $(document).ready(function () {
-        $('#exportpackagingslips-selected').click(function (e) {
-            e.preventDefault();
-            var ids = selectedIds.join(",");
-            $('#pdf-packaging-slip-selected-form #selectedIds').val(ids);
-            $('#pdf-packaging-slip-selected-form').submit();
-            return false;
-        });
-    });
+                $(document).ready(function () {
+                    $('#exportpackagingslips-selected').click(function (e) {
+                        e.preventDefault();
+                        var ids = selectedIds.join(",");
+                        $('#pdf-packaging-slip-selected-form #selectedIds').val(ids);
+                        $('#pdf-packaging-slip-selected-form').submit();
+                        return false;
+                    });
+                });
 </script>

@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using System.Threading.Tasks;
-using Nop.Core.Domain.Catalog;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class CategoryNavigationViewComponent : ViewComponent
+    public class CategoryNavigationViewComponent : NopViewComponent
     {
         private readonly ICatalogModelFactory _catalogModelFactory;
 
@@ -14,7 +13,7 @@ namespace Nop.Web.Components
             this._catalogModelFactory = catalogModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int currentCategoryId, int currentProductId)
+        public IViewComponentResult Invoke(int currentCategoryId, int currentProductId)
         {
             var model = _catalogModelFactory.PrepareCategoryNavigationModel(currentCategoryId, currentProductId);
             return View(model);

@@ -1,12 +1,12 @@
 ﻿@model PluginModel
 
-@Html.ValidationSummary(false)
-@Html.HiddenFor(model => model.SystemName)
+<div asp-validation-summary="All"></div>
+<input asp-for="SystemName" type="hidden" />
 
 @if (ViewBag.RefreshPage == true)
 {
     <script type="text/javascript">
-        try {window.opener.document.forms['@(ViewBag.formId)'].@(ViewBag.btnId).click();}
+        try {window.opener.document.forms['@(Context.Request.Query["formId"])'].@(Context.Request.Query["btnId"]).click();}
         catch (e){}
         window.close();
     </script>
@@ -15,30 +15,31 @@
 <div class="content">
     <div class="form-horizontal">
         <div class="panel-group">
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_plugin_details_top", additionalData = Model.SystemName })
             <div class="panel panel-default panel-popup">
                 <div class="panel-body">
                     @(Html.LocalizedEditor<PluginModel, PluginLocalizedModel>("plugin-localized",
                 @<div>
                     <div class="form-group">
                         <div class="col-sm-3">
-                            @Html.NopLabelFor(model => model.Locales[item].FriendlyName)
+                            <nop-label asp-for="@Model.Locales[item].FriendlyName" />
                         </div>
                         <div class="col-sm-9">
-                            @Html.NopEditorFor(model => model.Locales[item].FriendlyName)
-                            @Html.ValidationMessageFor(model => model.Locales[item].FriendlyName)
+                            <nop-editor asp-for="@Model.Locales[item].FriendlyName" />
+                            <span asp-validation-for="@Model.Locales[item].FriendlyName"></span>
                         </div>
                     </div>
-                    @Html.HiddenFor(model => model.Locales[item].LanguageId)
+                    <input type="hidden" asp-for="@Model.Locales[item].LanguageId" />
                 </div>
     ,
                     @<div>
                         <div class="form-group">
                             <div class="col-sm-3">
-                                @Html.NopLabelFor(model => model.FriendlyName)
+                                <nop-label asp-for="FriendlyName" />
                             </div>
                             <div class="col-sm-9">
-                                @Html.NopEditorFor(model => model.FriendlyName, required: true)
-                                @Html.ValidationMessageFor(model => model.FriendlyName)
+                                <nop-editor asp-for="FriendlyName" asp-required="true" />
+                                <span asp-validation-for="FriendlyName"></span>
                             </div>
                         </div>
                     </div>
@@ -46,36 +47,37 @@
 
                     <div class="form-group">
                         <div class="col-sm-3">
-                            @Html.NopLabelFor(model => model.DisplayOrder)
+                            <nop-label asp-for="DisplayOrder" />
                         </div>
                         <div class="col-sm-9">
-                            @Html.NopEditorFor(model => model.DisplayOrder)
-                            @Html.ValidationMessageFor(model => model.DisplayOrder)
+                            <nop-editor asp-for="DisplayOrder" />
+                            <span asp-validation-for="DisplayOrder"></span>
                         </div>
                     </div>
                     @if (Model.CanChangeEnabled)
                     {
                         <div class="form-group">
                             <div class="col-sm-3">
-                                @Html.NopLabelFor(model => model.IsEnabled)
+                                <nop-label asp-for="IsEnabled" />
                             </div>
                             <div class="col-sm-9">
-                                @Html.NopEditorFor(model => model.IsEnabled)
-                                @Html.ValidationMessageFor(model => model.IsEnabled)
+                                <nop-editor asp-for="IsEnabled" />
+                                <span asp-validation-for="IsEnabled"></span>
                             </div>
                         </div>
                     }
                     <div class="form-group">
                         <div class="col-sm-3">
-                            @Html.NopLabelFor(model => model.SelectedCustomerRoleIds)
+                            <nop-label asp-for="SelectedCustomerRoleIds" />
                         </div>
                         <div class="col-sm-9">
-                            @Html.EditorFor(model => model.SelectedCustomerRoleIds, new { SelectList = Model.AvailableCustomerRoles })
-                            <script>
+                            <nop-select asp-for="SelectedCustomerRoleIds" asp-items="Model.AvailableCustomerRoles" asp-multiple="true" />
+                            <script type="text/javascript">
                                 $(document).ready(function() {
-                                    var rolesIdsInput = $('#@Html.FieldIdFor(model => model.SelectedCustomerRoleIds)').data("kendoMultiSelect");
+                                    var rolesIdsInput = $('#@Html.IdFor(model => model.SelectedCustomerRoleIds)').data("kendoMultiSelect");
                                     rolesIdsInput.setOptions({
-                                        autoClose: false
+                                        autoClose: false,
+                                        filter: "contains"
                                     });
 
                                     @if (Model.AvailableCustomerRoles.Count == 0)
@@ -95,17 +97,18 @@
                     </div>
                     <div class="form-group">
                         <div class="col-sm-3">
-                            @Html.NopLabelFor(model => model.SelectedStoreIds)
+                            <nop-label asp-for="SelectedStoreIds" />
                         </div>
                         <div class="col-sm-9">
                             <div class="row">
                                 <div class="col-sm-4">
-                                    @Html.EditorFor(model => model.SelectedStoreIds, new {SelectList = Model.AvailableStores})
-                                    <script>
+                                    <nop-select asp-for="SelectedStoreIds" asp-items="Model.AvailableStores" asp-multiple="true" />
+                                    <script type="text/javascript">
                                         $(document).ready(function() {
-                                            var storesIdsInput = $('#@Html.FieldIdFor(model => model.SelectedStoreIds)').data("kendoMultiSelect");
+                                            var storesIdsInput = $('#@Html.IdFor(model => model.SelectedStoreIds)').data("kendoMultiSelect");
                                             storesIdsInput.setOptions({
-                                                autoClose: false
+                                                autoClose: false,
+                                                filter: "contains"
                                             });
 
                                             @if (Model.AvailableStores.Count == 0)
@@ -123,13 +126,14 @@
                                     </script>
                                 </div>
                                 <div class="col-sm-8">
-                                    @Component.InvokeAsync("MultistoreDisabledWarning")
+                                    @await Component.InvokeAsync("MultistoreDisabledWarning")
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_plugin_details_bottom", additionalData = Model.SystemName })
         </div>
     </div>
 </div>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Shipping;
@@ -78,24 +79,27 @@ namespace Nop.Plugin.Pickup.PickupInStore
             foreach (var point in _storePickupPointService.GetAllStorePickupPoints(_storeContext.CurrentStore.Id))
             {
                 var pointAddress = _addressService.GetAddressById(point.AddressId);
-                if (pointAddress != null)
-                    result.PickupPoints.Add(new PickupPoint
-                    {
-                        Id = point.Id.ToString(),
-                        Name = point.Name,
-                        Description = point.Description,
-                        Address = pointAddress.Address1,
-                        City = pointAddress.City,
-                        StateAbbreviation = pointAddress.StateProvince != null ? pointAddress.StateProvince.Abbreviation : string.Empty,
-                        CountryCode = pointAddress.Country != null ? pointAddress.Country.TwoLetterIsoCode : string.Empty,
-                        ZipPostalCode = pointAddress.ZipPostalCode,
-                        OpeningHours = point.OpeningHours,
-                        PickupFee = point.PickupFee,
-                        ProviderSystemName = PluginDescriptor.SystemName
-                    });
+                if (pointAddress == null)
+                    continue;
+
+                result.PickupPoints.Add(new PickupPoint
+                {
+                    Id = point.Id.ToString(),
+                    Name = point.Name,
+                    Description = point.Description,
+                    Address = pointAddress.Address1,
+                    City = pointAddress.City,
+                    StateAbbreviation = pointAddress.StateProvince?.Abbreviation ?? string.Empty,
+                    CountryCode = pointAddress.Country?.TwoLetterIsoCode ?? string.Empty,
+                    ZipPostalCode = pointAddress.ZipPostalCode,
+                    OpeningHours = point.OpeningHours,
+                    PickupFee = point.PickupFee,
+                    DisplayOrder = point.DisplayOrder,
+                    ProviderSystemName = PluginDescriptor.SystemName
+                });
             }
 
-            if (result.PickupPoints.Count == 0)
+            if (!result.PickupPoints.Any())
                 result.AddError(_localizationService.GetResource("Plugins.Pickup.PickupInStore.NoPickupPoints"));
 
             return result;
@@ -106,7 +110,7 @@ namespace Nop.Plugin.Pickup.PickupInStore
         /// </summary>
         public override string GetConfigurationPageUrl()
         {
-            return _webHelper.GetStoreLocation() + "Admin/PickupInStore/Configure";
+            return $"{_webHelper.GetStoreLocation()}Admin/PickupInStore/Configure";
         }
 
         /// <summary>
@@ -119,13 +123,14 @@ namespace Nop.Plugin.Pickup.PickupInStore
 
             //sample pickup point
             var country = _countryService.GetCountryByThreeLetterIsoCode("USA");
-            var state = _stateProvinceService.GetStateProvinceByAbbreviation("NY");
+            var state = _stateProvinceService.GetStateProvinceByAbbreviation("NY", country?.Id);
+
             var address = new Address
             {
                 Address1 = "21 West 52nd Street",
                 City = "New York",
-                CountryId = country != null ? (int?)country.Id : null,
-                StateProvinceId = state != null ? (int?)state.Id : null,
+                CountryId = country?.Id,
+                StateProvinceId = state?.Id,
                 ZipPostalCode = "10021",
                 CreatedOnUtc = DateTime.UtcNow
             };
@@ -144,6 +149,8 @@ namespace Nop.Plugin.Pickup.PickupInStore
             this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.AddNew", "Add a new pickup point");
             this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.Description", "Description");
             this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.Description.Hint", "Specify a description of the pickup point.");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.DisplayOrder", "Display order");
+            this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.DisplayOrder.Hint", "Specify the pickup point display order.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.Name", "Name");
             this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.Name.Hint", "Specify a name of the pickup point.");            
             this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.OpeningHours", "Opening hours");
@@ -169,6 +176,8 @@ namespace Nop.Plugin.Pickup.PickupInStore
             this.DeletePluginLocaleResource("Plugins.Pickup.PickupInStore.AddNew");
             this.DeletePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.Description");
             this.DeletePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.Description.Hint");
+            this.DeletePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.DisplayOrder");
+            this.DeletePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.DisplayOrder.Hint");
             this.DeletePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.Name");
             this.DeletePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.Name.Hint");
             this.DeletePluginLocaleResource("Plugins.Pickup.PickupInStore.Fields.OpeningHours");

@@ -60,6 +60,9 @@ namespace Nop.Services.Configuration
 
         #region Nested classes
 
+        /// <summary>
+        /// Setting (for caching)
+        /// </summary>
         [Serializable]
         public class SettingForCaching
         {
@@ -80,7 +83,7 @@ namespace Nop.Services.Configuration
         protected virtual IDictionary<string, IList<SettingForCaching>> GetAllSettingsCached()
         {
             //cache
-            string key = string.Format(SETTINGS_ALL_KEY);
+            var key = string.Format(SETTINGS_ALL_KEY);
             return _cacheManager.Get(key, () =>
             {
                 //we use no tracking here for performance optimization
@@ -131,7 +134,7 @@ namespace Nop.Services.Configuration
         public virtual void InsertSetting(Setting setting, bool clearCache = true)
         {
             if (setting == null)
-                throw new ArgumentNullException("setting");
+                throw new ArgumentNullException(nameof(setting));
 
             _settingRepository.Insert(setting);
 
@@ -151,7 +154,7 @@ namespace Nop.Services.Configuration
         public virtual void UpdateSetting(Setting setting, bool clearCache = true)
         {
             if (setting == null)
-                throw new ArgumentNullException("setting");
+                throw new ArgumentNullException(nameof(setting));
 
             _settingRepository.Update(setting);
 
@@ -170,7 +173,7 @@ namespace Nop.Services.Configuration
         public virtual void DeleteSetting(Setting setting)
         {
             if (setting == null)
-                throw new ArgumentNullException("setting");
+                throw new ArgumentNullException(nameof(setting));
 
             _settingRepository.Delete(setting);
 
@@ -188,7 +191,7 @@ namespace Nop.Services.Configuration
         public virtual void DeleteSettings(IList<Setting> settings)
         {
             if (settings == null)
-                throw new ArgumentNullException("settings");
+                throw new ArgumentNullException(nameof(settings));
 
             _settingRepository.Delete(settings);
 
@@ -224,7 +227,7 @@ namespace Nop.Services.Configuration
         /// <returns>Setting</returns>
         public virtual Setting GetSetting(string key, int storeId = 0, bool loadSharedValueIfNotFound = false)
         {
-            if (String.IsNullOrEmpty(key))
+            if (string.IsNullOrEmpty(key))
                 return null;
 
             var settings = GetAllSettingsCached();
@@ -257,7 +260,7 @@ namespace Nop.Services.Configuration
         public virtual T GetSettingByKey<T>(string key, T defaultValue = default(T), 
             int storeId = 0, bool loadSharedValueIfNotFound = false)
         {
-            if (String.IsNullOrEmpty(key))
+            if (string.IsNullOrEmpty(key))
                 return defaultValue;
 
             var settings = GetAllSettingsCached();
@@ -289,9 +292,9 @@ namespace Nop.Services.Configuration
         public virtual void SetSetting<T>(string key, T value, int storeId = 0, bool clearCache = true)
         {
             if (key == null)
-                throw new ArgumentNullException("key");
+                throw new ArgumentNullException(nameof(key));
             key = key.Trim().ToLowerInvariant();
-            string valueStr = TypeDescriptor.GetConverter(typeof(T)).ConvertToInvariantString(value);
+            var valueStr = TypeDescriptor.GetConverter(typeof(T)).ConvertToInvariantString(value);
 
             var allSettings = GetAllSettingsCached();
             var settingForCaching = allSettings.ContainsKey(key) ? 
@@ -342,7 +345,7 @@ namespace Nop.Services.Configuration
             Expression<Func<T, TPropType>> keySelector, int storeId = 0) 
             where T : ISettings, new()
         {
-            string key = settings.GetSettingKey(keySelector);
+            var key = settings.GetSettingKey(keySelector);
 
             var setting = GetSettingByKey<string>(key, storeId: storeId);
             return setting != null;
@@ -352,18 +355,27 @@ namespace Nop.Services.Configuration
         /// Load settings
         /// </summary>
         /// <typeparam name="T">Type</typeparam>
-        /// <param name="storeId">Store identifier for which settigns should be loaded</param>
+        /// <param name="storeId">Store identifier for which settings should be loaded</param>
         public virtual T LoadSetting<T>(int storeId = 0) where T : ISettings, new()
         {
-            var settings = Activator.CreateInstance<T>();
+            return (T)LoadSetting(typeof(T), storeId);
+        }
+        /// <summary>
+        /// Load settings
+        /// </summary>
+        /// <param name="type">Type</param>
+        /// <param name="storeId">Store identifier for which settings should be loaded</param>
+        public virtual ISettings LoadSetting(Type type, int storeId = 0)
+        {
+            var settings = Activator.CreateInstance(type);
 
-            foreach (var prop in typeof(T).GetProperties())
+            foreach (var prop in type.GetProperties())
             {
                 // get properties we can read and write to
                 if (!prop.CanRead || !prop.CanWrite)
                     continue;
 
-                var key = typeof(T).Name + "." + prop.Name;
+                var key = type.Name + "." + prop.Name;
                 //load by store
                 var setting = GetSettingByKey<string>(key, storeId: storeId, loadSharedValueIfNotFound: true);
                 if (setting == null)
@@ -375,13 +387,13 @@ namespace Nop.Services.Configuration
                 if (!TypeDescriptor.GetConverter(prop.PropertyType).IsValid(setting))
                     continue;
 
-                object value = TypeDescriptor.GetConverter(prop.PropertyType).ConvertFromInvariantString(setting);
+                var value = TypeDescriptor.GetConverter(prop.PropertyType).ConvertFromInvariantString(setting);
 
                 //set property
                 prop.SetValue(settings, value, null);
             }
 
-            return settings;
+            return settings as ISettings;
         }
 
         /// <summary>
@@ -404,7 +416,7 @@ namespace Nop.Services.Configuration
                 if (!TypeDescriptor.GetConverter(prop.PropertyType).CanConvertFrom(typeof(string)))
                     continue;
 
-                string key = typeof(T).Name + "." + prop.Name;
+                var key = typeof(T).Name + "." + prop.Name;
                 //Duck typing is not supported in C#. That's why we're using dynamic type
                 dynamic value = prop.GetValue(settings, null);
                 if (value != null)
@@ -446,7 +458,7 @@ namespace Nop.Services.Configuration
                        keySelector));
             }
 
-            string key = settings.GetSettingKey(keySelector);
+            var key = settings.GetSettingKey(keySelector);
             //Duck typing is not supported in C#. That's why we're using dynamic type
             dynamic value = propInfo.GetValue(settings, null);
             if (value != null)
@@ -485,7 +497,7 @@ namespace Nop.Services.Configuration
             var allSettings = GetAllSettings();
             foreach (var prop in typeof(T).GetProperties())
             {
-                string key = typeof(T).Name + "." + prop.Name;
+                var key = typeof(T).Name + "." + prop.Name;
                 settingsToDelete.AddRange(allSettings.Where(x => x.Name.Equals(key, StringComparison.InvariantCultureIgnoreCase)));
             }
 
@@ -503,7 +515,7 @@ namespace Nop.Services.Configuration
         public virtual void DeleteSetting<T, TPropType>(T settings,
             Expression<Func<T, TPropType>> keySelector, int storeId = 0) where T : ISettings, new()
         {
-            string key = settings.GetSettingKey(keySelector);
+            var key = settings.GetSettingKey(keySelector);
             key = key.Trim().ToLowerInvariant();
 
             var allSettings = GetAllSettingsCached();

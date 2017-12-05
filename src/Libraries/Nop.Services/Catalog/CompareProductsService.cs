@@ -16,7 +16,7 @@ namespace Nop.Services.Catalog
         /// <summary>
         /// Compare products cookie name
         /// </summary>
-        private const string COMPARE_PRODUCTS_COOKIE_NAME = "nop.CompareProducts";
+        private const string COMPARE_PRODUCTS_COOKIE_NAME = ".Nop.CompareProducts";
 
         #endregion
 
@@ -30,6 +30,12 @@ namespace Nop.Services.Catalog
 
         #region Ctor
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="catalogSettings">Catalog settings</param>
+        /// <param name="httpContextAccessor">HTTP context accessor</param>
+        /// <param name="productService">Product service</param>
         public CompareProductsService(CatalogSettings catalogSettings,
             IHttpContextAccessor httpContextAccessor, 
             IProductService productService)
@@ -50,7 +56,7 @@ namespace Nop.Services.Catalog
         protected virtual List<int> GetComparedProductIds()
         {
             var httpContext = _httpContextAccessor.HttpContext;
-            if (httpContext == null || httpContext.Request == null)
+            if (httpContext?.Request == null)
                 return new List<int>();
 
             //try to get cookie

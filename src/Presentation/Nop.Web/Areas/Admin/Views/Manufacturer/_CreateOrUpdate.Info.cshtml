@@ -2,12 +2,12 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-        $("#@Html.FieldIdFor(model => model.AllowCustomersToSelectPageSize)").click(togglePageSize);
+        $("#@Html.IdFor(model => model.AllowCustomersToSelectPageSize)").click(togglePageSize);
         togglePageSize();
     });
 
     function togglePageSize() {
-        if ($('#@Html.FieldIdFor(model => model.AllowCustomersToSelectPageSize)').is(':checked')) {
+        if ($('#@Html.IdFor(model => model.AllowCustomersToSelectPageSize)').is(':checked')) {
             $('#pnlPageSize').hide();
             $('#pnlPageSizeOptions').show();
         } else {
@@ -18,117 +18,121 @@
 </script>
 
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_manufacturer_details_info_top", additionalData = Model.Id })
     <div class="panel panel-default">
         <div class="panel-body">
             @(Html.LocalizedEditor<ManufacturerModel, ManufacturerLocalizedModel>("manufacturer-info-localized",
     @<div>
         <div class="form-group">
             <div class="col-md-3">
-                @Html.NopLabelFor(model => model.Locales[item].Name)
+                <nop-label asp-for="@Model.Locales[item].Name" />
             </div>
             <div class="col-md-9">
-                @Html.NopEditorFor(model => model.Locales[item].Name)
-                @Html.ValidationMessageFor(model => model.Locales[item].Name)
+                <nop-editor asp-for="@Model.Locales[item].Name" />
+                <span asp-validation-for="@Model.Locales[item].Name"></span>
             </div>
         </div>
         <div class="form-group">
             <div class="col-md-3">
-                @Html.NopLabelFor(model => model.Locales[item].Description)
+                <nop-label asp-for="@Model.Locales[item].Description" />
             </div>
             <div class="col-md-9">
-                @Html.EditorFor(model => model.Locales[item].Description, "RichEditor")
-                @Html.ValidationMessageFor(model => model.Locales[item].Description)
+                <nop-editor asp-for="@Model.Locales[item].Description" asp-template="RichEditor" />
+                <span asp-validation-for="@Model.Locales[item].Description"></span>
             </div>
         </div>
-        @Html.HiddenFor(model => model.Locales[item].LanguageId)
+        <input type="hidden" asp-for="@Model.Locales[item].LanguageId" />
     </div>
     ,
     @<div>
         <div class="form-group">
             <div class="col-md-3">
-                @Html.NopLabelFor(model => model.Name)
+                <nop-label asp-for="Name" />
             </div>
             <div class="col-md-9">
-                @Html.NopEditorFor(model => model.Name, required: true)
-                @Html.ValidationMessageFor(model => model.Name)
+                <nop-editor asp-for="Name" asp-required="true" />
+                <span asp-validation-for="Name"></span>
             </div>
         </div>
         <div class="form-group">
             <div class="col-md-3">
-                @Html.NopLabelFor(model => model.Description)
+                <nop-label asp-for="Description" />
             </div>
             <div class="col-md-9">
-                @Html.EditorFor(x => x.Description, "RichEditor")
-                @Html.ValidationMessageFor(model => model.Description)
+                <nop-editor asp-for="Description" asp-template="RichEditor" />
+                <span asp-validation-for="Description"></span>
             </div>
         </div>
     </div>
       ))
             <div class="form-group" @(Model.AvailableManufacturerTemplates.SelectionIsNotPossible() ? Html.Raw("style=\"display:none\"") : null)>
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.ManufacturerTemplateId)
+                    <nop-label asp-for="ManufacturerTemplateId" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopDropDownListFor(model => model.ManufacturerTemplateId, Model.AvailableManufacturerTemplates)
-                    @Html.ValidationMessageFor(model => model.ManufacturerTemplateId)
+                    <nop-select asp-for="ManufacturerTemplateId" asp-items="Model.AvailableManufacturerTemplates"/>
+                    <span asp-validation-for="ManufacturerTemplateId"></span>
                 </div>
             </div>
             <div class="form-group">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.PictureId)
+                    <nop-label asp-for="PictureId" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopEditorFor(model => model.PictureId)
-                    @Html.ValidationMessageFor(model => model.PictureId)
+                    <nop-editor asp-for="PictureId" />
+                    <span asp-validation-for="PictureId"></span>
                 </div>
             </div>
             <div class="form-group advanced-setting">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.PriceRanges)
+                    <nop-label asp-for="PriceRanges" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopEditorFor(x => x.PriceRanges)
-                    @Html.ValidationMessageFor(model => model.PriceRanges)
+                    <nop-editor asp-for="PriceRanges" />
+                    <span asp-validation-for="PriceRanges"></span>
                 </div>
             </div>
             <div class="form-group advanced-setting">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.AllowCustomersToSelectPageSize)
+                    <nop-label asp-for="AllowCustomersToSelectPageSize" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopEditorFor(x => x.AllowCustomersToSelectPageSize)
-                    @Html.ValidationMessageFor(model => model.AllowCustomersToSelectPageSize)
+                    <nop-editor asp-for="AllowCustomersToSelectPageSize" />
+                    <span asp-validation-for="AllowCustomersToSelectPageSize"></span>
                 </div>
             </div>
-            <div id="pnlPageSize" class="form-group advanced-setting">
-                <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.PageSize)
+            <nop-nested-setting asp-for="AllowCustomersToSelectPageSize">
+                <div id="pnlPageSize" class="form-group advanced-setting">
+                    <div class="col-md-3">
+                        <nop-label asp-for="PageSize" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="PageSize" />
+                        <span asp-validation-for="PageSize"></span>
+                    </div>
                 </div>
-                <div class="col-md-9">
-                    @Html.NopEditorFor(x => x.PageSize)
-                    @Html.ValidationMessageFor(model => model.PageSize)
+                <div id="pnlPageSizeOptions" class="form-group advanced-setting">
+                    <div class="col-md-3">
+                        <nop-label asp-for="PageSizeOptions" />
+                    </div>
+                    <div class="col-md-9">
+                        <nop-editor asp-for="PageSizeOptions" />
+                        <span asp-validation-for="PageSizeOptions"></span>
+                    </div>
                 </div>
-            </div>
-            <div id="pnlPageSizeOptions" class="form-group advanced-setting">
-                <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.PageSizeOptions)
-                </div>
-                <div class="col-md-9">
-                    @Html.NopEditorFor(x => x.PageSizeOptions)
-                    @Html.ValidationMessageFor(model => model.PageSizeOptions)
-                </div>
-            </div>
+            </nop-nested-setting>
             <div class="form-group advanced-setting">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.SelectedDiscountIds)
+                    <nop-label asp-for="SelectedDiscountIds" />
                 </div>
                 <div class="col-md-9">
-                    @Html.EditorFor(model => model.SelectedDiscountIds, new { SelectList = Model.AvailableDiscounts })
-                    <script>
+                    <nop-select asp-for="SelectedDiscountIds" asp-items="Model.AvailableDiscounts" asp-multiple="true" />
+                    <script type="text/javascript">
             $(document).ready(function() {
-                var discountsIdsInput = $('#@Html.FieldIdFor(model => model.SelectedDiscountIds)').data("kendoMultiSelect");
+                var discountsIdsInput = $('#@Html.IdFor(model => model.SelectedDiscountIds)').data("kendoMultiSelect");
                 discountsIdsInput.setOptions({
-                    autoClose: false
+                    autoClose: false,
+                    filter: "contains"
                 });
 
                 @if (Model.AvailableDiscounts.Count == 0)
@@ -148,17 +152,18 @@
             </div>
             <div class="form-group advanced-setting">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.SelectedCustomerRoleIds)
+                    <nop-label asp-for="SelectedCustomerRoleIds" />
                 </div>
                 <div class="col-md-9">
                     <div class="row">
                         <div class="col-md-4">
-                            @Html.EditorFor(model => model.SelectedCustomerRoleIds, new { SelectList = Model.AvailableCustomerRoles })
-                            <script>
+                            <nop-select asp-for="SelectedCustomerRoleIds" asp-items="Model.AvailableCustomerRoles" asp-multiple="true" />
+                            <script type="text/javascript">
                     $(document).ready(function() {
-                        var rolesIdsInput = $('#@Html.FieldIdFor(model => model.SelectedCustomerRoleIds)').data("kendoMultiSelect");
+                        var rolesIdsInput = $('#@Html.IdFor(model => model.SelectedCustomerRoleIds)').data("kendoMultiSelect");
                         rolesIdsInput.setOptions({
-                            autoClose: false
+                            autoClose: false,
+                            filter: "contains"
                         });
 
                         @if (Model.AvailableCustomerRoles.Count == 0)
@@ -183,17 +188,18 @@
             </div>
             <div class="form-group advanced-setting">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.SelectedStoreIds)
+                    <nop-label asp-for="SelectedStoreIds" />
                 </div>
                 <div class="col-md-9">
                     <div class="row">
                         <div class="col-md-4">
-                            @Html.EditorFor(model => model.SelectedStoreIds, new { SelectList = Model.AvailableStores })
-                            <script>
+                            <nop-select asp-for="SelectedStoreIds" asp-items="Model.AvailableStores" asp-multiple="true" />
+                            <script type="text/javascript">
                     $(document).ready(function() {
-                        var storesIdsInput = $('#@Html.FieldIdFor(model => model.SelectedStoreIds)').data("kendoMultiSelect");
+                        var storesIdsInput = $('#@Html.IdFor(model => model.SelectedStoreIds)').data("kendoMultiSelect");
                         storesIdsInput.setOptions({
-                            autoClose: false
+                            autoClose: false,
+                            filter: "contains"
                         });
 
                         @if (Model.AvailableStores.Count == 0)
@@ -218,22 +224,23 @@
             </div>
             <div class="form-group advanced-setting">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.Published)
+                    <nop-label asp-for="Published" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopEditorFor(x => x.Published)
-                    @Html.ValidationMessageFor(model => model.Published)
+                    <nop-editor asp-for="Published" />
+                    <span asp-validation-for="Published"></span>
                 </div>
             </div>
             <div class="form-group">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.DisplayOrder)
+                    <nop-label asp-for="DisplayOrder" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopEditorFor(model => model.DisplayOrder)
-                    @Html.ValidationMessageFor(model => model.DisplayOrder)
+                    <nop-editor asp-for="DisplayOrder" />
+                    <span asp-validation-for="DisplayOrder"></span>
                 </div>
             </div>
         </div>
     </div>
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_manufacturer_details_info_bottom", additionalData = Model.Id })
 </div>

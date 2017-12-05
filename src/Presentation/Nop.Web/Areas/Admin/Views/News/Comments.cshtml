@@ -13,7 +13,7 @@
     Html.SetActiveMenuItemSystemName("News comments");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.ContentManagement.News.Comments")
@@ -31,6 +31,7 @@
             <i class="fa fa-trash-o"></i>
             @T("Admin.ContentManagement.News.Comments.DeleteSelected")
         </button>
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_news_comment_list_buttons" })
     </div>
 </div>
 
@@ -43,34 +44,34 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.CreatedOnFrom)
+                                    <nop-label asp-for="CreatedOnFrom" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.CreatedOnFrom)
+                                    <nop-editor asp-for="CreatedOnFrom" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.CreatedOnTo)
+                                    <nop-label asp-for="CreatedOnTo" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.CreatedOnTo)
+                                    <nop-editor asp-for="CreatedOnTo" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchApprovedId)
+                                    <nop-label asp-for="SearchApprovedId" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopDropDownList("SearchApprovedId", Model.AvailableApprovedOptions)
+                                    <nop-select asp-for="SearchApprovedId" asp-items="Model.AvailableApprovedOptions" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchText)
+                                    <nop-label asp-for="SearchText" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.SearchText)
+                                    <nop-editor asp-for="SearchText" />
                                 </div>
                             </div>
 
@@ -90,7 +91,7 @@
                 <div class="panel-body">
                     <div id="comments-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#comments-grid").kendoGrid({
                                 dataSource: {
@@ -370,9 +371,9 @@
 
                         function additionalData() {
                             var data = {
-                                CreatedOnFrom: $('#@Html.FieldIdFor(model => model.CreatedOnFrom)').val(),
-                                CreatedOnTo: $('#@Html.FieldIdFor(model => model.CreatedOnTo)').val(),
-                                SearchText: $('#@Html.FieldIdFor(model => model.SearchText)').val(),
+                                CreatedOnFrom: $('#@Html.IdFor(model => model.CreatedOnFrom)').val(),
+                                CreatedOnTo: $('#@Html.IdFor(model => model.CreatedOnTo)').val(),
+                                SearchText: $('#@Html.IdFor(model => model.SearchText)').val(),
                                 SearchApprovedId: $('#SearchApprovedId').val()
                             };
                             addAntiForgeryToken(data);

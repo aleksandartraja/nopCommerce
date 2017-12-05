@@ -3,9 +3,9 @@
 }
 @model Nop.Plugin.Shipping.FixedOrByWeight.Models.ShippingByWeightModel
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="FixedOrByWeight" asp-action="AddRateByWeighPopup"
+      asp-route-btnId="@Context.Request.Query["btnId"]"
+      asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Common.AddNew")
@@ -20,4 +20,4 @@
             @await Html.PartialAsync("~/Plugins/Shipping.FixedOrByWeight/Views/_CreateOrUpdateRateByWeight.cshtml", Model)
         </div>
     </div>
-}
+</form>

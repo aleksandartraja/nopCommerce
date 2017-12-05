@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using Nop.Admin.Models.Directory;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Models.Directory;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Payments
+namespace Nop.Web.Areas.Admin.Models.Payments
 {
     public partial class PaymentMethodRestrictionModel : BaseNopModel
     {
@@ -13,10 +12,11 @@ namespace Nop.Admin.Models.Payments
             AvailableCountries = new List<CountryModel>();
             Resticted = new Dictionary<string, IDictionary<int, bool>>();
         }
+
         public IList<PaymentMethodModel> AvailablePaymentMethods { get; set; }
         public IList<CountryModel> AvailableCountries { get; set; }
 
-        //[payment method system name] / [customer role id] / [resticted]
+        //[payment method system name] / [customer role id] / [restricted]
         public IDictionary<string, IDictionary<int, bool>> Resticted { get; set; }
     }
 }

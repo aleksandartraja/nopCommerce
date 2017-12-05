@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -34,6 +35,11 @@ namespace Nop.Core
 
         #region Ctor
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="hostingConfig">Hosting config</param>
+        /// <param name="httpContextAccessor">HTTP context accessor</param>
         public WebHelper(HostingConfig hostingConfig, IHttpContextAccessor httpContextAccessor)
         {
             this._hostingConfig = hostingConfig;
@@ -66,9 +72,31 @@ namespace Nop.Core
             return true;
         }
 
+        /// <summary>
+        /// Is IP address specified
+        /// </summary>
+        /// <param name="address">IP address</param>
+        /// <returns>Result</returns>
         protected virtual bool IsIpAddressSet(IPAddress address)
         {
             return address != null && address.ToString() != NullIpAddress;
+        }
+
+        /// <summary>
+        /// Try to write web.config file
+        /// </summary>
+        /// <returns></returns>
+        protected virtual bool TryWriteWebConfig()
+        {
+            try
+            {
+                File.SetLastWriteTimeUtc(CommonHelper.MapPath("~/web.config"), DateTime.UtcNow);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         #endregion
@@ -105,7 +133,7 @@ namespace Nop.Core
                 {
                     //the X-Forwarded-For (XFF) HTTP header field is a de facto standard for identifying the originating IP address of a client
                     //connecting to a web server through an HTTP proxy or load balancer
-                    var forwardedHttpHeaderKey = "X-FORWARD-FOR";
+                    var forwardedHttpHeaderKey = "X-FORWARDED-FOR";
                     if (!string.IsNullOrEmpty(_hostingConfig.ForwardedHttpHeader))
                     {
                         //but in some cases server use other HTTP header
@@ -122,10 +150,13 @@ namespace Nop.Core
                 if (string.IsNullOrEmpty(result) && _httpContextAccessor.HttpContext.Connection.RemoteIpAddress != null)
                     result = _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
             }
-            catch { return string.Empty; }
+            catch
+            {
+                return string.Empty;
+            }
 
             //some of the validation
-            if (result.Equals("::1", StringComparison.InvariantCultureIgnoreCase))
+            if (result != null && result.Equals("::1", StringComparison.InvariantCultureIgnoreCase))
                 result = "127.0.0.1";
 
             //remove port
@@ -139,34 +170,28 @@ namespace Nop.Core
         /// Gets this page URL
         /// </summary>
         /// <param name="includeQueryString">Value indicating whether to include query strings</param>
+        /// <param name="useSsl">Value indicating whether to get SSL secured page URL. Pass null to determine automatically</param>
+        /// <param name="lowercaseUrl">Value indicating whether to lowercase URL</param>
         /// <returns>Page URL</returns>
-        public virtual string GetThisPageUrl(bool includeQueryString)
-        {
-            //whether connection is secured
-            var useSsl = IsCurrentConnectionSecured();
-
-            return GetThisPageUrl(includeQueryString, useSsl);
-        }
-
-        /// <summary>
-        /// Gets this page URL
-        /// </summary>
-        /// <param name="includeQueryString">Value indicating whether to include query strings</param>
-        /// <param name="useSsl">Value indicating whether to get SSL secured page URL</param>
-        /// <returns>Page URL</returns>
-        public virtual string GetThisPageUrl(bool includeQueryString, bool useSsl)
+        public virtual string GetThisPageUrl(bool includeQueryString, bool? useSsl = null, bool lowercaseUrl = false)
         {
             if (!IsRequestAvailable())
                 return string.Empty;
 
+            if (!useSsl.HasValue)
+                useSsl = IsCurrentConnectionSecured();
+
             //get the host considering using SSL
-            var url = GetStoreHost(useSsl).TrimEnd('/');
+            var url = GetStoreHost(useSsl.Value).TrimEnd('/');
 
             //get full URL with or without query string
             url += includeQueryString ? GetRawUrl(_httpContextAccessor.HttpContext.Request) 
                 : $"{_httpContextAccessor.HttpContext.Request.PathBase}{_httpContextAccessor.HttpContext.Request.Path}";
 
-            return url.ToLowerInvariant();
+            if (lowercaseUrl)
+                url = url.ToLowerInvariant();
+
+            return url;
         }
 
         /// <summary>
@@ -179,8 +204,12 @@ namespace Nop.Core
                 return false;
 
             //check whether hosting uses a load balancer
+            //use HTTP_CLUSTER_HTTPS?
+            if (_hostingConfig.UseHttpClusterHttps)
+                return _httpContextAccessor.HttpContext.Request.Headers["HTTP_CLUSTER_HTTPS"].ToString().Equals("on", StringComparison.OrdinalIgnoreCase);
+
             //use HTTP_X_FORWARDED_PROTO?
-            if (_hostingConfig.UseHttpXForwardedProto.HasValue && _hostingConfig.UseHttpXForwardedProto.Value)
+            if (_hostingConfig.UseHttpXForwardedProto)
                 return _httpContextAccessor.HttpContext.Request.Headers["X-Forwarded-Proto"].ToString().Equals("https", StringComparison.OrdinalIgnoreCase);
 
             return _httpContextAccessor.HttpContext.Request.IsHttps;
@@ -196,7 +225,6 @@ namespace Nop.Core
             var result = string.Empty;
 
             //try to get host from the request HOST header
-            //TODO test (it's better to yuse server variables)
             var hostHeader = _httpContextAccessor.HttpContext.Request.Headers[HeaderNames.Host];
             if (!StringValues.IsNullOrEmpty(hostHeader))
                 result = "http://" + hostHeader.FirstOrDefault();
@@ -243,30 +271,22 @@ namespace Nop.Core
             if (!result.EndsWith("/"))
                 result += "/";
 
-            return result.ToLowerInvariant();
+            return result;
         }
 
         /// <summary>
         /// Gets store location
         /// </summary>
+        /// <param name="useSsl">Whether to get SSL secured URL; pass null to determine automatically</param>
         /// <returns>Store location</returns>
-        public virtual string GetStoreLocation()
+        public virtual string GetStoreLocation(bool? useSsl = null)
         {
             //whether connection is secured
-            var useSsl = IsCurrentConnectionSecured();
+            if (!useSsl.HasValue)
+                useSsl = IsCurrentConnectionSecured();
 
-            return GetStoreLocation(useSsl);
-        }
-
-        /// <summary>
-        /// Gets store location
-        /// </summary>
-        /// <param name="useSsl">Whether to get SSL secured URL</param>
-        /// <returns>Store location</returns>
-        public virtual string GetStoreLocation(bool useSsl)
-        {
             //get store host
-            var host = GetStoreHost(useSsl).TrimEnd('/');
+            var host = GetStoreHost(useSsl.Value).TrimEnd('/');
 
             //add application path base if exists
             if (IsRequestAvailable())
@@ -275,7 +295,7 @@ namespace Nop.Core
             if (!host.EndsWith("/"))
                 host += "/";
 
-            return host.ToLowerInvariant();
+            return host;
         }
         
         /// <summary>
@@ -293,33 +313,29 @@ namespace Nop.Core
             //source: https://github.com/aspnet/StaticFiles/blob/dev/src/Microsoft.AspNetCore.StaticFiles/FileExtensionContentTypeProvider.cs
             //if it can return content type, then it's a static file
             var contentTypeProvider = new FileExtensionContentTypeProvider();
-            return contentTypeProvider.TryGetContentType(path, out string contentType);
+            return contentTypeProvider.TryGetContentType(path, out string _);
         }
 
         /// <summary>
         /// Modifies query string
         /// </summary>
-        /// <param name="url">Url to modify</param>
+        /// <param name="url">URL to modify</param>
         /// <param name="queryStringModification">Query string modification</param>
         /// <param name="anchor">Anchor</param>
-        /// <returns>New url</returns>
+        /// <returns>New URL</returns>
         public virtual string ModifyQueryString(string url, string queryStringModification, string anchor)
         {
             if (url == null)
                 url = string.Empty;
-            url = url.ToLowerInvariant();
 
             if (queryStringModification == null)
                 queryStringModification = string.Empty;
-            queryStringModification = queryStringModification.ToLowerInvariant();
 
             if (anchor == null)
                 anchor = string.Empty;
-            anchor = anchor.ToLowerInvariant();
 
-
-            string str = string.Empty;
-            string str2 = string.Empty;
+            var str = string.Empty;
+            var str2 = string.Empty;
             if (url.Contains("#"))
             {
                 str2 = url.Substring(url.IndexOf("#") + 1);
@@ -334,12 +350,12 @@ namespace Nop.Core
             {
                 if (!string.IsNullOrEmpty(str))
                 {
-                    var dictionary = new Dictionary<string, string>();
-                    foreach (string str3 in str.Split(new[] { '&' }))
+                    var dictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+                    foreach (var str3 in str.Split(new[] { '&' }))
                     {
                         if (!string.IsNullOrEmpty(str3))
                         {
-                            string[] strArray = str3.Split(new[] { '=' });
+                            var strArray = str3.Split(new[] { '=' });
                             if (strArray.Length == 2)
                             {
                                 if (!dictionary.ContainsKey(strArray[0]))
@@ -358,11 +374,11 @@ namespace Nop.Core
                             }
                         }
                     }
-                    foreach (string str4 in queryStringModification.Split(new[] { '&' }))
+                    foreach (var str4 in queryStringModification.Split(new[] { '&' }))
                     {
                         if (!string.IsNullOrEmpty(str4))
                         {
-                            string[] strArray2 = str4.Split(new[] { '=' });
+                            var strArray2 = str4.Split(new[] { '=' });
                             if (strArray2.Length == 2)
                             {
                                 dictionary[strArray2[0]] = strArray2[1];
@@ -374,7 +390,7 @@ namespace Nop.Core
                         }
                     }
                     var builder = new StringBuilder();
-                    foreach (string str5 in dictionary.Keys)
+                    foreach (var str5 in dictionary.Keys)
                     {
                         if (builder.Length > 0)
                         {
@@ -398,27 +414,24 @@ namespace Nop.Core
             {
                 str2 = anchor;
             }
-            return (url + (string.IsNullOrEmpty(str) ? "" : ("?" + str)) + (string.IsNullOrEmpty(str2) ? "" : ("#" + str2))).ToLowerInvariant();
+            return (url + (string.IsNullOrEmpty(str) ? "" : ("?" + str)) + (string.IsNullOrEmpty(str2) ? "" : ("#" + str2)));
         }
 
         /// <summary>
         /// Remove query string from the URL
         /// </summary>
-        /// <param name="url">Url to modify</param>
+        /// <param name="url">URL to modify</param>
         /// <param name="queryString">Query string to remove</param>
         /// <returns>New URL without passed query string</returns>
         public virtual string RemoveQueryString(string url, string queryString)
         {
             if (url == null)
                 url = string.Empty;
-            url = url.ToLowerInvariant();
 
             if (queryString == null)
                 queryString = string.Empty;
-            queryString = queryString.ToLowerInvariant();
 
-
-            string str = string.Empty;
+            var str = string.Empty;
             if (url.Contains("?"))
             {
                 str = url.Substring(url.IndexOf("?") + 1);
@@ -428,12 +441,12 @@ namespace Nop.Core
             {
                 if (!string.IsNullOrEmpty(str))
                 {
-                    var dictionary = new Dictionary<string, string>();
-                    foreach (string str3 in str.Split(new[] { '&' }))
+                    var dictionary = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+                    foreach (var str3 in str.Split(new[] { '&' }))
                     {
                         if (!string.IsNullOrEmpty(str3))
                         {
-                            string[] strArray = str3.Split(new[] { '=' });
+                            var strArray = str3.Split(new[] { '=' });
                             if (strArray.Length == 2)
                             {
                                 dictionary[strArray[0]] = strArray[1];
@@ -447,7 +460,7 @@ namespace Nop.Core
                     dictionary.Remove(queryString);
 
                     var builder = new StringBuilder();
-                    foreach (string str5 in dictionary.Keys)
+                    foreach (var str5 in dictionary.Keys)
                     {
                         if (builder.Length > 0)
                         {
@@ -487,49 +500,20 @@ namespace Nop.Core
         /// Restart application domain
         /// </summary>
         /// <param name="makeRedirect">A value indicating whether we should made redirection after restart</param>
-        /// <param name="redirectUrl">Redirect URL; empty string if you want to redirect to the current page URL</param>
-        public virtual void RestartAppDomain(bool makeRedirect = false, string redirectUrl = "")
+        public virtual void RestartAppDomain(bool makeRedirect = false)
         {
-#if NET451
-            if (CommonHelper.GetTrustLevel() > AspNetHostingPermissionLevel.Medium)
-            {
-                //full trust
-                HttpRuntime.UnloadAppDomain();
+            //the site will be restarted during the next request automatically
+            //_applicationLifetime.StopApplication();
 
-                TryWriteGlobalAsax();
-            }
-            else
+            //"touch" web.config to force restart
+            var success = TryWriteWebConfig();
+            if (!success)
             {
-                //medium trust
-                bool success = TryWriteWebConfig();
-                if (!success)
-                {
-                    throw new NopException("nopCommerce needs to be restarted due to a configuration change, but was unable to do so." + Environment.NewLine +
-                        "To prevent this issue in the future, a change to the web server configuration is required:" + Environment.NewLine +
-                        "- run the application in a full trust environment, or" + Environment.NewLine +
-                        "- give the application write access to the 'web.config' file.");
-                }
-                success = TryWriteGlobalAsax();
-
-                if (!success)
-                {
-                    throw new NopException("nopCommerce needs to be restarted due to a configuration change, but was unable to do so." + Environment.NewLine +
-                        "To prevent this issue in the future, a change to the web server configuration is required:" + Environment.NewLine +
-                        "- run the application in a full trust environment, or" + Environment.NewLine +
-                        "- give the application write access to the 'Global.asax' file.");
-                }
+                throw new NopException("nopCommerce needs to be restarted due to a configuration change, but was unable to do so." + Environment.NewLine +
+                    "To prevent this issue in the future, a change to the web server configuration is required:" + Environment.NewLine +
+                    "- run the application in a full trust environment, or" + Environment.NewLine +
+                    "- give the application write access to the 'web.config' file.");
             }
-
-            // If setting up extensions/modules requires an AppDomain restart, it's very unlikely the
-            // current request can be processed correctly.  So, we redirect to the same URL, so that the
-            // new request will come to the newly started AppDomain.
-            if (_httpContextAccessor.HttpContext != null && makeRedirect)
-            {
-                if (String.IsNullOrEmpty(redirectUrl))
-                    redirectUrl = GetThisPageUrl(true);
-                _httpContextAccessor.HttpContext.Response.Redirect(redirectUrl, true /*endResponse*/);
-            }
-#endif
         }
 
         /// <summary>
@@ -541,7 +525,7 @@ namespace Nop.Core
             {
                 var response = _httpContextAccessor.HttpContext.Response;
                 //ASP.NET 4 style - return response.IsRequestBeingRedirected;
-                int[] redirectionStatusCodes = {301, 302};
+                int[] redirectionStatusCodes = { StatusCodes.Status301MovedPermanently, StatusCodes.Status302Found};
                 return redirectionStatusCodes.Contains(response.StatusCode);
             }
         }
@@ -565,11 +549,11 @@ namespace Nop.Core
         }
 
         /// <summary>
-        /// Gets whether the specified http request uri references the local host.
+        /// Gets whether the specified HTTP request URI references the local host.
         /// </summary>
-        /// <param name="req">Http request</param>
-        /// <returns>True, if http request uri references to the local host</returns>
-        public  virtual bool IsLocalRequest(HttpRequest req)
+        /// <param name="req">HTTP request</param>
+        /// <returns>True, if HTTP request URI references to the local host</returns>
+        public virtual bool IsLocalRequest(HttpRequest req)
         {
             //source: https://stackoverflow.com/a/41242493/7860424
             var connection = req.HttpContext.Connection;
@@ -589,7 +573,7 @@ namespace Nop.Core
         /// <summary>
         /// Get the raw path and full query of request
         /// </summary>
-        /// <param name="request">Http request</param>
+        /// <param name="request">HTTP request</param>
         /// <returns>Raw URL</returns>
         public virtual string GetRawUrl(HttpRequest request)
         {

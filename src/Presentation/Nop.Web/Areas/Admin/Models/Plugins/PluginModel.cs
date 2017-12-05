@@ -1,15 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Plugins;
-using Nop.Web.Framework;
+using Nop.Web.Areas.Admin.Validators.Plugins;
 using Nop.Web.Framework.Localization;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Plugins
+namespace Nop.Web.Areas.Admin.Models.Plugins
 {
     [Validator(typeof(PluginValidator))]
     public partial class PluginModel : BaseNopModel, ILocalizedModel<PluginLocalizedModel>
@@ -23,6 +20,7 @@ namespace Nop.Admin.Models.Plugins
             SelectedCustomerRoleIds = new List<int>();
             AvailableCustomerRoles = new List<SelectListItem>();
         }
+
         [NopResourceDisplayName("Admin.Configuration.Plugins.Fields.Group")]
         public string Group { get; set; }
 
@@ -60,16 +58,15 @@ namespace Nop.Admin.Models.Plugins
 
         //ACL (customer roles)
         [NopResourceDisplayName("Admin.Configuration.Plugins.Fields.AclCustomerRoles")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedCustomerRoleIds { get; set; }
         public IList<SelectListItem> AvailableCustomerRoles { get; set; }
 
         //store mapping
         [NopResourceDisplayName("Admin.Configuration.Plugins.Fields.LimitedToStores")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedStoreIds { get; set; }
         public IList<SelectListItem> AvailableStores { get; set; }
     }
+
     public partial class PluginLocalizedModel : ILocalizedModelLocal
     {
         public int LanguageId { get; set; }

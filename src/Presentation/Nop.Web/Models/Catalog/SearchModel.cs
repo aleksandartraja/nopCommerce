@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework.Mvc.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
+using Nop.Web.Framework.Mvc.Models;
 
 namespace Nop.Web.Models.Catalog
 {
@@ -25,7 +25,6 @@ namespace Nop.Web.Models.Catalog
         /// Query string
         /// </summary>
         [NopResourceDisplayName("Search.SearchTerm")]
-
         public string q { get; set; }
 
         /// <summary>

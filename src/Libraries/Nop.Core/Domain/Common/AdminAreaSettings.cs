@@ -1,8 +1,10 @@
-﻿
-using Nop.Core.Configuration;
+﻿using Nop.Core.Configuration;
 
 namespace Nop.Core.Domain.Common
 {
+    /// <summary>
+    /// Admin area settings
+    /// </summary>
     public class AdminAreaSettings : ISettings
     {
         /// <summary>
@@ -46,8 +48,13 @@ namespace Nop.Core.Domain.Common
         public string LastNewsTitleAdminArea { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to use IsoDateTimeConverter in Json results (used for avoiding issue with dates in KendoUI grids)
+        /// Gets or sets a value indicating whether to use IsoDateTimeConverter in JSON results (used for avoiding issue with dates in KendoUI grids)
         /// </summary>
         public bool UseIsoDateTimeConverterInJson { get; set; }
+
+        /// <summary>
+        /// Indicates whether to use nested setting design
+        /// </summary>
+        public bool UseNestedSetting { get; set; }
     }
 }

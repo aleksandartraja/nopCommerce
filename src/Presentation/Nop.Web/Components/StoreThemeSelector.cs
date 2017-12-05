@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Factories;
-using System.Threading.Tasks;
 using Nop.Core.Domain;
-using System.Net;
+using Nop.Web.Factories;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class StoreThemeSelectorViewComponent : ViewComponent
+    public class StoreThemeSelectorViewComponent : NopViewComponent
     {
         private readonly ICommonModelFactory _commonModelFactory;
         private readonly StoreInformationSettings _storeInformationSettings;
@@ -18,7 +17,7 @@ namespace Nop.Web.Components
             this._storeInformationSettings = storeInformationSettings;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             if (!_storeInformationSettings.AllowCustomerToSelectTheme)
                 return Content("");

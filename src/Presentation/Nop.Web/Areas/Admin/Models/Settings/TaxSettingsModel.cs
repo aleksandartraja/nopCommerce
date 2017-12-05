@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Models.Common;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Settings
+namespace Nop.Web.Areas.Admin.Models.Settings
 {
     public partial class TaxSettingsModel : BaseNopModel
     {
@@ -19,7 +17,6 @@ namespace Nop.Admin.Models.Settings
         }
 
         public int ActiveStoreScopeConfiguration { get; set; }
-
 
         [NopResourceDisplayName("Admin.Configuration.Settings.Tax.PricesIncludeTax")]
         public bool PricesIncludeTax { get; set; }

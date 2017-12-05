@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
-using Nop.Admin.Models.Directory;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Models.Directory;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Shipping
+namespace Nop.Web.Areas.Admin.Models.Shipping
 {
     public partial class ShippingMethodRestrictionModel : BaseNopModel
     {

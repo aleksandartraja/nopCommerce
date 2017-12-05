@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Core.Domain.Catalog;
 using Nop.Services.Catalog;
 using Nop.Services.Localization;
@@ -12,7 +12,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class SpecificationAttributeController : BaseAdminController
     {
@@ -27,7 +27,7 @@ namespace Nop.Admin.Controllers
 
         #endregion Fields
 
-        #region Constructors
+        #region Ctor
 
         public SpecificationAttributeController(ISpecificationAttributeService specificationAttributeService,
             ILanguageService languageService, 
@@ -53,9 +53,9 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(specificationAttribute,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
             }
         }
 
@@ -64,9 +64,9 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(specificationAttributeOption,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
             }
         }
 
@@ -266,15 +266,17 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageAttributes))
                 return AccessDeniedView();
 
-            var model = new SpecificationAttributeOptionModel();
-            model.SpecificationAttributeId = specificationAttributeId;
+            var model = new SpecificationAttributeOptionModel
+            {
+                SpecificationAttributeId = specificationAttributeId
+            };
             //locales
             AddLocales(_languageService, model.Locales);
             return View(model);
         }
 
         [HttpPost]
-        public virtual IActionResult OptionCreatePopup(string btnId, string formId, SpecificationAttributeOptionModel model)
+        public virtual IActionResult OptionCreatePopup(SpecificationAttributeOptionModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageAttributes))
                 return AccessDeniedView();
@@ -295,8 +297,6 @@ namespace Nop.Admin.Controllers
                 UpdateOptionLocales(sao, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -317,7 +317,7 @@ namespace Nop.Admin.Controllers
 
             var model = sao.ToModel();
             //"Color" value
-            model.EnableColorSquaresRgb = !String.IsNullOrEmpty(sao.ColorSquaresRgb);
+            model.EnableColorSquaresRgb = !string.IsNullOrEmpty(sao.ColorSquaresRgb);
             //locales
             AddLocales(_languageService, model.Locales, (locale, languageId) =>
             {
@@ -328,7 +328,7 @@ namespace Nop.Admin.Controllers
         }
 
         [HttpPost]
-        public virtual IActionResult OptionEditPopup(string btnId, string formId, SpecificationAttributeOptionModel model)
+        public virtual IActionResult OptionEditPopup(SpecificationAttributeOptionModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageAttributes))
                 return AccessDeniedView();
@@ -350,8 +350,6 @@ namespace Nop.Admin.Controllers
                 UpdateOptionLocales(sao, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -375,7 +373,6 @@ namespace Nop.Admin.Controllers
             return new NullJsonResult();
         }
 
-
         //ajax
         [HttpGet]
         public virtual IActionResult GetOptionsByAttributeId(string attributeId)
@@ -386,8 +383,8 @@ namespace Nop.Admin.Controllers
             //    return AccessDeniedView();
 
             // This action method gets called via an ajax request
-            if (String.IsNullOrEmpty(attributeId))
-                throw new ArgumentNullException("attributeId");
+            if (string.IsNullOrEmpty(attributeId))
+                throw new ArgumentNullException(nameof(attributeId));
 
             var options = _specificationAttributeService.GetSpecificationAttributeOptionsBySpecificationAttribute(Convert.ToInt32(attributeId));
             var result = (from o in options

@@ -1,15 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Catalog;
 using Nop.Services.Catalog;
 using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Web.Factories;
-using System.Linq;
-using System.Threading.Tasks;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class HomepageProductsViewComponent : ViewComponent
+    public class HomepageProductsViewComponent : NopViewComponent
     {
         private readonly IAclService _aclService;
         private readonly IProductModelFactory _productModelFactory;
@@ -27,7 +27,7 @@ namespace Nop.Web.Components
             this._storeMappingService = storeMappingService;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int? productThumbPictureSize)
+        public IViewComponentResult Invoke(int? productThumbPictureSize)
         {
             var products = _productService.GetAllProductsDisplayedOnHomePage();
             //ACL and store mapping

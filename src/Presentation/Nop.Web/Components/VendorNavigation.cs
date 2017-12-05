@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Factories;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Vendors;
+using Nop.Web.Factories;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class VendorNavigationViewComponent : ViewComponent
+    public class VendorNavigationViewComponent : NopViewComponent
     {
         private readonly ICatalogModelFactory _catalogModelFactory;
         private readonly VendorSettings _vendorSettings;
@@ -18,7 +18,7 @@ namespace Nop.Web.Components
             this._vendorSettings = vendorSettings;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             if (_vendorSettings.VendorsBlockItemsToDisplay == 0)
                 return Content("");

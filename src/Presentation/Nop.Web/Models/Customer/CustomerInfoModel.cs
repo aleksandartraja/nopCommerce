@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework.Mvc.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
+using Nop.Web.Framework.Mvc.Models;
 using Nop.Web.Validators.Customer;
 
 namespace Nop.Web.Models.Customer
@@ -20,8 +22,13 @@ namespace Nop.Web.Models.Customer
             this.CustomerAttributes = new List<CustomerAttributeModel>();
         }
 
+        //MVC is suppressing further validation if the IFormCollection is passed to a controller method. That's why we add to the model
+        public IFormCollection Form { get; set; }
+
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Account.Fields.Email")]
         public string Email { get; set; }
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Account.Fields.EmailToRevalidate")]
         public string EmailToRevalidate { get; set; }
 
@@ -40,7 +47,6 @@ namespace Nop.Web.Models.Customer
         public string FirstName { get; set; }
         [NopResourceDisplayName("Account.Fields.LastName")]
         public string LastName { get; set; }
-
 
         public bool DateOfBirthEnabled { get; set; }
         [NopResourceDisplayName("Account.Fields.DateOfBirth")]
@@ -103,11 +109,13 @@ namespace Nop.Web.Models.Customer
 
         public bool PhoneEnabled { get; set; }
         public bool PhoneRequired { get; set; }
+        [DataType(DataType.PhoneNumber)]
         [NopResourceDisplayName("Account.Fields.Phone")]
         public string Phone { get; set; }
 
         public bool FaxEnabled { get; set; }
         public bool FaxRequired { get; set; }
+        [DataType(DataType.PhoneNumber)]
         [NopResourceDisplayName("Account.Fields.Fax")]
         public string Fax { get; set; }
 
@@ -136,6 +144,7 @@ namespace Nop.Web.Models.Customer
         [NopResourceDisplayName("Account.AssociatedExternalAuth")]
         public IList<AssociatedExternalAuthModel> AssociatedExternalAuthRecords { get; set; }
         public int NumberOfExternalAuthenticationProviders { get; set; }
+        public bool AllowCustomersToRemoveAssociations { get; set; }
 
         public IList<CustomerAttributeModel> CustomerAttributes { get; set; }
 

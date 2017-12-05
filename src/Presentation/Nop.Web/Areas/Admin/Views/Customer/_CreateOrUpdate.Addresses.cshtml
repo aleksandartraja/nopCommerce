@@ -1,9 +1,11 @@
 ﻿@model CustomerModel
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_customer_details_addresses_top", additionalData = Model.Id })
     <div class="panel panel-default">
         <div class="panel-body">
             <div id="customer-addresses-grid"></div>
-            <script>
+
+            <script type="text/javascript">
                 $(document).ready(function () {
                     $("#customer-addresses-grid").kendoGrid({
                         dataSource: {
@@ -94,4 +96,5 @@
             </button>
         </div>
     </div>
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_customer_details_addresses_bottom", additionalData = Model.Id })
 </div>

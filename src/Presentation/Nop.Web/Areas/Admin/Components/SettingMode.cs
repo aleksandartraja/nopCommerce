@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Nop.Admin.Models.Settings;
 using Nop.Core;
 using Nop.Services.Common;
+using Nop.Web.Areas.Admin.Models.Settings;
+using Nop.Web.Framework.Components;
 
-namespace Nop.Admin.Components
+namespace Nop.Web.Areas.Admin.Components
 {
-    public class SettingModeViewComponent : ViewComponent
+    public class SettingModeViewComponent : NopViewComponent
     {
         private readonly IWorkContext _workContext;
 
@@ -15,9 +15,9 @@ namespace Nop.Admin.Components
             this._workContext = workContext;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string modeName = "settings-advanced-mode")
+        public IViewComponentResult Invoke(string modeName = "settings-advanced-mode")
         {
-            var model = new ModeModel()
+            var model = new ModeModel
             {
                 ModeName = modeName,
                 Enabled = _workContext.CurrentCustomer.GetAttribute<bool>(modeName)

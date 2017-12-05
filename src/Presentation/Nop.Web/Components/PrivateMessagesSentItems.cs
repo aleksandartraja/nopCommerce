@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using System.Threading.Tasks;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class PrivateMessagesSentItemsViewComponent : ViewComponent
+    public class PrivateMessagesSentItemsViewComponent : NopViewComponent
     {
         private readonly IPrivateMessagesModelFactory _privateMessagesModelFactory;
 
@@ -13,9 +13,9 @@ namespace Nop.Web.Components
             this._privateMessagesModelFactory = privateMessagesModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int page, string tab)
+        public IViewComponentResult Invoke(int pageNumber, string tab)
         {
-            var model = _privateMessagesModelFactory.PrepareSentModel(page, tab);
+            var model = _privateMessagesModelFactory.PrepareSentModel(pageNumber, tab);
             return View(model);
         }
     }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Nop.Core;
 using Nop.Core.Infrastructure;
 
-namespace Nop.Admin.Helpers
+namespace Nop.Web.Areas.Admin.Helpers
 {
     /// <summary>
     /// TinyMCE helper
@@ -11,7 +11,7 @@ namespace Nop.Admin.Helpers
     public static class TinyMceHelper
     {
         /// <summary>
-        /// Get tinyMCE language name for curent language 
+        /// Get tinyMCE language name for current language 
         /// </summary>
         /// <returns>tinyMCE language name</returns>
         public static string GetTinyMceLanguage()
@@ -25,29 +25,22 @@ namespace Nop.Admin.Helpers
 
             var languageCulture = workContext.WorkingLanguage.LanguageCulture;
 
-            var langFile = string.Format("{0}.js", languageCulture);
-            var path = Path.Combine(hostingEnvironment.WebRootPath, "lib\\tinymce\\langs");
-            var fileExists = File.Exists(string.Format("{0}{1}", path, langFile));
+            var langFile = $"{languageCulture}.js";
+            var directoryPath = Path.Combine(hostingEnvironment.WebRootPath, @"lib\tinymce\langs");
+            var fileExists = File.Exists($"{directoryPath}\\{langFile}");
 
             if (!fileExists)
             {
                 languageCulture = languageCulture.Replace('-', '_');
-                langFile = string.Format("{0}.js", languageCulture);
-                fileExists = File.Exists(string.Format("{0}{1}", path, langFile));
-            }
-
-            if (!fileExists)
-            {
-                languageCulture = languageCulture.Replace('-', '_');
-                langFile = string.Format("{0}.js", languageCulture);
-                fileExists = File.Exists(string.Format("{0}{1}", path, langFile));
+                langFile = $"{languageCulture}.js";
+                fileExists = File.Exists($"{directoryPath}\\{langFile}");
             }
 
             if (!fileExists)
             {
                 languageCulture = languageCulture.Split('_', '-')[0];
-                langFile = string.Format("{0}.js", languageCulture);
-                fileExists = File.Exists(string.Format("{0}{1}", path, langFile));
+                langFile = $"{languageCulture}.js";
+                fileExists = File.Exists($"{directoryPath}\\{langFile}");
             }
 
             return fileExists ? languageCulture : string.Empty;

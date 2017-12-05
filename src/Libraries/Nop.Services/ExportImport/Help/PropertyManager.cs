@@ -21,7 +21,7 @@ namespace Nop.Services.ExportImport.Help
         /// <summary>
         /// Ctor
         /// </summary>
-        /// <param name="properties">All acsess properties</param>
+        /// <param name="properties">All access properties</param>
         public PropertyManager(IEnumerable<PropertyByName<T>> properties)
         {
             _properties = new Dictionary<string, PropertyByName<T>>();
@@ -36,12 +36,12 @@ namespace Nop.Services.ExportImport.Help
         }
 
         /// <summary>
-        /// Curent object to acsess
+        /// Current object to access
         /// </summary>
         public T CurrentObject { get; set; }
 
         /// <summary>
-        /// Return properti index
+        /// Return property index
         /// </summary>
         /// <param name="propertyName">Property name</param>
         /// <returns></returns>
@@ -66,6 +66,15 @@ namespace Nop.Services.ExportImport.Help
                     ? _properties[propertyName].GetProperty(CurrentObject)
                     : null;
             }
+        }
+
+        /// <summary>
+        /// Remove object by property name
+        /// </summary>
+        /// <param name="propertyName">Property name</param>
+        public void Remove(string propertyName)
+        {
+            _properties.Remove(propertyName);
         }
 
         /// <summary>
@@ -116,7 +125,7 @@ namespace Nop.Services.ExportImport.Help
                         fCell.Value = dropDownElement;
                     }
 
-                    validator.Formula.ExcelFormula = string.Format("{0}!{1}:{2}", fWorksheet.Name, fWorksheet.Cells[1, prop.PropertyOrderPosition].Address, fWorksheet.Cells[dropDownElements.Length, prop.PropertyOrderPosition].Address);
+                    validator.Formula.ExcelFormula = $"{fWorksheet.Name}!{fWorksheet.Cells[1, prop.PropertyOrderPosition].Address}:{fWorksheet.Cells[dropDownElements.Length, prop.PropertyOrderPosition].Address}";
                 }
                 else
                 {
@@ -185,7 +194,11 @@ namespace Nop.Services.ExportImport.Help
             get { return _properties.Values.ToArray(); }
         }
 
-        
+        /// <summary>
+        /// Set SelectList
+        /// </summary>
+        /// <param name="propertyName">Property name</param>
+        /// <param name="list">SelectList</param>
         public void SetSelectList(string propertyName, SelectList list)
         {
             var tempProperty = GetProperty(propertyName);
@@ -193,6 +206,9 @@ namespace Nop.Services.ExportImport.Help
                 tempProperty.DropDownElements = list;
         }
 
+        /// <summary>
+        /// Is caption
+        /// </summary>
         public bool IsCaption
         {
             get { return _properties.Values.All(p => p.IsCaption); }

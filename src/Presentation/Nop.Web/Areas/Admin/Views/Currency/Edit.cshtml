@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Currencies");
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Currency" asp-action="Edit" method="post">
     <div class="content-header clearfix">
         <h1 class="pull-left">
-            @T("Admin.Configuration.Currencies.EditCurrencyDetails") - @Model.Name 
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.Configuration.Currencies.BackToList").Text, "List")</small>
+            @T("Admin.Configuration.Currencies.EditCurrencyDetails") - @Model.Name
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.Configuration.Currencies.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -28,8 +29,9 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Common.Delete")
             </span>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_currency_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
-@Html.DeleteConfirmation("currency-delete")
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="currency-delete" />

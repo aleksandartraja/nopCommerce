@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Routing;
 using Nop.Web.Framework.Mvc.Routing;
 
-namespace Nop.Plugin.Payments.PayPalDirect
+namespace Nop.Plugin.Payments.PayPalStandard
 {
     public partial class RouteProvider : IRouteProvider
     {
@@ -30,7 +30,7 @@ namespace Nop.Plugin.Payments.PayPalDirect
         /// </summary>
         public int Priority
         {
-            get { return 1; }
+            get { return -1; }
         }
     }
 }

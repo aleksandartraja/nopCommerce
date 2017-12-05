@@ -1,18 +1,18 @@
 ﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Factories;
-using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Services.Catalog;
 using Nop.Services.Security;
 using Nop.Services.Stores;
+using Nop.Web.Factories;
+using Nop.Web.Framework.Components;
 using Nop.Web.Infrastructure.Cache;
 
 namespace Nop.Web.Components
 {
-    public class RelatedProductsViewComponent : ViewComponent
+    public class RelatedProductsViewComponent : NopViewComponent
     {
         private readonly IProductModelFactory _productModelFactory;
         private readonly IProductService _productService;
@@ -36,11 +36,11 @@ namespace Nop.Web.Components
             this._cacheManager = cacheManager;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int productId, int? productThumbPictureSize)
+        public IViewComponentResult Invoke(int productId, int? productThumbPictureSize)
         {
             //load and cache report
             var productIds = _cacheManager.Get(string.Format(ModelCacheEventConsumer.PRODUCTS_RELATED_IDS_KEY, productId, _storeContext.CurrentStore.Id),
-                () => _productService.GetRelatedProductsByProductId1(productId).Select(x => x.ProductId2).ToArray() );
+                () => _productService.GetRelatedProductsByProductId1(productId).Select(x => x.ProductId2).ToArray());
 
             //load products
             var products = _productService.GetProductsByIds(productIds);

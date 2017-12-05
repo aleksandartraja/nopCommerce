@@ -1,14 +1,11 @@
-﻿using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
-using Nop.Web.Framework.Mvc.ModelBinding;
+﻿using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Settings
+namespace Nop.Web.Areas.Admin.Models.Settings
 {
     public partial class CatalogSettingsModel : BaseNopModel
     {
         public int ActiveStoreScopeConfiguration { get; set; }
-
         
         [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.AllowViewUnpublishedProductPage")]
         public bool AllowViewUnpublishedProductPage { get; set; }
@@ -225,7 +222,19 @@ namespace Nop.Admin.Models.Settings
         [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.ExportImportProductAttributes")]
         public bool ExportImportProductAttributes { get; set; }
         public bool ExportImportProductAttributes_OverrideForStore { get; set; }
+
+        [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.ExportImportProductSpecificationAttributes")]
+        public bool ExportImportProductSpecificationAttributes { get; set; }
+        public bool ExportImportProductSpecificationAttributes_OverrideForStore { get; set; }
         
+        [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.ExportImportProductCategoryBreadcrumb")]
+        public bool ExportImportProductCategoryBreadcrumb { get; set; }
+        public bool ExportImportProductCategoryBreadcrumb_OverrideForStore { get; set; }
+
+        [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.ExportImportCategoriesUsingCategoryName")]
+        public bool ExportImportCategoriesUsingCategoryName { get; set; }
+        public bool ExportImportCategoriesUsingCategoryName_OverrideForStore { get; set; }
+
         [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.IgnoreDiscounts")]
         public bool IgnoreDiscounts { get; set; }
         [NopResourceDisplayName("Admin.Configuration.Settings.Catalog.IgnoreFeaturedProducts")]

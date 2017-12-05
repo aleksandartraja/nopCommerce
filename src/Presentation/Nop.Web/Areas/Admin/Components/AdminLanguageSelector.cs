@@ -1,15 +1,14 @@
-﻿
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Common;
 using Nop.Core;
 using Nop.Services.Localization;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Common;
+using Nop.Web.Framework.Components;
 
-namespace Nop.Admin.Components
+namespace Nop.Web.Areas.Admin.Components
 {
-    public class AdminLanguageSelectorViewComponent : ViewComponent
+    public class AdminLanguageSelectorViewComponent : NopViewComponent
     {
         private readonly ILanguageService _languageService;
         private readonly IStoreContext _storeContext;
@@ -24,14 +23,16 @@ namespace Nop.Admin.Components
             this._workContext = workContext;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
-            var model = new LanguageSelectorModel();
-            model.CurrentLanguage = _workContext.WorkingLanguage.ToModel();
-            model.AvailableLanguages = _languageService
+            var model = new LanguageSelectorModel
+            {
+                CurrentLanguage = _workContext.WorkingLanguage.ToModel(),
+                AvailableLanguages = _languageService
                 .GetAllLanguages(storeId: _storeContext.CurrentStore.Id)
                 .Select(x => x.ToModel())
-                .ToList();
+                .ToList()
+            };
 
             return View(model);
         }

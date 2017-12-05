@@ -5,9 +5,9 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Helpers;
-using Nop.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Helpers;
+using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
@@ -29,7 +29,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class ManufacturerController : BaseAdminController
     {
@@ -60,7 +60,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public ManufacturerController(ICategoryService categoryService, 
             IManufacturerService manufacturerService,
@@ -118,29 +118,29 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(manufacturer,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(manufacturer,
-                                                           x => x.Description,
-                                                           localized.Description,
-                                                           localized.LanguageId);
+                    x => x.Description,
+                    localized.Description,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(manufacturer,
-                                                           x => x.MetaKeywords,
-                                                           localized.MetaKeywords,
-                                                           localized.LanguageId);
+                    x => x.MetaKeywords,
+                    localized.MetaKeywords,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(manufacturer,
-                                                           x => x.MetaDescription,
-                                                           localized.MetaDescription,
-                                                           localized.LanguageId);
+                    x => x.MetaDescription,
+                    localized.MetaDescription,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(manufacturer,
-                                                           x => x.MetaTitle,
-                                                           localized.MetaTitle,
-                                                           localized.LanguageId);
+                    x => x.MetaTitle,
+                    localized.MetaTitle,
+                    localized.LanguageId);
 
                 //search engine name
                 var seName = manufacturer.ValidateSeName(localized.SeName, localized.Name, false);
@@ -158,7 +158,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareTemplatesModel(ManufacturerModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             var templates = _manufacturerTemplateService.GetAllManufacturerTemplates();
             foreach (var template in templates)
@@ -174,7 +174,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareDiscountModel(ManufacturerModel model, Manufacturer manufacturer, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && manufacturer != null)
                 model.SelectedDiscountIds = manufacturer.AppliedDiscounts.Select(d => d.Id).ToList();
@@ -193,7 +193,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareAclModel(ManufacturerModel model, Manufacturer manufacturer, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && manufacturer != null)
                 model.SelectedCustomerRoleIds = _aclService.GetCustomerRoleIdsWithAccess(manufacturer).ToList();
@@ -237,7 +237,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareStoresMappingModel(ManufacturerModel model, Manufacturer manufacturer, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && manufacturer != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(manufacturer).ToList();
@@ -452,7 +452,7 @@ namespace Nop.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                int prevPictureId = manufacturer.PictureId;
+                var prevPictureId = manufacturer.PictureId;
                 manufacturer = model.ToEntity(manufacturer);
                 manufacturer.UpdatedOnUtc = DateTime.UtcNow;
                 _manufacturerService.UpdateManufacturer(manufacturer);
@@ -507,7 +507,6 @@ namespace Nop.Admin.Controllers
                 }
                 return RedirectToAction("List");
             }
-
 
             //If we got this far, something failed, redisplay form
             //templates
@@ -641,7 +640,6 @@ namespace Nop.Admin.Controllers
                 Total = productManufacturers.TotalCount
             };
 
-
             return Json(gridModel);
         }
 
@@ -740,14 +738,14 @@ namespace Nop.Admin.Controllers
         
         [HttpPost]
         [FormValueRequired("save")]
-        public virtual IActionResult ProductAddPopup(string btnId, string formId, ManufacturerModel.AddManufacturerProductModel model)
+        public virtual IActionResult ProductAddPopup(ManufacturerModel.AddManufacturerProductModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageManufacturers))
                 return AccessDeniedView();
 
             if (model.SelectedProductIds != null)
             {
-                foreach (int id in model.SelectedProductIds)
+                foreach (var id in model.SelectedProductIds)
                 {
                     var product = _productService.GetProductById(id);
                     if (product != null)
@@ -769,8 +767,6 @@ namespace Nop.Admin.Controllers
             }
 
             ViewBag.RefreshPage = true;
-            ViewBag.btnId = btnId;
-            ViewBag.formId = formId;
 
             return View(model);
         }

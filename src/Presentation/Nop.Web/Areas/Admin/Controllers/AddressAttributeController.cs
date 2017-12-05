@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Common;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Common;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Services.Common;
@@ -13,7 +13,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class AddressAttributeController : BaseAdminController
     {
@@ -29,7 +29,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public AddressAttributeController(IAddressAttributeService addressAttributeService,
             ILanguageService languageService, 
@@ -57,9 +57,9 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(addressAttribute,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
             }
         }
 
@@ -68,9 +68,9 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(addressAttributeValue,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
             }
         }
 
@@ -277,15 +277,17 @@ namespace Nop.Admin.Controllers
                 //No address attribute found with the specified id
                 return RedirectToAction("List");
 
-            var model = new AddressAttributeValueModel();
-            model.AddressAttributeId = addressAttributeId;
+            var model = new AddressAttributeValueModel
+            {
+                AddressAttributeId = addressAttributeId
+            };
             //locales
             AddLocales(_languageService, model.Locales);
             return View(model);
         }
 
         [HttpPost]
-        public virtual IActionResult ValueCreatePopup(string btnId, string formId, AddressAttributeValueModel model)
+        public virtual IActionResult ValueCreatePopup(AddressAttributeValueModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
@@ -313,8 +315,6 @@ namespace Nop.Admin.Controllers
                 UpdateValueLocales(cav, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -351,7 +351,7 @@ namespace Nop.Admin.Controllers
         }
 
         [HttpPost]
-        public virtual IActionResult ValueEditPopup(string btnId, string formId, AddressAttributeValueModel model)
+        public virtual IActionResult ValueEditPopup( AddressAttributeValueModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
@@ -374,8 +374,6 @@ namespace Nop.Admin.Controllers
                 _customerActivityService.InsertActivity("EditAddressAttributeValue", _localizationService.GetResource("ActivityLog.EditAddressAttributeValue"), cav.Id);
                 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 

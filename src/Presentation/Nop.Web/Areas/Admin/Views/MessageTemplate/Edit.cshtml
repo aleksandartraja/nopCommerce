@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Message templates");
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="MessageTemplate" asp-action="Edit" method="post">
     <div class="content-header clearfix">
         <h1 class="pull-left">
-            @T("Admin.ContentManagement.MessageTemplates.EditMessageTemplateDetails") - @Model.Name 
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.ContentManagement.MessageTemplates.BackToList").Text, "List")</small>
+            @T("Admin.ContentManagement.MessageTemplates.EditMessageTemplateDetails") - @Model.Name
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.ContentManagement.MessageTemplates.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -30,14 +31,13 @@
                 <i class="fa fa-clone"></i>
                 @T("Admin.ContentManagement.MessageTemplates.Copy")
             </button>
-            @Html.ActionConfirmation("message-template-copy")
-
+            <nop-action-confirmation asp-button-id="message-template-copy" />
             <span id="message-template-delete" class="btn bg-red">
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Common.Delete")
             </span>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_message_template_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
-@Html.DeleteConfirmation("message-template-delete")
+</form>

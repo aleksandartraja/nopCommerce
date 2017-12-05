@@ -1,35 +1,19 @@
 ﻿@model AffiliateModel
 @inject IEventPublisher eventPublisher
 
-@Html.ValidationSummary(false)
-@Html.HiddenFor(model => model.Id)
-
-<script>
-    $(document).ready(function() {
-        bindBootstrapTabSelectEvent('affiliate-edit');
-    });
-</script>
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden"/>
 
 <div class="content">
     <div class="form-horizontal">
-        <div id="affiliate-edit" class="nav-tabs-custom">
-            <ul class="nav nav-tabs">
-                @Html.RenderBootstrapTabHeader("tab-info", @T("Admin.Affiliates.Info"), true)
-                @if (Model.Id > 0)
-                {
-                    @Html.RenderBootstrapTabHeader("tab-customers", @T("Admin.Affiliates.Customers"))
-                    @Html.RenderBootstrapTabHeader("tab-orders", @T("Admin.Affiliates.Orders"))
-                }
-            </ul>
-            <div class="tab-content">
-                @Html.RenderBootstrapTabContent("tab-info", await Html.PartialAsync("_CreateOrUpdate.Info", Model), true)
-                @if (Model.Id > 0)
-                {
-                    @Html.RenderBootstrapTabContent("tab-customers", await Html.PartialAsync("_CreateOrUpdate.Customers", Model))
-                    @Html.RenderBootstrapTabContent("tab-orders", await Html.PartialAsync("_CreateOrUpdate.Orders", Model.AffiliatedOrderList))
-                }
-            </div>
-        </div>
+        <nop-tabs id="affiliate-edit">
+            <nop-tab asp-name="tab-info" asp-title="@T("Admin.Affiliates.Info")" asp-default="true">@await Html.PartialAsync("_CreateOrUpdate.Info", Model)</nop-tab>
+            @if (Model.Id > 0)
+            {
+                <nop-tab asp-name="tab-customers" asp-title="@T("Admin.Affiliates.Customers")">@await Html.PartialAsync("_CreateOrUpdate.Customers", Model)</nop-tab>
+                <nop-tab asp-name="tab-orders" asp-title="@T("Admin.Affiliates.Orders")">@await Html.PartialAsync("_CreateOrUpdate.Orders", Model.AffiliatedOrderList)</nop-tab>
+            }
+        </nop-tabs>
     </div>
 </div>
 
@@ -42,6 +26,3 @@
         @eventBlock
     }
 }
-
-@*save selected tab name*@
-<input type="hidden" id="selected-tab-name" name="selected-tab-name" value="@(Html.GetSelectedTabName())">

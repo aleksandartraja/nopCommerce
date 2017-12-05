@@ -18,6 +18,11 @@ namespace Nop.Web.Framework.Infrastructure
         /// <param name="configuration">Configuration root of the application</param>
         public void ConfigureServices(IServiceCollection services, IConfigurationRoot configuration)
         {
+            //add data protection
+            services.AddNopDataProtection();
+
+            //add authentication
+            services.AddNopAuthentication();
         }
 
         /// <summary>
@@ -27,7 +32,7 @@ namespace Nop.Web.Framework.Infrastructure
         public void Configure(IApplicationBuilder application)
         {
             //configure authentication
-            application.UseAuthentication();
+            application.UseNopAuthentication();
 
             //set request culture
             application.UseCulture();

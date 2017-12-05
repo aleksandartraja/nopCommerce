@@ -5,13 +5,14 @@
     Html.SetActiveMenuItemSystemName("Tax providers");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Configuration.Tax.Providers")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_tax_provider_list_buttons" })
     </div>
 </div>
 
@@ -20,9 +21,12 @@
         <div class="panel-group">
             <div class="panel panel-default">
                 <div class="panel-body">
+                    <p>
+                        @T("Admin.Configuration.Tax.Providers.DownloadMorePlugins")
+                    </p>
                     <div id="tax-providers-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#tax-providers-grid").kendoGrid({
                                 dataSource: {
@@ -48,13 +52,6 @@
                                     serverPaging: true,
                                     serverFiltering: true,
                                     serverSorting: true
-                                },
-                                pageable: {
-                                    refresh: true,
-                                    numeric: false,
-                                    previousNext: false,
-                                    info: false,
-                                    @await Html.PartialAsync("_GridPagerMessages")
                                 },
                                 editable: {
                                     confirmation: "@T("Admin.Common.DeleteConfirmation")",
@@ -90,7 +87,7 @@
                                     width: 150,
                                     headerAttributes: { style: "text-align:center" },
                                     attributes: { style: "text-align:center" },
-                                    template: '<a class="btn btn-default" href="ConfigureProvider?systemName=#=SystemName#"><i class="fa fa-cog"></i>@T("Admin.Configuration.Tax.Providers.Configure")</a>'
+                                    template: '# if(ConfigurationUrl && ConfigurationUrl.length > 0) {# <a class="btn btn-default" href="#=ConfigurationUrl#"><i class="fa fa-cog"></i>@T("Admin.Configuration.Tax.Providers.Configure")</a>#} #'
                                     }
                                 ]
                             });

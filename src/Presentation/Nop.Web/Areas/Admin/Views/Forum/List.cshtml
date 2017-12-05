@@ -5,14 +5,15 @@
     Html.SetActiveMenuItemSystemName("Manage forums");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token/>
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.ContentManagement.Forums.Manage")
     </h1>
     <div class="pull-right">
-        <a href="@Url.Action("CreateForumGroup")" class="btn btn-primary">@T("Admin.ContentManagement.Forums.ForumGroup.CreateForumGroup")</a>
-        <a href="@Url.Action("CreateForum")" class="btn btn-primary">@T("Admin.ContentManagement.Forums.Forum.CreateForum")</a>
+        <a asp-action="CreateForumGroup" class="btn btn-primary">@T("Admin.ContentManagement.Forums.ForumGroup.CreateForumGroup")</a>
+        <a asp-action="CreateForum" class="btn btn-primary">@T("Admin.ContentManagement.Forums.Forum.CreateForum")</a>
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_forum_list_buttons" })
     </div>
 </div>
 
@@ -21,10 +22,9 @@
         <div class="panel-group">
             <div class="panel panel-default">
                 <div class="panel-body">
-
                     <div id="forumgroup-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#forumgroup-grid").kendoGrid({
                                 dataSource: {

@@ -137,7 +137,7 @@ namespace Nop.Services.Orders
             Order usedWithOrder = null, decimal usedAmount = 0M, DateTime? activatingDate = null)
         {
             if (customer == null)
-                throw new ArgumentNullException("customer");
+                throw new ArgumentNullException(nameof(customer));
 
             if (storeId <= 0)
                 throw new ArgumentException("Store ID should be valid");
@@ -191,7 +191,6 @@ namespace Nop.Services.Orders
             return lastRph != null && lastRph.PointsBalance.HasValue ? lastRph.PointsBalance.Value : 0;
         }
 
-
         /// <summary>
         /// Gets a reward point history entry
         /// </summary>
@@ -212,7 +211,7 @@ namespace Nop.Services.Orders
         public virtual void DeleteRewardPointsHistoryEntry(RewardPointsHistory rewardPointsHistory)
         {
             if (rewardPointsHistory == null)
-                throw new ArgumentNullException("rewardPointsHistory");
+                throw new ArgumentNullException(nameof(rewardPointsHistory));
 
             _rphRepository.Delete(rewardPointsHistory);
 
@@ -227,7 +226,7 @@ namespace Nop.Services.Orders
         public virtual void UpdateRewardPointsHistoryEntry(RewardPointsHistory rewardPointsHistory)
         {
             if (rewardPointsHistory == null)
-                throw new ArgumentNullException("rewardPointsHistory");
+                throw new ArgumentNullException(nameof(rewardPointsHistory));
 
             _rphRepository.Update(rewardPointsHistory);
 

@@ -2,17 +2,18 @@
 @using Nop.Core.Domain.Catalog
 
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_checkout_attribute_details_condition_top", additionalData = Model.Id })
     <div class="panel panel-default">
         @if (Model.Id > 0)
         {
             <script type="text/javascript">
                 $(document).ready(function () {
-                    $("#@Html.FieldIdFor(model => model.ConditionModel.EnableCondition)").click(toggleEnableCondition);
+                    $("#@Html.IdFor(model => model.ConditionModel.EnableCondition)").click(toggleEnableCondition);
                     toggleEnableCondition();
                 });
 
                 function toggleEnableCondition() {
-                    if ($('#@Html.FieldIdFor(model => model.ConditionModel.EnableCondition)').is(':checked')) {
+                    if ($('#@Html.IdFor(model => model.ConditionModel.EnableCondition)').is(':checked')) {
                         $('#pnlAttributes').show();
                     } else {
                         $('#pnlAttributes').hide();
@@ -23,34 +24,34 @@
             <div class="panel-body">
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.ConditionModel.EnableCondition)
+                        <nop-label asp-for="ConditionModel.EnableCondition"/>
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.ConditionModel.EnableCondition)
-                        @Html.ValidationMessageFor(model => model.ConditionModel.EnableCondition)
+                        <nop-editor asp-for="ConditionModel.EnableCondition"/>
+                        <span asp-validation-for="ConditionModel.EnableCondition"></span>
                     </div>
                 </div>
-
-                <div id="pnlAttributes">
+                <nop-nested-setting asp-for="ConditionModel.EnableCondition" id="pnlAttributes">
                     @if (Model.ConditionModel.ConditionAttributes.Count > 0)
                     {
                         <div class="form-group">
                             <div class="col-md-3">
-                                @Html.NopLabelFor(model => model.ConditionModel.SelectedAttributeId)
+                                <nop-label asp-for="ConditionModel.SelectedAttributeId"/>
                             </div>
                             <div class="col-md-9">
-                                @Html.NopDropDownListFor(model => model.ConditionModel.SelectedAttributeId,
-                            Model.ConditionModel.ConditionAttributes.Select(x => new SelectListItem() { Text = x.Name, Value = x.Id.ToString() }))
-
+                                <nop-select asp-for="ConditionModel.SelectedAttributeId" asp-items="@(Model.ConditionModel.ConditionAttributes.Select(x => new SelectListItem() {Text = x.Name, Value = x.Id.ToString()}))"/>
+                                
                                 <script type="text/javascript">
                                     $(document).ready(function() {
-                                        $("#@Html.FieldIdFor(model => model.ConditionModel.SelectedAttributeId)").change(toggleConditionAttributes);
+                                        $("#@Html.IdFor(model => model.ConditionModel.SelectedAttributeId)")
+                                            .change(toggleConditionAttributes);
 
                                         toggleConditionAttributes();
                                     });
 
                                     function toggleConditionAttributes() {
-                                        var selectedCheckoutAttributeId = $("#@Html.FieldIdFor(model => model.ConditionModel.SelectedAttributeId)").val();
+                                        var selectedCheckoutAttributeId =
+                                            $("#@Html.IdFor(model => model.ConditionModel.SelectedAttributeId)").val();
                                         $('[id^="pnl_attribute_values_"]').hide();
                                         $('#pnl_attribute_values_' + selectedCheckoutAttributeId).show();
                                     }
@@ -58,16 +59,16 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <div class="col-md-9 col-md-offset-3">
-                                @for (int i = 0; i < Model.ConditionModel.ConditionAttributes.Count; i++)
+                            <div class="col-md-3">&nbsp;</div>
+                            <div class="col-md-9">
+                                @for (var i = 0; i < Model.ConditionModel.ConditionAttributes.Count; i++)
                                 {
-                                    @Html.HiddenFor(model => Model.ConditionModel.ConditionAttributes[i].Id)
-                                    <div id="@string.Format("pnl_attribute_values_{0}", Model.ConditionModel.ConditionAttributes[i].Id)">
+                                    <input type="hidden" asp-for="@Model.ConditionModel.ConditionAttributes[i].Id"/>
+                                    <div id="@($"pnl_attribute_values_{Model.ConditionModel.ConditionAttributes[i].Id}")">
                                         @switch (Model.ConditionModel.ConditionAttributes[i].AttributeControlType)
                                         {
                                             case AttributeControlType.DropdownList:
-                                                @Html.NopDropDownListFor(model => Model.ConditionModel.ConditionAttributes[i].SelectedValueId,
-                                            Model.ConditionModel.ConditionAttributes[i].Values)
+                                                <nop-select asp-for="@Model.ConditionModel.ConditionAttributes[i].SelectedValueId" asp-items="Model.ConditionModel.ConditionAttributes[i].Values"/>
                                                 break;
                                             case AttributeControlType.RadioList:
                                             case AttributeControlType.ColorSquares:
@@ -76,8 +77,7 @@
                                                 {
                                                     <div class="radio">
                                                         <label>
-                                                            @Html.RadioButtonFor(model => Model.ConditionModel.ConditionAttributes[i].SelectedValueId, value.Value,
-                                                                value.Selected ? new { @checked = true } : null)
+                                                            <input type="radio" asp-for="@Model.ConditionModel.ConditionAttributes[i].SelectedValueId" value="@value.Value" checked="@value.Selected"/>
                                                             @value.Text
                                                         </label>
                                                     </div>
@@ -88,8 +88,8 @@
                                                 {
                                                     <div class="checkbox">
                                                         <label>
-                                                            @Html.HiddenFor(model => Model.ConditionModel.ConditionAttributes[i].Values[j].Value)
-                                                            @Html.CheckBoxFor(model => Model.ConditionModel.ConditionAttributes[i].Values[j].Selected)
+                                                            <input type="hidden" asp-for="@Model.ConditionModel.ConditionAttributes[i].Values[j].Value"/>
+                                                            <nop-editor asp-for="@Model.ConditionModel.ConditionAttributes[i].Values[j].Selected"/>
                                                             @Model.ConditionModel.ConditionAttributes[i].Values[j].Text
                                                         </label>
                                                     </div>
@@ -117,7 +117,7 @@
                             </div>
                         </div>
                     }
-                </div>
+                </nop-nested-setting>
             </div>
         }
         else
@@ -127,4 +127,5 @@
             </div>
         }
     </div>
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_checkout_attribute_details_condition_bottom", additionalData = Model.Id })
 </div>

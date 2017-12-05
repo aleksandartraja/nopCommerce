@@ -26,7 +26,7 @@ namespace Nop.Web.Controllers
         
         #endregion
 
-		#region Constructors
+		#region Ctor
 
         public BackInStockSubscriptionController(IProductService productService,
             IWorkContext workContext, 
@@ -56,15 +56,17 @@ namespace Nop.Web.Controllers
             if (product == null || product.Deleted)
                 throw new ArgumentException("No product found with the specified id");
 
-            var model = new BackInStockSubscribeModel();
-            model.ProductId = product.Id;
-            model.ProductName = product.GetLocalized(x => x.Name);
-            model.ProductSeName = product.GetSeName();
-            model.IsCurrentCustomerRegistered = _workContext.CurrentCustomer.IsRegistered();
-            model.MaximumBackInStockSubscriptions = _catalogSettings.MaximumBackInStockSubscriptions;
-            model.CurrentNumberOfBackInStockSubscriptions = _backInStockSubscriptionService
+            var model = new BackInStockSubscribeModel
+            {
+                ProductId = product.Id,
+                ProductName = product.GetLocalized(x => x.Name),
+                ProductSeName = product.GetSeName(),
+                IsCurrentCustomerRegistered = _workContext.CurrentCustomer.IsRegistered(),
+                MaximumBackInStockSubscriptions = _catalogSettings.MaximumBackInStockSubscriptions,
+                CurrentNumberOfBackInStockSubscriptions = _backInStockSubscriptionService
                 .GetAllSubscriptionsByCustomerId(_workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id, 0, 1)
-                .TotalCount;
+                .TotalCount
+            };
             if (product.ManageInventoryMethod == ManageInventoryMethod.ManageStock &&
                 product.BackorderMode == BackorderMode.NoBackorders &&
                 product.AllowBackInStockSubscriptions &&
@@ -138,19 +140,18 @@ namespace Nop.Web.Controllers
             return Content(_localizationService.GetResource("BackInStockSubscriptions.NotAllowed"));
         }
 
-
         // My account / Back in stock subscriptions
-        public virtual IActionResult CustomerSubscriptions(int? page)
+        public virtual IActionResult CustomerSubscriptions(int? pageNumber)
         {
             if (_customerSettings.HideBackInStockSubscriptionsTab)
             {
                 return RedirectToRoute("CustomerInfo");
             }
 
-            int pageIndex = 0;
-            if (page > 0)
+            var pageIndex = 0;
+            if (pageNumber > 0)
             {
-                pageIndex = page.Value - 1;
+                pageIndex = pageNumber.Value - 1;
             }
             var pageSize = 10;
 
@@ -185,11 +186,12 @@ namespace Nop.Web.Controllers
                 ShowTotalSummary = false,
                 RouteActionName = "CustomerBackInStockSubscriptionsPaged",
                 UseRouteLinks = true,
-                RouteValues = new BackInStockSubscriptionsRouteValues { page = pageIndex }
+                RouteValues = new BackInStockSubscriptionsRouteValues { pageNumber = pageIndex }
             };
 
             return View(model);
         }
+
         [HttpPost, ActionName("CustomerSubscriptions")]
         public virtual IActionResult CustomerSubscriptionsPOST(IFormCollection formCollection)
         {
@@ -200,8 +202,7 @@ namespace Nop.Web.Controllers
                 if (value.Equals("on") && key.StartsWith("biss", StringComparison.InvariantCultureIgnoreCase))
                 {
                     var id = key.Replace("biss", "").Trim();
-                    int subscriptionId;
-                    if (Int32.TryParse(id, out subscriptionId))
+                    if (int.TryParse(id, out int subscriptionId))
                     {
                         var subscription = _backInStockSubscriptionService.GetSubscriptionById(subscriptionId);
                         if (subscription != null && subscription.CustomerId == _workContext.CurrentCustomer.Id)

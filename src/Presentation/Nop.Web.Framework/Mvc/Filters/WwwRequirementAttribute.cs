@@ -13,12 +13,16 @@ namespace Nop.Web.Framework.Mvc.Filters
     /// </summary>
     public class WwwRequirementAttribute : TypeFilterAttribute
     {
+        #region Ctor
+
         /// <summary>
         /// Create instance of the filter attribute
         /// </summary>
         public WwwRequirementAttribute() : base(typeof(WwwRequirementFilter))
         {
         }
+
+        #endregion
 
         #region Nested filter
 
@@ -58,7 +62,7 @@ namespace Nop.Web.Framework.Mvc.Filters
                 var urlScheme = _webHelper.IsCurrentConnectionSecured() ? "https://" : "http://";
 
                 //compose start of URL with WWW
-                var urlWith3W = string.Format("{0}www.", urlScheme);
+                var urlWith3W = $"{urlScheme}www.";
 
                 //get requested URL
                 var currentUrl = _webHelper.GetThisPageUrl(true);
@@ -86,13 +90,13 @@ namespace Nop.Web.Framework.Mvc.Filters
             public void OnAuthorization(AuthorizationFilterContext filterContext)
             {
                 if (filterContext == null)
-                    throw new ArgumentNullException("filterContext");
-
-                if (!DataSettingsHelper.DatabaseIsInstalled())
-                    return;
+                    throw new ArgumentNullException(nameof(filterContext));
 
                 //only in GET requests, otherwise the browser might not propagate the verb and request body correctly.
                 if (!filterContext.HttpContext.Request.Method.Equals(WebRequestMethods.Http.Get, StringComparison.InvariantCultureIgnoreCase))
+                    return;
+
+                if (!DataSettingsHelper.DatabaseIsInstalled())
                     return;
 
                 //ignore this rule for localhost

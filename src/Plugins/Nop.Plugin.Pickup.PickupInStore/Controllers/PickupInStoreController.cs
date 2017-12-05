@@ -13,15 +13,15 @@ using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Security;
 using Nop.Services.Stores;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
-using Nop.Web.Framework.Security;
 
 namespace Nop.Plugin.Pickup.PickupInStore.Controllers
 {
-    [Area("Admin")]
+    [Area(AreaNames.Admin)]
     [AuthorizeAdmin]
     public class PickupInStoreController : BasePluginController
     {
@@ -63,7 +63,7 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
         public IActionResult Configure()
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return Content("Access denied");
+                return AccessDeniedView();
 
             return View("~/Plugins/Pickup.PickupInStore/Views/Configure.cshtml");
         }
@@ -73,20 +73,20 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
         public IActionResult List(DataSourceRequest command)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return ErrorForKendoGridJson("Access denied");
+                return AccessDeniedKendoGridJson();
 
-            var pickupPoints = _storePickupPointService.GetAllStorePickupPoints();
-            var model = pickupPoints.Select(x =>
+            var pickupPoints = _storePickupPointService.GetAllStorePickupPoints(pageIndex: command.Page - 1, pageSize: command.PageSize);
+            var model = pickupPoints.Select(point =>
             {
-                var store = _storeService.GetStoreById(x.StoreId);
+                var store = _storeService.GetStoreById(point.StoreId);
                 return new StorePickupPointModel
                 {
-                    Id = x.Id,
-                    Name = x.Name,
-                    OpeningHours = x.OpeningHours,
-                    PickupFee = x.PickupFee,
-                    StoreName = store != null ? store.Name
-                        : x.StoreId == 0 ? _localizationService.GetResource("Admin.Configuration.Settings.StoreScope.AllStores") : string.Empty
+                    Id = point.Id,
+                    Name = point.Name,
+                    OpeningHours = point.OpeningHours,
+                    PickupFee = point.PickupFee,
+                    DisplayOrder = point.DisplayOrder,
+                    StoreName = store?.Name ?? (point.StoreId == 0 ? _localizationService.GetResource("Admin.Configuration.Settings.StoreScope.AllStores") : string.Empty)
                 };
             }).ToList();
 
@@ -100,7 +100,7 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
         public IActionResult Create()
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return Content("Access denied");
+                return AccessDeniedView();
 
             var model = new StorePickupPointModel();
 
@@ -128,10 +128,10 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
 
         [HttpPost]
         [AdminAntiForgery]
-        public IActionResult Create(string btnId, string formId, StorePickupPointModel model)
+        public IActionResult Create(StorePickupPointModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return Content("Access denied");
+                return AccessDeniedView();
 
             var address = new Address
             {
@@ -151,13 +151,12 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
                 AddressId = address.Id,
                 OpeningHours = model.OpeningHours,
                 PickupFee = model.PickupFee,
+                DisplayOrder = model.DisplayOrder,
                 StoreId = model.StoreId
             };
             _storePickupPointService.InsertStorePickupPoint(pickupPoint);
 
             ViewBag.RefreshPage = true;
-            ViewBag.btnId = btnId;
-            ViewBag.formId = formId;
 
             return View("~/Plugins/Pickup.PickupInStore/Views/Create.cshtml", model);
         }
@@ -165,7 +164,7 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
         public IActionResult Edit(int id)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return Content("Access denied");
+                return AccessDeniedView();
 
             var pickupPoint = _storePickupPointService.GetStorePickupPointById(id);
             if (pickupPoint == null)
@@ -178,6 +177,7 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
                 Description = pickupPoint.Description,
                 OpeningHours = pickupPoint.OpeningHours,
                 PickupFee = pickupPoint.PickupFee,
+                DisplayOrder = pickupPoint.DisplayOrder,
                 StoreId = pickupPoint.StoreId
             };
 
@@ -218,10 +218,10 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
 
         [HttpPost]
         [AdminAntiForgery]
-        public IActionResult Edit(string btnId, string formId, StorePickupPointModel model)
+        public IActionResult Edit(StorePickupPointModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return Content("Access denied");
+                return AccessDeniedView();
 
             var pickupPoint = _storePickupPointService.GetStorePickupPointById(model.Id);
             if (pickupPoint == null)
@@ -243,12 +243,11 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
             pickupPoint.AddressId = address.Id;
             pickupPoint.OpeningHours = model.OpeningHours;
             pickupPoint.PickupFee = model.PickupFee;
+            pickupPoint.DisplayOrder = model.DisplayOrder;
             pickupPoint.StoreId = model.StoreId;
             _storePickupPointService.UpdateStorePickupPoint(pickupPoint);
 
             ViewBag.RefreshPage = true;
-            ViewBag.btnId = btnId;
-            ViewBag.formId = formId;
 
             return View("~/Plugins/Pickup.PickupInStore/Views/Edit.cshtml", model);
         }
@@ -258,7 +257,7 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
         public IActionResult Delete(int id)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return Content("Access denied");
+                return AccessDeniedView();
 
             var pickupPoint = _storePickupPointService.GetStorePickupPointById(id);
             if (pickupPoint == null)
@@ -267,6 +266,7 @@ namespace Nop.Plugin.Pickup.PickupInStore.Controllers
             var address = _addressService.GetAddressById(pickupPoint.AddressId);
             if (address != null)
                 _addressService.DeleteAddress(address);
+
             _storePickupPointService.DeleteStorePickupPoint(pickupPoint);
 
             return new NullJsonResult();

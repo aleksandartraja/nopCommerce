@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using Nop.Core.Extensions;
 using Nop.Core.Infrastructure;
 using Nop.Core.Plugins;
 using Nop.Services.Logging;
@@ -60,11 +59,10 @@ namespace Nop.Services.Events
         {
             //get all event subscribers, excluding from not installed plugins
             var subscribers = _subscriptionService.GetSubscriptions<T>()
-                .Where(subscriber => PluginManager.FindPlugin(subscriber.GetType()).Return(plugin => plugin.Installed, true)).ToList();
+                .Where(subscriber => PluginManager.FindPlugin(subscriber.GetType())?.Installed ?? true).ToList();
 
             //publish event to subscribers
             subscribers.ForEach(subscriber => PublishToConsumer(subscriber, eventMessage));
         }
-
     }
 }

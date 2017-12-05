@@ -5,9 +5,9 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Services.Security;
-using Nop.Web.Framework.Security;
+using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     /// <summary>
     /// Controller used by jbimages (JustBoil.me) plugin (TimyMCE)
@@ -50,7 +50,7 @@ namespace Nop.Admin.Controllers
             }
 
             var fileName = Path.GetFileName(uploadFile.FileName);
-            if (String.IsNullOrEmpty(fileName))
+            if (string.IsNullOrEmpty(fileName))
             {
                 ViewData["resultCode"] = "failed";
                 ViewData["result"] = "No file name provided";
@@ -64,10 +64,9 @@ namespace Nop.Admin.Controllers
             if (!GetAllowedFileTypes().Contains(fileExtension))
             {
                 ViewData["resultCode"] = "failed";
-                ViewData["result"] = string.Format("Files with {0} extension cannot be uploaded", fileExtension);
+                ViewData["result"] = $"Files with {fileExtension} extension cannot be uploaded";
                 return View();
             }
-
 
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
@@ -76,7 +75,7 @@ namespace Nop.Admin.Controllers
 
             ViewData["resultCode"] = "success";
             ViewData["result"] = "success";
-            ViewData["filename"] = this.Url.Content(string.Format("{0}{1}", directory, fileName));
+            ViewData["filename"] = this.Url.Content($"{directory}{fileName}");
             return View();
         }
     }

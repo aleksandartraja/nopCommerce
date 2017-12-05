@@ -334,14 +334,14 @@ namespace Nop.Services.EuropaCheckVatService
         {
             if ((endpointConfiguration == EndpointConfiguration.checkVatPort))
             {
-                System.ServiceModel.BasicHttpBinding result = new System.ServiceModel.BasicHttpBinding();
+                var result = new System.ServiceModel.BasicHttpBinding();
                 result.MaxBufferSize = int.MaxValue;
                 result.ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max;
                 result.MaxReceivedMessageSize = int.MaxValue;
                 result.AllowCookies = true;
                 return result;
             }
-            throw new System.InvalidOperationException(string.Format("Could not find endpoint with name \'{0}\'.", endpointConfiguration));
+            throw new System.InvalidOperationException($"Could not find endpoint with name \'{endpointConfiguration}\'.");
         }
         
         private static System.ServiceModel.EndpointAddress GetEndpointAddress(EndpointConfiguration endpointConfiguration)
@@ -350,7 +350,7 @@ namespace Nop.Services.EuropaCheckVatService
             {
                 return new System.ServiceModel.EndpointAddress("http://ec.europa.eu/taxation_customs/vies/services/checkVatService");
             }
-            throw new System.InvalidOperationException(string.Format("Could not find endpoint with name \'{0}\'.", endpointConfiguration));
+            throw new System.InvalidOperationException($"Could not find endpoint with name \'{endpointConfiguration}\'.");
         }
         
         private static System.ServiceModel.Channels.Binding GetDefaultBinding()

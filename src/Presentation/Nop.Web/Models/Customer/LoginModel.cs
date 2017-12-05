@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
-using Nop.Web.Framework.Mvc.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
+using Nop.Web.Framework.Mvc.Models;
 using Nop.Web.Validators.Customer;
 
 namespace Nop.Web.Models.Customer
@@ -11,6 +11,7 @@ namespace Nop.Web.Models.Customer
     {
         public bool CheckoutAsGuest { get; set; }
 
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Account.Login.Fields.Email")]
         public string Email { get; set; }
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
@@ -21,7 +20,7 @@ namespace Nop.Web.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public PollController(IPollModelFactory pollModelFactory,
             ILocalizationService localizationService,
@@ -61,7 +60,7 @@ namespace Nop.Web.Controllers
                     error = _localizationService.GetResource("Polls.OnlyRegisteredUsersVote"),
                 });
 
-            bool alreadyVoted = _pollService.AlreadyVoted(poll.Id, _workContext.CurrentCustomer.Id);
+            var alreadyVoted = _pollService.AlreadyVoted(poll.Id, _workContext.CurrentCustomer.Id);
             if (!alreadyVoted)
             {
                 //vote
@@ -78,7 +77,7 @@ namespace Nop.Web.Controllers
 
             return Json(new
             {
-                html = this.RenderPartialViewToString("_Poll", _pollModelFactory.PreparePollModel(poll, true)),
+                html = RenderPartialViewToString("_Poll", _pollModelFactory.PreparePollModel(poll, true)),
             });
         }
 

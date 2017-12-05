@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Languages");
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Language" asp-action="Create" method="post">
     <div class="content-header clearfix">
         <h1 class="pull-left">
-            @T("Admin.Configuration.Languages.AddNew") 
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.Configuration.Languages.BackToList").Text, "List")</small>
+            @T("Admin.Configuration.Languages.AddNew")
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.Configuration.Languages.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -24,7 +25,8 @@
                 <i class="fa fa-floppy-o"></i>
                 @T("Admin.Common.SaveContinue")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_language_details_buttons" })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
+</form>

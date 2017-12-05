@@ -4,8 +4,8 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Directory;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Directory;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Services.Configuration;
@@ -19,7 +19,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class CurrencyController :  BaseAdminController
     {
@@ -81,7 +81,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareStoresMappingModel(CurrencyModel model, Currency currency, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && currency != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(currency).ToList();
@@ -136,15 +136,30 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCurrencies))
                 return AccessDeniedView();
 
+            var model = new CurrencyListModel
+            {
+                AutoUpdateEnabled = _currencySettings.AutoUpdateEnabled,
+                ExchangeRateProviders = _currencyService.LoadAllExchangeRateProviders().Select(erp => new SelectListItem
+                {
+                    Text = erp.PluginDescriptor.FriendlyName,
+                    Value = erp.PluginDescriptor.SystemName,
+                    Selected = erp.PluginDescriptor.SystemName.Equals(_currencySettings.ActiveExchangeRateProviderSystemName, StringComparison.InvariantCultureIgnoreCase)
+                }).ToList(),
+            };
+
             if (liveRates)
             {
                 try
                 {
-                    var primaryExchangeCurrency = _currencyService.GetCurrencyById(_currencySettings.PrimaryExchangeRateCurrencyId);
+                    var primaryExchangeCurrency = _currencyService.GetCurrencyById(_currencySettings.PrimaryExchangeRateCurrencyId, false);
                     if (primaryExchangeCurrency == null)
                         throw new NopException("Primary exchange rate currency is not set");
-
-                    ViewBag.Rates = _currencyService.GetCurrencyLiveRates(primaryExchangeCurrency.CurrencyCode);
+                    
+                    //filter by existing currencies
+                    var currencies = _currencyService.GetAllCurrencies(true, loadCacheableCopy: false);
+                    model.ExchangeRates = _currencyService.GetCurrencyLiveRates(primaryExchangeCurrency.CurrencyCode)
+                        .Where(rate => currencies.Any(currency => currency.CurrencyCode.Equals(rate.CurrencyCode, StringComparison.InvariantCultureIgnoreCase)))
+                        .Select(rate => new CurrencyListModel.ExchangeRateModel { CurrencyCode = rate.CurrencyCode, Rate = rate.Rate }).ToList();
                 }
                 catch (Exception exc)
                 {
@@ -152,31 +167,20 @@ namespace Nop.Admin.Controllers
                 }
             }
 
-            ViewBag.ExchangeRateProviders = new List<SelectListItem>();
-            foreach (var erp in _currencyService.LoadAllExchangeRateProviders())
-            {
-                ViewBag.ExchangeRateProviders.Add(new SelectListItem
-                {
-                    Text = erp.PluginDescriptor.FriendlyName,
-                    Value = erp.PluginDescriptor.SystemName,
-                    Selected = erp.PluginDescriptor.SystemName.Equals(_currencySettings.ActiveExchangeRateProviderSystemName, StringComparison.InvariantCultureIgnoreCase)
-                });
-            }
-            ViewBag.AutoUpdateEnabled = _currencySettings.AutoUpdateEnabled;
-           
-            return View();
+            return View(model);
         }
 
         [HttpPost]
         [FormValueRequired("save")]
-        public virtual IActionResult List(IFormCollection formValues)
+        public virtual IActionResult List(CurrencyListModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCurrencies))
                 return AccessDeniedView();
 
-            _currencySettings.ActiveExchangeRateProviderSystemName = formValues["exchangeRateProvider"];
-            _currencySettings.AutoUpdateEnabled = !formValues["autoUpdateEnabled"].Equals("false");
+            _currencySettings.ActiveExchangeRateProviderSystemName = model.ExchangeRateProvider;
+            _currencySettings.AutoUpdateEnabled = model.AutoUpdateEnabled;
             _settingService.SaveSetting(_currencySettings);
+
             return RedirectToAction("List", "Currency");
         }
 
@@ -186,7 +190,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCurrencies))
                 return AccessDeniedKendoGridJson();
 
-            var currenciesModel = _currencyService.GetAllCurrencies(true).Select(x => x.ToModel()).ToList();
+            var currenciesModel = _currencyService.GetAllCurrencies(true, loadCacheableCopy: false).Select(x => x.ToModel()).ToList();
             foreach (var currency in currenciesModel)
                 currency.IsPrimaryExchangeRateCurrency = currency.Id == _currencySettings.PrimaryExchangeRateCurrencyId;
             foreach (var currency in currenciesModel)
@@ -201,12 +205,32 @@ namespace Nop.Admin.Controllers
         }
 
         [HttpPost]
+        public virtual IActionResult ApplyAllRates(IEnumerable<CurrencyListModel.ExchangeRateModel> rates)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCurrencies))
+                return AccessDeniedView();
+            
+            foreach (var rate in rates)
+            {
+                var currency = _currencyService.GetCurrencyByCode(rate.CurrencyCode, false);
+                if (currency == null)
+                    continue;
+
+                currency.Rate = rate.Rate;
+                currency.UpdatedOnUtc = DateTime.UtcNow;
+                _currencyService.UpdateCurrency(currency);
+            }
+
+            return Json(new { result = true });
+        }
+
+        [HttpPost]
         public virtual IActionResult ApplyRate(string currencyCode, decimal rate)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCurrencies))
                 return AccessDeniedView();
 
-            var currency = _currencyService.GetCurrencyByCode(currencyCode);
+            var currency = _currencyService.GetCurrencyByCode(currencyCode, false);
             if (currency != null)
             {
                 currency.Rate = rate;
@@ -304,7 +328,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCurrencies))
                 return AccessDeniedView();
 
-            var currency = _currencyService.GetCurrencyById(id);
+            var currency = _currencyService.GetCurrencyById(id, false);
             if (currency == null)
                 //No currency found with the specified id
                 return RedirectToAction("List");
@@ -328,7 +352,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCurrencies))
                 return AccessDeniedView();
 
-            var currency = _currencyService.GetCurrencyById(model.Id);
+            var currency = _currencyService.GetCurrencyById(model.Id, false);
             if (currency == null)
                 //No currency found with the specified id
                 return RedirectToAction("List");
@@ -381,7 +405,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCurrencies))
                 return AccessDeniedView();
 
-            var currency = _currencyService.GetCurrencyById(id);
+            var currency = _currencyService.GetCurrencyById(id, false);
             if (currency == null)
                 //No currency found with the specified id
                 return RedirectToAction("List");
@@ -395,7 +419,7 @@ namespace Nop.Admin.Controllers
                     throw new NopException(_localizationService.GetResource("Admin.Configuration.Currencies.CantDeleteExchange"));
 
                 //ensure we have at least one published currency
-                var allCurrencies = _currencyService.GetAllCurrencies();
+                var allCurrencies = _currencyService.GetAllCurrencies(loadCacheableCopy: false);
                 if (allCurrencies.Count == 1 && allCurrencies[0].Id == currency.Id)
                 {
                     ErrorNotification(_localizationService.GetResource("Admin.Configuration.Currencies.PublishedCurrencyRequired"));

@@ -2,14 +2,14 @@
 
 @{
     Layout = "_AdminPopupLayout";
- 
+
     //page title
     ViewBag.Title = T("Admin.Catalog.Products.TierPrices.Edit").Text;
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Product" asp-action="TierPriceEditPopup"
+      asp-route-btnId="@Context.Request.Query["btnId"]"
+      asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Catalog.Products.TierPrices.Edit")
@@ -19,7 +19,8 @@
                 <i class="fa fa-floppy-o"></i>
                 @T("Admin.Common.Save")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_product_tier_price_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdateTierPrice", Model)
-}
+</form>

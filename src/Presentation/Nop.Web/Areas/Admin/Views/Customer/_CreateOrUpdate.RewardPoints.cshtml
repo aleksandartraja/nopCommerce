@@ -9,11 +9,12 @@
 }
 
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_customer_details_reward_points_top", additionalData = Model.Id })
     <div class="panel panel-default">
         <div class="panel-body">
             <div id="customer-rewardpoints-grid"></div>
 
-            <script>
+            <script type="text/javascript">
                 $(document).ready(function() {
                     $("#customer-rewardpoints-grid").kendoGrid({
                         dataSource: {
@@ -85,29 +86,29 @@
         <div class="panel-body">
             <div class="form-group">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.AddRewardPointsValue)
+                    <nop-label asp-for="AddRewardPointsValue" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopEditorFor(model => model.AddRewardPointsValue)
-                    @Html.ValidationMessageFor(model => model.AddRewardPointsValue)
+                    <nop-editor asp-for="AddRewardPointsValue" />
+                    <span asp-validation-for="AddRewardPointsValue"></span>
                 </div>
             </div>
             <div class="form-group">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.AddRewardPointsMessage)
+                    <nop-label asp-for="AddRewardPointsMessage" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopEditorFor(model => model.AddRewardPointsMessage)
-                    @Html.ValidationMessageFor(model => model.AddRewardPointsMessage)
+                    <nop-editor asp-for="AddRewardPointsMessage" />
+                    <span asp-validation-for="AddRewardPointsMessage"></span>
                 </div>
             </div>
             <div class="form-group" @(Model.RewardPointsAvailableStores.SelectionIsNotPossible() ? Html.Raw("style=\"display:none\"") : null)>
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.AddRewardPointsStoreId)
+                    <nop-label asp-for="AddRewardPointsStoreId" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopDropDownListFor(model => model.AddRewardPointsStoreId, Model.RewardPointsAvailableStores)
-                    @Html.ValidationMessageFor(model => model.AddRewardPointsStoreId)
+                    <nop-select asp-for="AddRewardPointsStoreId" asp-items="Model.RewardPointsAvailableStores" />
+                    <span asp-validation-for="AddRewardPointsStoreId"></span>
                 </div>
             </div>
             <div class="form-group">
@@ -119,9 +120,9 @@
         <script type="text/javascript">
             $(document).ready(function () {
                 $('#addRewardPoints').click(function () {
-                    var rewardPointsValue = $("#@Html.FieldIdFor(model => model.AddRewardPointsValue)").val();
-                    var rewardPointsMessage = $("#@Html.FieldIdFor(model => model.AddRewardPointsMessage)").val();
-                    var rewardPointsStoreId = $("#@Html.FieldIdFor(model => model.AddRewardPointsStoreId)").val();
+                    var rewardPointsValue = $("#@Html.IdFor(model => model.AddRewardPointsValue)").val();
+                    var rewardPointsMessage = $("#@Html.IdFor(model => model.AddRewardPointsMessage)").val();
+                    var rewardPointsStoreId = $("#@Html.IdFor(model => model.AddRewardPointsStoreId)").val();
                     $('#addRewardPoints').attr('disabled', true);
 
                     var postData = {
@@ -151,4 +152,5 @@
             });
         </script>
     </div>
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_customer_details_reward_points_bottom", additionalData = Model.Id })
 </div>

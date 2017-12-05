@@ -11,16 +11,17 @@
     Html.SetActiveMenuItemSystemName("Gift cards");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token/>
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.GiftCards")
     </h1>
     <div class="pull-right">
-        <a href="@Url.Action("Create")" class="btn bg-blue">
+        <a asp-action="Create" class="btn bg-blue">
             <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
         </a>
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_gift_card_list_buttons" })
     </div>
 </div>
 
@@ -33,26 +34,26 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.ActivatedId)
+                                    <nop-label asp-for="ActivatedId"/>
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopDropDownListFor(model => model.ActivatedId, Model.ActivatedList)
+                                    <nop-select asp-for="ActivatedId" asp-items="Model.ActivatedList" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.CouponCode)
+                                    <nop-label asp-for="CouponCode"/>
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.CouponCode)
+                                    <nop-editor asp-for="CouponCode"/>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.RecipientName)
+                                    <nop-label asp-for="RecipientName"/>
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.RecipientName)
+                                    <nop-editor asp-for="RecipientName"/>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -72,7 +73,7 @@
                 <div class="panel-body">
                     <div id="giftcards-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function () {
                             $("#giftcards-grid").kendoGrid({
                                 dataSource: {
@@ -157,7 +158,7 @@
                             });
                         });
 
-                        $("#@Html.FieldIdFor(model => model.CouponCode)").keydown(function (event) {
+                        $("#@Html.IdFor(model => model.CouponCode)").keydown(function (event) {
                             if (event.keyCode == 13) {
                                 $("#search-giftcards").click();
                                 return false;
@@ -166,9 +167,9 @@
 
                         function additionalData() {
                             var data = {
-                                ActivatedId: $('#@Html.FieldIdFor(model => model.ActivatedId)').val(),
-                                CouponCode: $('#@Html.FieldIdFor(model => model.CouponCode)').val(),
-                                RecipientName: $('#@Html.FieldIdFor(model => model.RecipientName)').val()
+                                ActivatedId: $('#@Html.IdFor(model => model.ActivatedId)').val(),
+                                CouponCode: $('#@Html.IdFor(model => model.CouponCode)').val(),
+                                RecipientName: $('#@Html.IdFor(model => model.RecipientName)').val()
                             };
                             addAntiForgeryToken(data);
                             return data;

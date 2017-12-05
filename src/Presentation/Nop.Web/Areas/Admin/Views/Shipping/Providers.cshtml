@@ -5,13 +5,14 @@
     Html.SetActiveMenuItemSystemName("Shipping providers");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Configuration.Shipping.Providers.Title")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_shipping_provider_list_buttons" })
     </div>
 </div>
 
@@ -20,9 +21,12 @@
         <div class="panel-group">
             <div class="panel panel-default">
                 <div class="panel-body">
+                    <p>
+                        @T("Admin.Configuration.Shipping.Providers.DownloadMorePlugins")
+                    </p>
                     <div id="shippingproviders-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#shippingproviders-grid").kendoGrid({
                                 dataSource: {
@@ -115,7 +119,7 @@
                                     width: 150,
                                     headerAttributes: { style: "text-align:center" },
                                     attributes: { style: "text-align:center" },
-                                    template: '<a class="btn btn-default" href="ConfigureProvider?systemName=#=SystemName#"><i class="fa fa-cog"></i>@T("Admin.Configuration.Shipping.Providers.Configure")</a>'
+                                    template: '# if(ConfigurationUrl && ConfigurationUrl.length > 0) {# <a class="btn btn-default" href="#=ConfigurationUrl#"><i class="fa fa-cog"></i>@T("Admin.Configuration.Shipping.Providers.Configure")</a>#} #'
                                 }, {
                                     command: {
                                         name: "edit",

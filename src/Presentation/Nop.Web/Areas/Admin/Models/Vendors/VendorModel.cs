@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
-using Nop.Admin.Models.Common;
-using Nop.Admin.Validators.Vendors;
+using Nop.Web.Areas.Admin.Models.Common;
+using Nop.Web.Areas.Admin.Validators.Vendors;
 using Nop.Web.Framework.Localization;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Vendors
+namespace Nop.Web.Areas.Admin.Models.Vendors
 {
     [Validator(typeof(VendorValidator))]
     public partial class VendorModel : BaseNopEntityModel, ILocalizedModel<VendorLocalizedModel>
@@ -28,6 +28,7 @@ namespace Nop.Admin.Models.Vendors
         [NopResourceDisplayName("Admin.Vendors.Fields.Name")]
         public string Name { get; set; }
 
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Admin.Vendors.Fields.Email")]
         public string Email { get; set; }
 
@@ -76,22 +77,16 @@ namespace Nop.Admin.Models.Vendors
         [NopResourceDisplayName("Admin.Vendors.Fields.AssociatedCustomerEmails")]
         public IList<AssociatedCustomerInfo> AssociatedCustomers { get; set; }
 
-
-
         //vendor notes
         [NopResourceDisplayName("Admin.Vendors.VendorNotes.Fields.Note")]
         public string AddVendorNoteMessage { get; set; }
-
-
-
-
+        
         #region Nested classes
 
         public class AssociatedCustomerInfo : BaseNopEntityModel
         {
             public string Email { get; set; }
         }
-
 
         public partial class VendorNote : BaseNopEntityModel
         {
@@ -101,8 +96,8 @@ namespace Nop.Admin.Models.Vendors
             [NopResourceDisplayName("Admin.Vendors.VendorNotes.Fields.CreatedOn")]
             public DateTime CreatedOn { get; set; }
         }
-        #endregion
 
+        #endregion
     }
 
     public partial class VendorLocalizedModel : ILocalizedModelLocal

@@ -16,12 +16,16 @@ namespace Nop.Web.Framework.Mvc.Filters
     /// </summary>
     public class CheckLanguageSeoCodeAttribute : TypeFilterAttribute
     {
+        #region Ctor
+
         /// <summary>
         /// Create instance of the filter attribute
         /// </summary>
         public CheckLanguageSeoCodeAttribute() : base(typeof(CheckLanguageSeoCodeFilter))
         {
         }
+        
+        #endregion
 
         #region Nested filter
 
@@ -62,27 +66,30 @@ namespace Nop.Web.Framework.Mvc.Filters
             /// <param name="context">A context for action filters</param>
             public void OnActionExecuting(ActionExecutingContext context)
             {
-                if (context == null || context.HttpContext == null || context.HttpContext.Request == null)
-                    return;
+                if (context == null)
+                    throw new ArgumentNullException(nameof(context));
 
-                if (!DataSettingsHelper.DatabaseIsInstalled())
+                if (context.HttpContext.Request == null)
                     return;
 
                 //only in GET requests
                 if (!context.HttpContext.Request.Method.Equals(WebRequestMethods.Http.Get, StringComparison.InvariantCultureIgnoreCase))
                     return;
 
+                if (!DataSettingsHelper.DatabaseIsInstalled())
+                    return;
+
                 //whether SEO friendly URLs are enabled
                 if (!_localizationSettings.SeoFriendlyUrlsForLanguagesEnabled)
                     return;
-
-                //ensure that there is route and it is registered and localizable
-                if (context.RouteData == null || context.RouteData.Routers == null || !context.RouteData.Routers.OfType<LocalizedRoute>().Any())
+                                
+                //ensure that this route is registered and localizable (LocalizedRoute in RouteProvider)
+                if (context.RouteData?.Routers == null || !context.RouteData.Routers.ToList().Any(r => r is LocalizedRoute))
                     return;
 
                 //check whether current page URL is already localized URL
                 var pageUrl = _webHelper.GetRawUrl(context.HttpContext.Request);
-                if (pageUrl.IsLocalizedUrl(context.HttpContext.Request.PathBase, true, out Language language))
+                if (pageUrl.IsLocalizedUrl(context.HttpContext.Request.PathBase, true, out Language _))
                     return;
 
                 //not localized yet, so redirect to the page with working language SEO code

@@ -281,7 +281,7 @@ namespace Nop.Services.Catalog
         /// Adjust inventory
         /// </summary>
         /// <param name="product">Product</param>
-        /// <param name="quantityToChange">Quantity to increase or descrease</param>
+        /// <param name="quantityToChange">Quantity to increase or decrease</param>
         /// <param name="attributesXml">Attributes in XML format</param>
         /// <param name="message">Message for the stock quantity history</param>
         void AdjustInventory(Product product, int quantityToChange, string attributesXml = "", string message = "");
@@ -372,6 +372,14 @@ namespace Nop.Services.Catalog
         /// <param name="showHidden">A value indicating whether to show hidden records</param>
         /// <returns>Cross-sell products</returns>
         IList<CrossSellProduct> GetCrossSellProductsByProductId1(int productId1, bool showHidden = false);
+
+        /// <summary>
+        /// Gets cross-sell products by product identifier
+        /// </summary>
+        /// <param name="productIds">The first product identifiers</param>
+        /// <param name="showHidden">A value indicating whether to show hidden records</param>
+        /// <returns>Cross-sell products</returns>
+        IList<CrossSellProduct> GetCrossSellProductsByProductIds(int[] productIds, bool showHidden = false);
 
         /// <summary>
         /// Gets a cross-sell product

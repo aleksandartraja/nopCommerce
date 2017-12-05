@@ -19,6 +19,8 @@ namespace Nop.Services.Customers
     {
         #region Fields
 
+        private const int SALT_KEY_SIZE = 5;
+
         private readonly ICustomerService _customerService;
         private readonly IEncryptionService _encryptionService;
         private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
@@ -83,7 +85,7 @@ namespace Nop.Services.Customers
         #region Utilities
 
         /// <summary>
-        /// Check whether the entered password matches with saved one
+        /// Check whether the entered password matches with a saved one
         /// </summary>
         /// <param name="customerPassword">Customer password</param>
         /// <param name="enteredPassword">The entered password</param>
@@ -106,6 +108,9 @@ namespace Nop.Services.Customers
                     savedPassword = _encryptionService.CreatePasswordHash(enteredPassword, customerPassword.PasswordSalt, _customerSettings.HashedPasswordFormat);
                     break;
             }
+
+            if (customerPassword.Password == null)
+                return false;
 
             return customerPassword.Password.Equals(savedPassword);
         }
@@ -174,7 +179,7 @@ namespace Nop.Services.Customers
         public virtual CustomerRegistrationResult RegisterCustomer(CustomerRegistrationRequest request)
         {
             if (request == null)
-                throw new ArgumentNullException("request");
+                throw new ArgumentNullException(nameof(request));
 
             if (request.Customer == null)
                 throw new ArgumentException("Can't load current customer");
@@ -195,7 +200,7 @@ namespace Nop.Services.Customers
                 result.AddError("Current customer is already registered");
                 return result;
             }
-            if (String.IsNullOrEmpty(request.Email))
+            if (string.IsNullOrEmpty(request.Email))
             {
                 result.AddError(_localizationService.GetResource("Account.Register.Errors.EmailIsNotProvided"));
                 return result;
@@ -205,14 +210,14 @@ namespace Nop.Services.Customers
                 result.AddError(_localizationService.GetResource("Common.WrongEmail"));
                 return result;
             }
-            if (String.IsNullOrWhiteSpace(request.Password))
+            if (string.IsNullOrWhiteSpace(request.Password))
             {
                 result.AddError(_localizationService.GetResource("Account.Register.Errors.PasswordIsNotProvided"));
                 return result;
             }
             if (_customerSettings.UsernamesEnabled)
             {
-                if (String.IsNullOrEmpty(request.Username))
+                if (string.IsNullOrEmpty(request.Username))
                 {
                     result.AddError(_localizationService.GetResource("Account.Register.Errors.UsernameIsNotProvided"));
                     return result;
@@ -254,7 +259,7 @@ namespace Nop.Services.Customers
                     break;
                 case PasswordFormat.Hashed:
                     {
-                        var saltKey = _encryptionService.CreateSaltKey(5);
+                        var saltKey = _encryptionService.CreateSaltKey(SALT_KEY_SIZE);
                         customerPassword.PasswordSalt = saltKey;
                         customerPassword.Password = _encryptionService.CreatePasswordHash(request.Password, saltKey, _customerSettings.HashedPasswordFormat);
                     }
@@ -300,15 +305,15 @@ namespace Nop.Services.Customers
         public virtual ChangePasswordResult ChangePassword(ChangePasswordRequest request)
         {
             if (request == null)
-                throw new ArgumentNullException("request");
+                throw new ArgumentNullException(nameof(request));
 
             var result = new ChangePasswordResult();
-            if (String.IsNullOrWhiteSpace(request.Email))
+            if (string.IsNullOrWhiteSpace(request.Email))
             {
                 result.AddError(_localizationService.GetResource("Account.ChangePassword.Errors.EmailIsNotProvided"));
                 return result;
             }
-            if (String.IsNullOrWhiteSpace(request.NewPassword))
+            if (string.IsNullOrWhiteSpace(request.NewPassword))
             {
                 result.AddError(_localizationService.GetResource("Account.ChangePassword.Errors.PasswordIsNotProvided"));
                 return result;
@@ -362,7 +367,7 @@ namespace Nop.Services.Customers
                     break;
                 case PasswordFormat.Hashed:
                     {
-                        var saltKey = _encryptionService.CreateSaltKey(5);
+                        var saltKey = _encryptionService.CreateSaltKey(SALT_KEY_SIZE);
                         customerPassword.PasswordSalt = saltKey;
                         customerPassword.Password = _encryptionService.CreatePasswordHash(request.NewPassword, saltKey, _customerSettings.HashedPasswordFormat);
                     }
@@ -385,13 +390,13 @@ namespace Nop.Services.Customers
         public virtual void SetEmail(Customer customer, string newEmail, bool requireValidation)
         {
             if (customer == null)
-                throw new ArgumentNullException("customer");
+                throw new ArgumentNullException(nameof(customer));
 
             if (newEmail == null)
                 throw new NopException("Email cannot be null");
 
             newEmail = newEmail.Trim();
-            string oldEmail = customer.Email;
+            var oldEmail = customer.Email;
 
             if (!CommonHelper.IsValidEmail(newEmail))
                 throw new NopException(_localizationService.GetResource("Account.EmailUsernameErrors.NewEmailIsNotValid"));
@@ -419,7 +424,7 @@ namespace Nop.Services.Customers
                 _customerService.UpdateCustomer(customer);
 
                 //update newsletter subscription (if required)
-                if (!String.IsNullOrEmpty(oldEmail) && !oldEmail.Equals(newEmail, StringComparison.InvariantCultureIgnoreCase))
+                if (!string.IsNullOrEmpty(oldEmail) && !oldEmail.Equals(newEmail, StringComparison.InvariantCultureIgnoreCase))
                 {
                     foreach (var store in _storeService.GetAllStores())
                     {
@@ -442,7 +447,7 @@ namespace Nop.Services.Customers
         public virtual void SetUsername(Customer customer, string newUsername)
         {
             if (customer == null)
-                throw new ArgumentNullException("customer");
+                throw new ArgumentNullException(nameof(customer));
 
             if (!_customerSettings.UsernamesEnabled)
                 throw new NopException("Usernames are disabled");

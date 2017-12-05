@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Orders
+namespace Nop.Web.Areas.Admin.Models.Orders
 {
     public partial class CountryReportModel : BaseNopModel
     {
@@ -24,7 +22,6 @@ namespace Nop.Admin.Models.Orders
         [NopResourceDisplayName("Admin.SalesReport.Country.EndDate")]
         [UIHint("DateNullable")]
         public DateTime? EndDate { get; set; }
-
 
         [NopResourceDisplayName("Admin.SalesReport.Country.OrderStatus")]
         public int OrderStatusId { get; set; }

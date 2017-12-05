@@ -5,13 +5,14 @@
     Html.SetActiveMenuItemSystemName("Measures");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Configuration.Shipping.Measures")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_measure_list_buttons" })
     </div>
 </div>
 

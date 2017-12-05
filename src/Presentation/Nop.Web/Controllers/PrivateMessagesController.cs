@@ -32,7 +32,7 @@ namespace Nop.Web.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public PrivateMessagesController(IPrivateMessagesModelFactory privateMessagesModelFactory,
             IForumService forumService,
@@ -57,7 +57,7 @@ namespace Nop.Web.Controllers
         
         #region Methods
 
-        public virtual IActionResult Index(int? page, string tab)
+        public virtual IActionResult Index(int? pageNumber, string tab)
         {
             if (!_forumSettings.AllowPrivateMessages)
             {
@@ -66,13 +66,12 @@ namespace Nop.Web.Controllers
 
             if (_workContext.CurrentCustomer.IsGuest())
             {
-                return new UnauthorizedResult();
+                return Challenge();
             }
 
-            var model = _privateMessagesModelFactory.PreparePrivateMessageIndexModel(page, tab);
+            var model = _privateMessagesModelFactory.PreparePrivateMessageIndexModel(pageNumber, tab);
             return View(model);
         }
-
         
         [HttpPost, FormValueRequired("delete-inbox"), ActionName("InboxUpdate")]
         [PublicAntiForgery]
@@ -85,8 +84,7 @@ namespace Nop.Web.Controllers
                 if (value.Equals("on") && key.StartsWith("pm", StringComparison.InvariantCultureIgnoreCase))
                 {
                     var id = key.Replace("pm", "").Trim();
-                    int privateMessageId;
-                    if (Int32.TryParse(id, out privateMessageId))
+                    if (int.TryParse(id, out int privateMessageId))
                     {
                         var pm = _forumService.GetPrivateMessageById(privateMessageId);
                         if (pm != null)
@@ -114,8 +112,7 @@ namespace Nop.Web.Controllers
                 if (value.Equals("on") && key.StartsWith("pm", StringComparison.InvariantCultureIgnoreCase))
                 {
                     var id = key.Replace("pm", "").Trim();
-                    int privateMessageId;
-                    if (Int32.TryParse(id, out privateMessageId))
+                    if (int.TryParse(id, out int privateMessageId))
                     {
                         var pm = _forumService.GetPrivateMessageById(privateMessageId);
                         if (pm != null)
@@ -144,10 +141,9 @@ namespace Nop.Web.Controllers
                 if (value.Equals("on") && key.StartsWith("si", StringComparison.InvariantCultureIgnoreCase))
                 {
                     var id = key.Replace("si", "").Trim();
-                    int privateMessageId;
-                    if (Int32.TryParse(id, out privateMessageId))
+                    if (int.TryParse(id, out int privateMessageId))
                     {
-                        PrivateMessage pm = _forumService.GetPrivateMessageById(privateMessageId);
+                        var pm = _forumService.GetPrivateMessageById(privateMessageId);
                         if (pm != null)
                         {
                             if (pm.FromCustomerId == _workContext.CurrentCustomer.Id)
@@ -158,7 +154,6 @@ namespace Nop.Web.Controllers
                         }
                     }
                 }
-
             }
             return RedirectToRoute("PrivateMessages", new {tab = "sent"});
         }
@@ -169,7 +164,7 @@ namespace Nop.Web.Controllers
                 return RedirectToRoute("HomePage");
 
             if (_workContext.CurrentCustomer.IsGuest())
-                return new UnauthorizedResult();
+                return Challenge();
 
             var customerTo = _customerService.GetCustomerById(toCustomerId);
             if (customerTo == null || customerTo.IsGuest())
@@ -197,10 +192,10 @@ namespace Nop.Web.Controllers
 
             if (_workContext.CurrentCustomer.IsGuest())
             {
-                return new UnauthorizedResult();
+                return Challenge();
             }
 
-            Customer toCustomer = null;
+            Customer toCustomer;
             var replyToPM = _forumService.GetPrivateMessageById(model.ReplyToMessageId);
             if (replyToPM != null)
             {
@@ -232,7 +227,7 @@ namespace Nop.Web.Controllers
             {
                 try
                 {
-                    string subject = model.Subject;
+                    var subject = model.Subject;
                     if (_forumSettings.PMSubjectMaxLength > 0 && subject.Length > _forumSettings.PMSubjectMaxLength)
                     {
                         subject = subject.Substring(0, _forumSettings.PMSubjectMaxLength);
@@ -285,7 +280,7 @@ namespace Nop.Web.Controllers
 
             if (_workContext.CurrentCustomer.IsGuest())
             {
-                return new UnauthorizedResult();
+                return Challenge();
             }
 
             var pm = _forumService.GetPrivateMessageById(privateMessageId);
@@ -320,7 +315,7 @@ namespace Nop.Web.Controllers
 
             if (_workContext.CurrentCustomer.IsGuest())
             {
-                return new UnauthorizedResult();
+                return Challenge();
             }
 
             var pm = _forumService.GetPrivateMessageById(privateMessageId);

@@ -6,6 +6,9 @@ using Nop.Core.Infrastructure;
 
 namespace Nop.Services.Forums
 {
+    /// <summary>
+    /// Forum extensions
+    /// </summary>
     public static class ForumExtensions
     {
         /// <summary>
@@ -15,9 +18,9 @@ namespace Nop.Services.Forums
         /// <returns>Formatted text</returns>
         public static string FormatPostText(this ForumPost forumPost)
         {
-            string text = forumPost.Text;
+            var text = forumPost.Text;
 
-            if (String.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text))
                 return string.Empty;
 
             switch (EngineContext.Current.Resolve<ForumSettings>().ForumEditor)
@@ -46,24 +49,24 @@ namespace Nop.Services.Forums
         /// <returns>Formatted subject</returns>
         public static string StripTopicSubject(this ForumTopic forumTopic)
         {
-            string subject = forumTopic.Subject;
-            if (String.IsNullOrEmpty(subject))
+            var subject = forumTopic.Subject;
+            if (string.IsNullOrEmpty(subject))
             {
                 return subject;
             }
 
-            int strippedTopicMaxLength = EngineContext.Current.Resolve<ForumSettings>().StrippedTopicMaxLength;
-            if (strippedTopicMaxLength > 0)
+            var strippedTopicMaxLength = EngineContext.Current.Resolve<ForumSettings>().StrippedTopicMaxLength;
+            if (strippedTopicMaxLength <= 0)
+                return subject;
+
+            if (subject.Length <= strippedTopicMaxLength)
+                return subject;
+
+            var index = subject.IndexOf(" ", strippedTopicMaxLength);
+            if (index > 0)
             {
-                if (subject.Length > strippedTopicMaxLength)
-                {
-                    int index = subject.IndexOf(" ", strippedTopicMaxLength);
-                    if (index > 0)
-                    {
-                        subject = subject.Substring(0, index);
-                        subject += "...";
-                    }
-                }
+                subject = subject.Substring(0, index);
+                subject += "...";
             }
 
             return subject;
@@ -76,7 +79,7 @@ namespace Nop.Services.Forums
         /// <returns>Formatted text</returns>
         public static string FormatForumSignatureText(this string text)
         {
-            if (String.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text))
                 return string.Empty;
 
             text = HtmlHelper.FormatText(text, false, true, false, false, false, false);
@@ -90,9 +93,9 @@ namespace Nop.Services.Forums
         /// <returns>Formatted text</returns>
         public static string FormatPrivateMessageText(this PrivateMessage pm)
         {
-            string text = pm.Text;
+            var text = pm.Text;
 
-            if (String.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text))
                 return string.Empty;
 
             text = HtmlHelper.FormatText(text, false, true, false, true, false, false);
@@ -109,7 +112,7 @@ namespace Nop.Services.Forums
         public static ForumTopic GetLastTopic(this Forum forum, IForumService forumService)
         {
             if (forum == null)
-                throw new ArgumentNullException("forum");
+                throw new ArgumentNullException(nameof(forum));
 
             return forumService.GetTopicById(forum.LastTopicId);
         }
@@ -123,7 +126,7 @@ namespace Nop.Services.Forums
         public static ForumPost GetLastPost(this Forum forum, IForumService forumService)
         {
             if (forum == null)
-                throw new ArgumentNullException("forum");
+                throw new ArgumentNullException(nameof(forum));
 
             return forumService.GetPostById(forum.LastPostId);
         }
@@ -137,7 +140,7 @@ namespace Nop.Services.Forums
         public static ForumPost GetFirstPost(this ForumTopic forumTopic, IForumService forumService)
         {
             if (forumTopic == null)
-                throw new ArgumentNullException("forumTopic");
+                throw new ArgumentNullException(nameof(forumTopic));
 
             var forumPosts = forumService.GetAllPosts(forumTopic.Id, 0, string.Empty, 0, 1);
             if (forumPosts.Any())
@@ -155,7 +158,7 @@ namespace Nop.Services.Forums
         public static ForumPost GetLastPost(this ForumTopic forumTopic, IForumService forumService)
         {
             if (forumTopic == null)
-                throw new ArgumentNullException("forumTopic");
+                throw new ArgumentNullException(nameof(forumTopic));
 
             return forumService.GetPostById(forumTopic.LastPostId);
         }

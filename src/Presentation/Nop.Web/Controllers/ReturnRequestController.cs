@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Localization;
@@ -42,7 +39,7 @@ namespace Nop.Web.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public ReturnRequestController(IReturnRequestModelFactory returnRequestModelFactory,
             IReturnRequestService returnRequestService,
@@ -81,7 +78,7 @@ namespace Nop.Web.Controllers
         public virtual IActionResult CustomerReturnRequests()
         {
             if (!_workContext.CurrentCustomer.IsRegistered())
-                return new UnauthorizedResult();
+                return Challenge();
 
             var model = _returnRequestModelFactory.PrepareCustomerReturnRequestsModel();
             return View(model);
@@ -92,7 +89,7 @@ namespace Nop.Web.Controllers
         {
             var order = _orderService.GetOrderById(orderId);
             if (order == null || order.Deleted || _workContext.CurrentCustomer.Id != order.CustomerId)
-                return new UnauthorizedResult();
+                return Challenge();
 
             if (!_orderProcessingService.IsReturnRequestAllowed(order))
                 return RedirectToRoute("HomePage");
@@ -104,16 +101,16 @@ namespace Nop.Web.Controllers
 
         [HttpPost, ActionName("ReturnRequest")]
         [PublicAntiForgery]
-        public virtual IActionResult ReturnRequestSubmit(int orderId, SubmitReturnRequestModel model, IFormCollection form)
+        public virtual IActionResult ReturnRequestSubmit(int orderId, SubmitReturnRequestModel model)
         {
             var order = _orderService.GetOrderById(orderId);
             if (order == null || order.Deleted || _workContext.CurrentCustomer.Id != order.CustomerId)
-                return new UnauthorizedResult();
+                return Challenge();
 
             if (!_orderProcessingService.IsReturnRequestAllowed(order))
                 return RedirectToRoute("HomePage");
 
-            int count = 0;
+            var count = 0;
 
             var downloadId = 0;
             if (_orderSettings.ReturnRequestsAllowFiles)
@@ -124,12 +121,13 @@ namespace Nop.Web.Controllers
             }
 
             //returnable products
+            var form = model.Form;
             var orderItems = order.OrderItems.Where(oi => !oi.Product.NotReturnable);
             foreach (var orderItem in orderItems)
             {
-                int quantity = 0; //parse quantity
-                foreach (string formKey in form.Keys)
-                    if (formKey.Equals(string.Format("quantity{0}", orderItem.Id), StringComparison.InvariantCultureIgnoreCase))
+                var quantity = 0; //parse quantity
+                foreach (var formKey in form.Keys)
+                    if (formKey.Equals($"quantity{orderItem.Id}", StringComparison.InvariantCultureIgnoreCase))
                     {
                         int.TryParse(form[formKey], out quantity);
                         break;
@@ -181,7 +179,7 @@ namespace Nop.Web.Controllers
         [HttpPost]
         public virtual IActionResult UploadFileReturnRequest()
         {
-            if (!_orderSettings.ReturnRequestsEnabled && !_orderSettings.ReturnRequestsAllowFiles)
+            if (!_orderSettings.ReturnRequestsEnabled || !_orderSettings.ReturnRequestsAllowFiles)
             {
                 return Json(new
                 {
@@ -205,7 +203,7 @@ namespace Nop.Web.Controllers
 
             var qqFileNameParameter = "qqfilename";
             var fileName = httpPostedFile.FileName;
-            if (String.IsNullOrEmpty(fileName) && Request.Form.ContainsKey(qqFileNameParameter))
+            if (string.IsNullOrEmpty(fileName) && Request.Form.ContainsKey(qqFileNameParameter))
                 fileName = Request.Form[qqFileNameParameter].ToString();
             //remove path (passed in IE)
             fileName = Path.GetFileName(fileName);
@@ -213,10 +211,10 @@ namespace Nop.Web.Controllers
             var contentType = httpPostedFile.ContentType;
 
             var fileExtension = Path.GetExtension(fileName);
-            if (!String.IsNullOrEmpty(fileExtension))
+            if (!string.IsNullOrEmpty(fileExtension))
                 fileExtension = fileExtension.ToLowerInvariant();
 
-            int validationFileMaximumSize = _orderSettings.ReturnRequestsFileMaximumSize;
+            var validationFileMaximumSize = _orderSettings.ReturnRequestsFileMaximumSize;
             if (validationFileMaximumSize > 0)
             {
                 //compare in bytes

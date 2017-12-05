@@ -13,12 +13,12 @@
     if (seoSettings.CanonicalUrlsEnabled)
     {
         var productsByTagUrl = Url.RouteUrl("ProductsByTag", new { productTagId = Model.Id, SeName = Model.TagSeName }, this.Url.ActionContext.HttpContext.Request.Scheme);
-        Html.AddCanonicalUrlParts(productsByTagUrl);
+        Html.AddCanonicalUrlParts(productsByTagUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
     }
 }
 <div class="page product-tag-page">
     <div class="page-title">
-        <h1>@String.Format(T("Products.Tags.ProductsTaggedWith").Text, Model.TagName)</h1>
+        <h1>@string.Format(T("Products.Tags.ProductsTaggedWith").Text, Model.TagName)</h1>
     </div>
     <div class="page-body">
         @await Component.InvokeAsync("Widget", new { widgetZone = "productsbytag_top", additionalData = Model.Id })

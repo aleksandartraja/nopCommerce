@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Routing;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
@@ -37,6 +36,8 @@ namespace Nop.Web.Factories
         private readonly ICurrencyService _currencyService;
         private readonly IPriceFormatter _priceFormatter;
         private readonly IOrderProcessingService _orderProcessingService;
+        private readonly IProductAttributeParser _productAttributeParser;
+        private readonly IProductService _productService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly ICountryService _countryService;
         private readonly IStateProvinceService _stateProvinceService;
@@ -46,6 +47,7 @@ namespace Nop.Web.Factories
         private readonly IRewardPointService _rewardPointService;
         private readonly IWebHelper _webHelper;
 
+        private readonly CommonSettings _commonSettings;
         private readonly OrderSettings _orderSettings;
         private readonly RewardPointsSettings _rewardPointsSettings;
         private readonly PaymentSettings _paymentSettings;
@@ -65,6 +67,8 @@ namespace Nop.Web.Factories
             ICurrencyService currencyService, 
             IPriceFormatter priceFormatter, 
             IOrderProcessingService orderProcessingService,
+            IProductAttributeParser productAttributeParser,
+            IProductService productService,
             IGenericAttributeService genericAttributeService,
             ICountryService countryService,
             IStateProvinceService stateProvinceService,
@@ -73,6 +77,7 @@ namespace Nop.Web.Factories
             IOrderTotalCalculationService orderTotalCalculationService,
             IRewardPointService rewardPointService,
             IWebHelper webHelper,
+            CommonSettings commonSettings,
             OrderSettings orderSettings, 
             RewardPointsSettings rewardPointsSettings,
             PaymentSettings paymentSettings,
@@ -88,6 +93,8 @@ namespace Nop.Web.Factories
             this._currencyService = currencyService;
             this._priceFormatter = priceFormatter;
             this._orderProcessingService = orderProcessingService;
+            this._productAttributeParser = productAttributeParser;
+            this._productService = productService;
             this._genericAttributeService = genericAttributeService;
             this._countryService = countryService;
             this._stateProvinceService = stateProvinceService;
@@ -97,6 +104,7 @@ namespace Nop.Web.Factories
             this._rewardPointService = rewardPointService;
             this._webHelper = webHelper;
 
+            this._commonSettings = commonSettings;
             this._orderSettings = orderSettings;
             this._rewardPointsSettings = rewardPointsSettings;
             this._paymentSettings = paymentSettings;
@@ -121,9 +129,12 @@ namespace Nop.Web.Factories
             bool prePopulateNewAddressWithCustomerFields = false,
             string overrideAttributesXml = "")
         {
-            var model = new CheckoutBillingAddressModel();
-            model.ShipToSameAddressAllowed = _shippingSettings.ShipToSameAddress && cart.RequiresShipping();
-            model.ShipToSameAddress = true;
+            var model = new CheckoutBillingAddressModel
+            {
+                ShipToSameAddressAllowed = _shippingSettings.ShipToSameAddress && cart.RequiresShipping(_productService, _productAttributeParser),
+                //allow customers to enter (choose) a shipping address if "Disable Billing address step" setting is enabled
+                ShipToSameAddress = !_orderSettings.DisableBillingAddressCheckoutStep
+            };
 
             //existing addresses
             var addresses = _workContext.CurrentCustomer.Addresses
@@ -146,8 +157,8 @@ namespace Nop.Web.Factories
             }
 
             //new address
-            model.NewAddress.CountryId = selectedCountryId;
-            _addressModelFactory.PrepareAddressModel(model.NewAddress,
+            model.BillingNewAddress.CountryId = selectedCountryId;
+            _addressModelFactory.PrepareAddressModel(model.BillingNewAddress,
                 address: null,
                 excludeProperties: false,
                 addressSettings: _addressSettings,
@@ -168,10 +179,12 @@ namespace Nop.Web.Factories
         public virtual CheckoutShippingAddressModel PrepareShippingAddressModel(int? selectedCountryId = null,
             bool prePopulateNewAddressWithCustomerFields = false, string overrideAttributesXml = "")
         {
-            var model = new CheckoutShippingAddressModel();
+            var model = new CheckoutShippingAddressModel
+            {
 
-            //allow pickup in store?
-            model.AllowPickUpInStore = _shippingSettings.AllowPickUpInStore;
+                //allow pickup in store?
+                AllowPickUpInStore = _shippingSettings.AllowPickUpInStore
+            };
             if (model.AllowPickUpInStore)
             {
                 model.DisplayPickupPointsOnMap = _shippingSettings.DisplayPickupPointsOnMap;
@@ -179,31 +192,33 @@ namespace Nop.Web.Factories
                 var pickupPointProviders = _shippingService.LoadActivePickupPointProviders(_workContext.CurrentCustomer, _storeContext.CurrentStore.Id);
                 if (pickupPointProviders.Any())
                 {
+                    var languageId = _workContext.WorkingLanguage.Id;
                     var pickupPointsResponse = _shippingService.GetPickupPoints(_workContext.CurrentCustomer.BillingAddress,
                         _workContext.CurrentCustomer, storeId: _storeContext.CurrentStore.Id);
                     if (pickupPointsResponse.Success)
-                        model.PickupPoints = pickupPointsResponse.PickupPoints.Select(x =>
+                        model.PickupPoints = pickupPointsResponse.PickupPoints.Select(point =>
                         {
-                            var country = _countryService.GetCountryByTwoLetterIsoCode(x.CountryCode);
-                            var state = _stateProvinceService.GetStateProvinceByAbbreviation(x.StateAbbreviation);
+                            var country = _countryService.GetCountryByTwoLetterIsoCode(point.CountryCode);
+                            var state = _stateProvinceService.GetStateProvinceByAbbreviation(point.StateAbbreviation, country?.Id);
+
                             var pickupPointModel = new CheckoutPickupPointModel
                             {
-                                Id = x.Id,
-                                Name = x.Name,
-                                Description = x.Description,
-                                ProviderSystemName = x.ProviderSystemName,
-                                Address = x.Address,
-                                City = x.City,
-                                StateName = state != null ? state.Name : string.Empty,
-                                CountryName = country != null ? country.Name : string.Empty,
-                                ZipPostalCode = x.ZipPostalCode,
-                                Latitude = x.Latitude,
-                                Longitude = x.Longitude,
-                                OpeningHours = x.OpeningHours
+                                Id = point.Id,
+                                Name = point.Name,
+                                Description = point.Description,
+                                ProviderSystemName = point.ProviderSystemName,
+                                Address = point.Address,
+                                City = point.City,
+                                StateName = state?.GetLocalized(x => x.Name, languageId) ?? string.Empty,
+                                CountryName = country?.GetLocalized(x => x.Name, languageId) ?? string.Empty,
+                                ZipPostalCode = point.ZipPostalCode,
+                                Latitude = point.Latitude,
+                                Longitude = point.Longitude,
+                                OpeningHours = point.OpeningHours
                             };
-                            if (x.PickupFee > 0)
+                            if (point.PickupFee > 0)
                             {
-                                var amount = _taxService.GetShippingPrice(x.PickupFee, _workContext.CurrentCustomer);
+                                var amount = _taxService.GetShippingPrice(point.PickupFee, _workContext.CurrentCustomer);
                                 amount = _currencyService.ConvertFromPrimaryStoreCurrency(amount, _workContext.WorkingCurrency);
                                 pickupPointModel.PickupFee = _priceFormatter.FormatShippingPrice(amount, true);
                             }
@@ -250,8 +265,8 @@ namespace Nop.Web.Factories
             }
 
             //new address
-            model.NewAddress.CountryId = selectedCountryId;
-            _addressModelFactory.PrepareAddressModel(model.NewAddress,
+            model.ShippingNewAddress.CountryId = selectedCountryId;
+            _addressModelFactory.PrepareAddressModel(model.ShippingNewAddress,
                 address: null,
                 excludeProperties: false,
                 addressSettings: _addressSettings,
@@ -294,12 +309,10 @@ namespace Nop.Web.Factories
                                       };
 
                     //adjust rate
-                    List<DiscountForCaching> appliedDiscounts;
-                    var shippingTotal = _orderTotalCalculationService.AdjustShippingRate(
-                        shippingOption.Rate, cart, out appliedDiscounts);
+                    var shippingTotal = _orderTotalCalculationService.AdjustShippingRate(shippingOption.Rate, cart, out List<DiscountForCaching> _);
 
-                    decimal rateBase = _taxService.GetShippingPrice(shippingTotal, _workContext.CurrentCustomer);
-                    decimal rate = _currencyService.ConvertFromPrimaryStoreCurrency(rateBase, _workContext.WorkingCurrency);
+                    var rateBase = _taxService.GetShippingPrice(shippingTotal, _workContext.CurrentCustomer);
+                    var rate = _currencyService.ConvertFromPrimaryStoreCurrency(rateBase, _workContext.WorkingCurrency);
                     soModel.Fee = _priceFormatter.FormatShippingPrice(rate, true);
 
                     model.ShippingMethods.Add(soModel);
@@ -312,9 +325,9 @@ namespace Nop.Web.Factories
                 {
                     var shippingOptionToSelect = model.ShippingMethods.ToList()
                         .Find( so =>
-                            !String.IsNullOrEmpty(so.Name) &&
+                            !string.IsNullOrEmpty(so.Name) &&
                             so.Name.Equals(selectedShippingOption.Name, StringComparison.InvariantCultureIgnoreCase) &&
-                            !String.IsNullOrEmpty(so.ShippingRateComputationMethodSystemName) &&
+                            !string.IsNullOrEmpty(so.ShippingRateComputationMethodSystemName) &&
                             so.ShippingRateComputationMethodSystemName.Equals(selectedShippingOption.ShippingRateComputationMethodSystemName, StringComparison.InvariantCultureIgnoreCase));
                     if (shippingOptionToSelect != null)
                     {
@@ -359,9 +372,9 @@ namespace Nop.Web.Factories
             //reward points
             if (_rewardPointsSettings.Enabled && !cart.IsRecurring())
             {
-                int rewardPointsBalance = _rewardPointService.GetRewardPointsBalance(_workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
-                decimal rewardPointsAmountBase = _orderTotalCalculationService.ConvertRewardPointsToAmount(rewardPointsBalance);
-                decimal rewardPointsAmount = _currencyService.ConvertFromPrimaryStoreCurrency(rewardPointsAmountBase, _workContext.WorkingCurrency);
+                var rewardPointsBalance = _rewardPointService.GetRewardPointsBalance(_workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
+                var rewardPointsAmountBase = _orderTotalCalculationService.ConvertRewardPointsToAmount(rewardPointsBalance);
+                var rewardPointsAmount = _currencyService.ConvertFromPrimaryStoreCurrency(rewardPointsAmountBase, _workContext.WorkingCurrency);
                 if (rewardPointsAmount > decimal.Zero && 
                     _orderTotalCalculationService.CheckMinimumRewardPointsToUseRequirement(rewardPointsBalance))
                 {
@@ -393,9 +406,9 @@ namespace Nop.Web.Factories
                     LogoUrl = pm.PluginDescriptor.GetLogoUrl(_webHelper)
                 };
                 //payment method additional fee
-                decimal paymentMethodAdditionalFee = _paymentService.GetAdditionalHandlingFee(cart, pm.PluginDescriptor.SystemName);
-                decimal rateBase = _taxService.GetPaymentMethodAdditionalFee(paymentMethodAdditionalFee, _workContext.CurrentCustomer);
-                decimal rate = _currencyService.ConvertFromPrimaryStoreCurrency(rateBase, _workContext.WorkingCurrency);
+                var paymentMethodAdditionalFee = _paymentService.GetAdditionalHandlingFee(cart, pm.PluginDescriptor.SystemName);
+                var rateBase = _taxService.GetPaymentMethodAdditionalFee(paymentMethodAdditionalFee, _workContext.CurrentCustomer);
+                var rate = _currencyService.ConvertFromPrimaryStoreCurrency(rateBase, _workContext.WorkingCurrency);
                 if (rate > decimal.Zero)
                     pmModel.Fee = _priceFormatter.FormatPaymentMethodAdditionalFee(rate, true);
 
@@ -406,7 +419,7 @@ namespace Nop.Web.Factories
             var selectedPaymentMethodSystemName = _workContext.CurrentCustomer.GetAttribute<string>(
                 SystemCustomerAttributeNames.SelectedPaymentMethod,
                 _genericAttributeService, _storeContext.CurrentStore.Id);
-            if (!String.IsNullOrEmpty(selectedPaymentMethodSystemName))
+            if (!string.IsNullOrEmpty(selectedPaymentMethodSystemName))
             {
                 var paymentMethodToSelect = model.PaymentMethods.ToList()
                     .Find(pm => pm.PaymentMethodSystemName.Equals(selectedPaymentMethodSystemName, StringComparison.InvariantCultureIgnoreCase));
@@ -431,12 +444,11 @@ namespace Nop.Web.Factories
         /// <returns>Payment info model</returns>
         public virtual CheckoutPaymentInfoModel PreparePaymentInfoModel(IPaymentMethod paymentMethod)
         {
-            paymentMethod.GetPaymentInfoRoute(out string viewComponentName, out object viewComponentArguments);
+            paymentMethod.GetPublicViewComponent(out string viewComponentName);
 
             var model = new CheckoutPaymentInfoModel
             {
                 PaymentViewComponentName = viewComponentName,
-                PaymentViewComponentArguments = viewComponentArguments,
                 DisplayOrderTotals = _orderSettings.OnePageCheckoutDisplayOrderTotalsOnPaymentInfoTab
             };
             
@@ -450,14 +462,17 @@ namespace Nop.Web.Factories
         /// <returns>Confirm order model</returns>
         public virtual CheckoutConfirmModel PrepareConfirmOrderModel(IList<ShoppingCartItem> cart)
         {
-            var model = new CheckoutConfirmModel();
-            //terms of service
-            model.TermsOfServiceOnOrderConfirmPage = _orderSettings.TermsOfServiceOnOrderConfirmPage;
+            var model = new CheckoutConfirmModel
+            {
+                //terms of service
+                TermsOfServiceOnOrderConfirmPage = _orderSettings.TermsOfServiceOnOrderConfirmPage,
+                TermsOfServicePopup = _commonSettings.PopupForTermsOfServiceLinks
+            };
             //min order amount validation
-            bool minOrderTotalAmountOk = _orderProcessingService.ValidateMinOrderTotalAmount(cart);
+            var minOrderTotalAmountOk = _orderProcessingService.ValidateMinOrderTotalAmount(cart);
             if (!minOrderTotalAmountOk)
             {
-                decimal minOrderTotalAmount = _currencyService.ConvertFromPrimaryStoreCurrency(_orderSettings.MinOrderTotalAmount, _workContext.WorkingCurrency);
+                var minOrderTotalAmount = _currencyService.ConvertFromPrimaryStoreCurrency(_orderSettings.MinOrderTotalAmount, _workContext.WorkingCurrency);
                 model.MinOrderTotalWarning = string.Format(_localizationService.GetResource("Checkout.MinOrderTotalAmount"), _priceFormatter.FormatPrice(minOrderTotalAmount, true, false));
             }
             return model;
@@ -471,7 +486,7 @@ namespace Nop.Web.Factories
         public virtual CheckoutCompletedModel PrepareCheckoutCompletedModel(Order order)
         {
             if (order ==null)
-                throw new ArgumentNullException("order");
+                throw new ArgumentNullException(nameof(order));
 
             var model = new CheckoutCompletedModel
             {
@@ -502,11 +517,11 @@ namespace Nop.Web.Factories
         public virtual OnePageCheckoutModel PrepareOnePageCheckoutModel(IList<ShoppingCartItem> cart)
         {
             if (cart == null)
-                throw  new ArgumentNullException("cart");
+                throw  new ArgumentNullException(nameof(cart));
 
             var model = new OnePageCheckoutModel
             {
-                ShippingRequired = cart.RequiresShipping(),
+                ShippingRequired = cart.RequiresShipping(_productService, _productAttributeParser),
                 DisableBillingAddressCheckoutStep = _orderSettings.DisableBillingAddressCheckoutStep,
                 BillingAddress = PrepareBillingAddressModel(cart, prePopulateNewAddressWithCustomerFields: true)
             };

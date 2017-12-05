@@ -5,13 +5,14 @@
     Html.SetActiveMenuItemSystemName("External authentication methods");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token/>
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Configuration.ExternalAuthenticationMethods")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_external_authentication_list_buttons" })
     </div>
 </div>
 
@@ -20,10 +21,9 @@
         <div class="panel-group">
             <div class="panel panel-default">
                 <div class="panel-body">
-
                     <div id="authenticationmethods-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#authenticationmethods-grid").kendoGrid({
                                 dataSource: {
@@ -110,7 +110,7 @@
                                     width: 150,
                                     headerAttributes: { style: "text-align:center" },
                                     attributes: { style: "text-align:center" },
-                                    template: '<a class="btn btn-default" href="ConfigureMethod?systemName=#=SystemName#"><i class="fa fa-cog"></i>@T("Admin.Configuration.ExternalAuthenticationMethods.Configure")</a>'
+                                    template: '# if(ConfigurationUrl && ConfigurationUrl.length > 0) {# <a class="btn btn-default" href="#=ConfigurationUrl#"><i class="fa fa-cog"></i>@T("Admin.Configuration.ExternalAuthenticationMethods.Configure")</a>#} #'
                                 }, {
                                     command: {
                                         name: "edit",

@@ -4,9 +4,9 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Services.Media;
-using Nop.Web.Framework.Security;
+using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class PictureController : BaseAdminController
     {
@@ -40,7 +40,7 @@ namespace Nop.Admin.Controllers
 
             var qqFileNameParameter = "qqfilename";
             var fileName = httpPostedFile.FileName;
-            if (String.IsNullOrEmpty(fileName) && Request.Form.ContainsKey(qqFileNameParameter))
+            if (string.IsNullOrEmpty(fileName) && Request.Form.ContainsKey(qqFileNameParameter))
                 fileName = Request.Form[qqFileNameParameter].ToString();
             //remove path (passed in IE)
             fileName = Path.GetFileName(fileName);
@@ -48,13 +48,13 @@ namespace Nop.Admin.Controllers
             var contentType = httpPostedFile.ContentType;
 
             var fileExtension = Path.GetExtension(fileName);
-            if (!String.IsNullOrEmpty(fileExtension))
+            if (!string.IsNullOrEmpty(fileExtension))
                 fileExtension = fileExtension.ToLowerInvariant();
 
             //contentType is not always available 
             //that's why we manually update it here
             //http://www.sfsu.edu/training/mimetype.htm
-            if (String.IsNullOrEmpty(contentType))
+            if (string.IsNullOrEmpty(contentType))
             {
                 switch (fileExtension)
                 {

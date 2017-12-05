@@ -1,14 +1,8 @@
 ﻿@model ProductModel
 @inject IEventPublisher eventPublisher
 
-@Html.ValidationSummary(false)
-@Html.HiddenFor(model => model.Id)
-
-<script>
-    $(document).ready(function () {
-        bindBootstrapTabSelectEvent('product-edit');
-    });
-</script>
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
 
 <div class="content">
     <div class="form-horizontal">
@@ -26,32 +20,19 @@
                 }
             </div>
         </div>
-        <div id="product-edit" class="nav-tabs-custom">
-            <ul class="nav nav-tabs">
-                @Html.RenderBootstrapTabHeader("tab-info", @T("Admin.Catalog.Products.Info"), true)
-                @Html.RenderBootstrapTabHeader("tab-seo", @T("Admin.Common.SEO"), customCssClass:  Model.ProductEditorSettingsModel.Seo ? "" : "advanced-setting")
-                @Html.RenderBootstrapTabHeader("tab-pictures", @T("Admin.Catalog.Products.Pictures"))
-                @Html.RenderBootstrapTabHeader("tab-product-attributes", @T("Admin.Catalog.Products.ProductAttributes"), customCssClass: Model.ProductEditorSettingsModel.ProductAttributes ? "" : "advanced-setting")
-                @Html.RenderBootstrapTabHeader("tab-specification-attributes", @T("Admin.Catalog.Products.SpecificationAttributes"), customCssClass: Model.ProductEditorSettingsModel.SpecificationAttributes ? "" : "advanced-setting")
-                @if (Model.Id > 0)
-                {
-                    @Html.RenderBootstrapTabHeader("tab-purchased-with-orders", @T("Admin.Catalog.Products.PurchasedWithOrders"), customCssClass: Model.ProductEditorSettingsModel.PurchasedWithOrders ? "" : "advanced-setting")
-                    @Html.RenderBootstrapTabHeader("tab-stock-quantity-history", @T("Admin.Catalog.Products.StockQuantityHistory"), customCssClass: Model.ProductEditorSettingsModel.StockQuantityHistory ? "" : "advanced-setting")
-                }
-            </ul>
-            <div class="tab-content">
-                @Html.RenderBootstrapTabContent("tab-info", await Html.PartialAsync("_CreateOrUpdate.Info", Model), true)
-                @Html.RenderBootstrapTabContent("tab-seo", await Html.PartialAsync("_CreateOrUpdate.SEO", Model))
-                @Html.RenderBootstrapTabContent("tab-pictures", await Html.PartialAsync("_CreateOrUpdate.Pictures", Model))
-                @Html.RenderBootstrapTabContent("tab-specification-attributes", await Html.PartialAsync("_CreateOrUpdate.SpecificationAttributes", Model))
-                @Html.RenderBootstrapTabContent("tab-product-attributes", await Html.PartialAsync("_CreateOrUpdate.ProductAttributes", Model))
-                @if (Model.Id > 0)
-                {
-                    @Html.RenderBootstrapTabContent("tab-purchased-with-orders", await Html.PartialAsync("_CreateOrUpdate.PurchasedWithOrders", Model))
-                    @Html.RenderBootstrapTabContent("tab-stock-quantity-history", await Html.PartialAsync("_CreateOrUpdate._StockQuantityHistory", Model))
-                }
-            </div>
-        </div>
+
+        <nop-tabs id="product-edit">
+            <nop-tab asp-name="tab-info" asp-title="@T("Admin.Catalog.Products.Info")" asp-default="true">@await Html.PartialAsync("_CreateOrUpdate.Info", Model)</nop-tab>
+            <nop-tab asp-name="tab-seo" asp-title="@T("Admin.Common.SEO")" class="@(Model.ProductEditorSettingsModel.Seo ? "" : "advanced-setting")">@await Html.PartialAsync("_CreateOrUpdate.SEO", Model)</nop-tab>
+            <nop-tab asp-name="tab-pictures" asp-title="@T("Admin.Catalog.Products.Pictures")">@await Html.PartialAsync("_CreateOrUpdate.Pictures", Model)</nop-tab>
+            <nop-tab asp-name="tab-product-attributes" asp-title="@T("Admin.Catalog.Products.ProductAttributes")" class="@(Model.ProductEditorSettingsModel.ProductAttributes ? "" : "advanced-setting")">@await Html.PartialAsync("_CreateOrUpdate.ProductAttributes", Model)</nop-tab>
+            <nop-tab asp-name="tab-specification-attributes" asp-title="@T("Admin.Catalog.Attributes.SpecificationAttributes")" class="@(Model.ProductEditorSettingsModel.SpecificationAttributes ? "" : "advanced-setting")">@await Html.PartialAsync("_CreateOrUpdate.SpecificationAttributes", Model)</nop-tab>
+            @if (Model.Id > 0)
+            {
+                <nop-tab asp-name="tab-purchased-with-orders" asp-title="@T("Admin.Catalog.Products.PurchasedWithOrders")" class="@(Model.ProductEditorSettingsModel.PurchasedWithOrders ? "" : "advanced-setting")">@await Html.PartialAsync("_CreateOrUpdate.PurchasedWithOrders", Model)</nop-tab>
+                <nop-tab asp-name="tab-stock-quantity-history" asp-title="@T("Admin.Catalog.Products.StockQuantityHistory")" class="@(Model.ProductEditorSettingsModel.StockQuantityHistory ? "" : "advanced-setting")">@await Html.PartialAsync("_CreateOrUpdate._StockQuantityHistory", Model)</nop-tab>
+            }
+        </nop-tabs>
     </div>
 </div>
 
@@ -64,6 +45,3 @@
         @eventBlock
     }
 }
-
-@*save selected tab name*@
-<input type="hidden" id="selected-tab-name" name="selected-tab-name" value="@(Html.GetSelectedTabName())">

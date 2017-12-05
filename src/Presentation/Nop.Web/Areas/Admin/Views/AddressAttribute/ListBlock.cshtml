@@ -8,7 +8,7 @@
         </p>
         <div id="addressattributes-grid"></div>
 
-        <script>
+        <script type="text/javascript">
                 $(document).ready(function () {
                     $("#addressattributes-grid").kendoGrid({
                         dataSource: {
@@ -79,7 +79,7 @@
         </script>
     </div>
     <div class="panel-footer">
-        <a href="@Url.Action("Create", "AddressAttribute")" class="btn btn-primary">
+        <a asp-action="Create" asp-controller="AddressAttribute" class="btn btn-primary">
             <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
         </a>

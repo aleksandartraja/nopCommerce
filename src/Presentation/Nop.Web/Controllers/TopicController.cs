@@ -4,6 +4,7 @@ using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Services.Topics;
 using Nop.Web.Factories;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Security;
 
@@ -22,7 +23,7 @@ namespace Nop.Web.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public TopicController(ITopicModelFactory topicModelFactory,
             ITopicService topicService,
@@ -52,7 +53,7 @@ namespace Nop.Web.Controllers
 
             //display "edit" (manage) link
             if (_permissionService.Authorize(StandardPermissionProvider.AccessAdminPanel) && _permissionService.Authorize(StandardPermissionProvider.ManageTopics))
-                DisplayEditLink(Url.Action("Edit", "Topic", new { id = model.Id, area = "Admin" }));
+                DisplayEditLink(Url.Action("Edit", "Topic", new { id = model.Id, area = AreaNames.Admin }));
 
             //template
             var templateViewPath = _topicModelFactory.PrepareTemplateViewPath(model.TopicTemplateId);
@@ -71,7 +72,6 @@ namespace Nop.Web.Controllers
             var templateViewPath = _topicModelFactory.PrepareTemplateViewPath(model.TopicTemplateId);
             return PartialView(templateViewPath, model);
         }
-
 
         [HttpPost]
         [PublicAntiForgery]

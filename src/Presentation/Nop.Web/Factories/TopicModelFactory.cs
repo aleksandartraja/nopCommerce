@@ -31,7 +31,7 @@ namespace Nop.Web.Factories
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public TopicModelFactory(ITopicService topicService,
             IWorkContext workContext,
@@ -62,7 +62,7 @@ namespace Nop.Web.Factories
         protected virtual TopicModel PrepareTopicModel(Topic topic)
         {
             if (topic == null)
-                throw new ArgumentNullException("topic");
+                throw new ArgumentNullException(nameof(topic));
 
             var model = new TopicModel
             {

@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Factories;
-using System.Threading.Tasks;
 using Nop.Core.Domain.Blogs;
+using Nop.Web.Factories;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class BlogTagsViewComponent : ViewComponent
+    public class BlogTagsViewComponent : NopViewComponent
     {
         private readonly IBlogModelFactory _blogModelFactory;
         private readonly BlogSettings _blogSettings;
@@ -16,7 +16,7 @@ namespace Nop.Web.Components
             this._blogSettings = blogSettings;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int currentCategoryId, int currentProductId)
+        public IViewComponentResult Invoke(int currentCategoryId, int currentProductId)
         {
             if (!_blogSettings.Enabled)
                 return Content("");

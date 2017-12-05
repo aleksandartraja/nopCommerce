@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Countries");
 }
 
-@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "country-form" }))
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Country" asp-action="Edit" method="post" id="country-form">
     <div class="content-header clearfix">
         <h1 class="pull-left">
-            @T("Admin.Configuration.Countries.EditCountryDetails") - @Model.Name 
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.Configuration.Countries.BackToList").Text, "List")</small>
+            @T("Admin.Configuration.Countries.EditCountryDetails") - @Model.Name
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.Configuration.Countries.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -28,8 +29,9 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Common.Delete")
             </span>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_country_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
-@Html.DeleteConfirmation("country-delete")
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="country-delete" />

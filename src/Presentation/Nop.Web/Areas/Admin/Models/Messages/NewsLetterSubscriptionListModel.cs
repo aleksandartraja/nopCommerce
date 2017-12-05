@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Messages
+namespace Nop.Web.Areas.Admin.Models.Messages
 {
     public partial class NewsLetterSubscriptionListModel : BaseNopModel
     {
@@ -18,6 +16,7 @@ namespace Nop.Admin.Models.Messages
             AvailableCustomerRoles = new List<SelectListItem>();
         }
 
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Admin.Promotions.NewsLetterSubscriptions.List.SearchEmail")]
         public string SearchEmail { get; set; }
 
@@ -41,6 +40,5 @@ namespace Nop.Admin.Models.Messages
         [NopResourceDisplayName("Admin.Promotions.NewsLetterSubscriptions.List.EndDate")]
         [UIHint("DateNullable")]
         public DateTime? EndDate { get; set; }
-
     }
 }

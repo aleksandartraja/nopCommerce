@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Manufacturers");
 }
 
-@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "manufacturer-form" }))
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Manufacturer" asp-action="Edit" method="post" id="manufacturer-form">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Catalog.Manufacturers.EditManufacturerDetails") - @Model.Name
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.Catalog.Manufacturers.BackToList").Text, "List")</small>
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.Catalog.Manufacturers.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="button" onclick="javascript:OpenWindow('@Url.RouteUrl("Manufacturer", new {SeName = Model.SeName})', 800, 600, true); return false;" class="btn bg-purple">
@@ -32,8 +33,9 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Common.Delete")
             </span>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_manufacturer_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
-@Html.DeleteConfirmation("manufacturer-delete")
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="manufacturer-delete" />

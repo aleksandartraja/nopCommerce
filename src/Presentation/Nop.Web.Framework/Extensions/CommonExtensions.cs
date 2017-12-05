@@ -13,6 +13,13 @@ namespace Nop.Web.Framework.Extensions
     /// </summary>
     public static class CommonExtensions
     {
+        /// <summary>
+        /// In-memory paging of entities (models)
+        /// </summary>
+        /// <typeparam name="T">Type</typeparam>
+        /// <param name="current">Entities (models)</param>
+        /// <param name="command">Command (paging details)</param>
+        /// <returns>Paged entities (models)</returns>
         public static IEnumerable<T> PagedForCommand<T>(this IEnumerable<T> current, DataSourceRequest command)
         {
             return current.Skip((command.Page - 1) * command.PageSize).Take(command.PageSize);
@@ -27,7 +34,7 @@ namespace Nop.Web.Framework.Extensions
         public static bool SelectionIsNotPossible(this IList<SelectListItem> items, bool ignoreZeroValue = true)
         {
             if (items == null)
-                throw  new ArgumentNullException("items");
+                throw  new ArgumentNullException(nameof(items));
 
             //we ignore items with "0" value? Usually it's something like "Select All", "etc
             return items.Count(x => !ignoreZeroValue || !x.Value.ToString().Equals("0")) < 2;
@@ -62,10 +69,10 @@ namespace Nop.Web.Framework.Extensions
         public static string RelativeFormat(this DateTime source,
             bool convertToUserTime, string defaultFormat)
         {
-            string result = "";
+            var result = "";
 
             var ts = new TimeSpan(DateTime.UtcNow.Ticks - source.Ticks);
-            double delta = ts.TotalSeconds;
+            var delta = ts.TotalSeconds;
 
             if (delta > 0)
             {
@@ -87,7 +94,7 @@ namespace Nop.Web.Framework.Extensions
                 }
                 else if (delta < 86400) // 24 (hours) * 60 (minutes) * 60 (seconds)
                 {
-                    int hours = ts.Hours;
+                    var hours = ts.Hours;
                     if (hours == 1)
                         hours = 2;
                     result = hours + " hours ago";
@@ -102,24 +109,24 @@ namespace Nop.Web.Framework.Extensions
                 }
                 else if (delta < 31104000) // 12 (months) * 30 (days) * 24 (hours) * 60 (minutes) * 60 (seconds)
                 {
-                    int months = Convert.ToInt32(Math.Floor((double)ts.Days / 30));
+                    var months = Convert.ToInt32(Math.Floor((double)ts.Days / 30));
                     result = months <= 1 ? "one month ago" : months + " months ago";
                 }
                 else
                 {
-                    int years = Convert.ToInt32(Math.Floor((double)ts.Days / 365));
+                    var years = Convert.ToInt32(Math.Floor((double)ts.Days / 365));
                     result = years <= 1 ? "one year ago" : years + " years ago";
                 }
             }
             else
             {
-                DateTime tmp1 = source;
+                var tmp1 = source;
                 if (convertToUserTime)
                 {
                     tmp1 = EngineContext.Current.Resolve<IDateTimeHelper>().ConvertToUserTime(tmp1, DateTimeKind.Utc);
                 }
                 //default formatting
-                if (!String.IsNullOrEmpty(defaultFormat))
+                if (!string.IsNullOrEmpty(defaultFormat))
                 {
                     result = tmp1.ToString(defaultFormat);
                 }

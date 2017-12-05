@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Routing;
-using Nop.Core.Extensions;
 using Nop.Core.Infrastructure;
 using Nop.Core.Plugins;
 
@@ -14,12 +13,19 @@ namespace Nop.Web.Framework.Mvc.Routing
     {
         #region Fields
 
+        /// <summary>
+        /// Type finder
+        /// </summary>
         protected readonly ITypeFinder typeFinder;
 
         #endregion
 
         #region Ctor
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="typeFinder">Type finder</param>
         public RoutePublisher(ITypeFinder typeFinder)
         {
             this.typeFinder = typeFinder;
@@ -40,7 +46,7 @@ namespace Nop.Web.Framework.Mvc.Routing
 
             //create and sort instances of route providers
             var instances = routeProviders
-                .Where(routeProvider => PluginManager.FindPlugin(routeProvider).Return(plugin => plugin.Installed, true)) //ignore not installed plugins
+                .Where(routeProvider => PluginManager.FindPlugin(routeProvider)?.Installed ?? true) //ignore not installed plugins
                 .Select(routeProvider => (IRouteProvider)Activator.CreateInstance(routeProvider))
                 .OrderByDescending(routeProvider => routeProvider.Priority);
 

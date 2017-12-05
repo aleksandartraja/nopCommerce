@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Helpers;
-using Nop.Admin.Models.Discounts;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Helpers;
+using Nop.Web.Areas.Admin.Models.Discounts;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Discounts;
-using Nop.Core.Extensions;
 using Nop.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Directory;
@@ -29,7 +28,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class DiscountController : BaseAdminController
     {
@@ -104,19 +103,19 @@ namespace Nop.Admin.Controllers
         protected virtual string GetRequirementUrlInternal(IDiscountRequirementRule discountRequirementRule, Discount discount, int? discountRequirementId)
         {
             if (discountRequirementRule == null)
-                throw new ArgumentNullException("discountRequirementRule");
+                throw new ArgumentNullException(nameof(discountRequirementRule));
 
             if (discount == null)
-                throw new ArgumentNullException("discount");
+                throw new ArgumentNullException(nameof(discount));
 
-            string url = string.Format("{0}{1}", _webHelper.GetStoreLocation(), discountRequirementRule.GetConfigurationUrl(discount.Id, discountRequirementId));
+            var url = $"{_webHelper.GetStoreLocation()}{discountRequirementRule.GetConfigurationUrl(discount.Id, discountRequirementId)}";
             return url;
         }
         
         protected virtual void PrepareDiscountModel(DiscountModel model, Discount discount)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (discount == null)
                 return;
@@ -182,7 +181,7 @@ namespace Nop.Admin.Controllers
         {
             //recursively delete child requirements
             var tmpRequirements = requirements.ToList();
-            for (int i = 0; i < tmpRequirements.Count; i++)
+            for (var i = 0; i < tmpRequirements.Count; i++)
             {
                 if (tmpRequirements[i].ChildRequirements.Any())
                     DeleteRequirement(tmpRequirements[i].ChildRequirements);
@@ -207,8 +206,10 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return AccessDeniedView();
 
-            var model = new DiscountListModel();
-            model.AvailableDiscountTypes = DiscountType.AssignedToOrderTotal.ToSelectList(false).ToList();
+            var model = new DiscountListModel
+            {
+                AvailableDiscountTypes = DiscountType.AssignedToOrderTotal.ToSelectList(false).ToList()
+            };
             model.AvailableDiscountTypes.Insert(0, new SelectListItem { Text = _localizationService.GetResource("Admin.Common.All"), Value = "0" });
 
             if (_catalogSettings.IgnoreDiscounts)
@@ -408,8 +409,8 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return AccessDeniedView();
 
-            if (String.IsNullOrEmpty(systemName))
-                throw new ArgumentNullException("systemName");
+            if (string.IsNullOrEmpty(systemName))
+                throw new ArgumentNullException(nameof(systemName));
 
             var discountRequirementRule = _discountService.LoadDiscountRequirementRuleBySystemName(systemName);
             if (discountRequirementRule == null)
@@ -419,7 +420,7 @@ namespace Nop.Admin.Controllers
             if (discount == null)
                 throw new ArgumentException("Discount could not be loaded");
 
-            string url = GetRequirementUrlInternal(discountRequirementRule, discount, discountRequirementId);
+            var url = GetRequirementUrlInternal(discountRequirementRule, discount, discountRequirementId);
             return Json(new { url = url });
         }
 
@@ -451,7 +452,7 @@ namespace Nop.Admin.Controllers
                 else
                 {
                     var defaultGroupId = discount.DiscountRequirements.FirstOrDefault(requirement => 
-                        !requirement.ParentId.HasValue && requirement.IsGroup).Return(requirement => requirement.Id, 0);
+                        !requirement.ParentId.HasValue && requirement.IsGroup)?.Id ?? 0;
                     if (defaultGroupId == 0)
                     {
                         //add default requirement group
@@ -485,10 +486,10 @@ namespace Nop.Admin.Controllers
             }
 
             //get current requirements
-            var topLevelRequirements = discount.DiscountRequirements.Where(requirement => !requirement.ParentId.HasValue && requirement.IsGroup);
+            var topLevelRequirements = discount.DiscountRequirements.Where(requirement => !requirement.ParentId.HasValue && requirement.IsGroup).ToList();
 
             //get interaction type of top-level group
-            var interactionType = topLevelRequirements.FirstOrDefault().Return(requirement => requirement.InteractionType, null);
+            var interactionType = topLevelRequirements.FirstOrDefault()?.InteractionType;
 
             if (interactionType.HasValue)
                 requirements = GetReqirements(topLevelRequirements, interactionType.Value, discount).ToList();
@@ -535,7 +536,7 @@ namespace Nop.Admin.Controllers
             //set identifier as group name (if not specified)
             if (string.IsNullOrEmpty(name))
             {
-                discountRequirementGroup.DiscountRequirementRuleSystemName = string.Format("#{0}", discountRequirementGroup.Id);
+                discountRequirementGroup.DiscountRequirementRuleSystemName = $"#{discountRequirementGroup.Id}";
                 _discountService.UpdateDiscount(discount);
             }
 
@@ -658,7 +659,7 @@ namespace Nop.Admin.Controllers
 
         [HttpPost]
         [FormValueRequired("save")]
-        public virtual IActionResult ProductAddPopup(string btnId, string formId, DiscountModel.AddProductToDiscountModel model)
+        public virtual IActionResult ProductAddPopup(DiscountModel.AddProductToDiscountModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return AccessDeniedView();
@@ -669,7 +670,7 @@ namespace Nop.Admin.Controllers
 
             if (model.SelectedProductIds != null)
             {
-                foreach (int id in model.SelectedProductIds)
+                foreach (var id in model.SelectedProductIds)
                 {
                     var product = _productService.GetProductById(id);
                     if (product != null)
@@ -684,8 +685,6 @@ namespace Nop.Admin.Controllers
             }
 
             ViewBag.RefreshPage = true;
-            ViewBag.btnId = btnId;
-            ViewBag.formId = formId;
             return View(model);
         }
 
@@ -775,7 +774,7 @@ namespace Nop.Admin.Controllers
 
         [HttpPost]
         [FormValueRequired("save")]
-        public virtual IActionResult CategoryAddPopup(string btnId, string formId, DiscountModel.AddCategoryToDiscountModel model)
+        public virtual IActionResult CategoryAddPopup(DiscountModel.AddCategoryToDiscountModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return AccessDeniedView();
@@ -786,7 +785,7 @@ namespace Nop.Admin.Controllers
 
             if (model.SelectedCategoryIds != null)
             {
-                foreach (int id in model.SelectedCategoryIds)
+                foreach (var id in model.SelectedCategoryIds)
                 {
                     var category = _categoryService.GetCategoryById(id);
                     if (category != null)
@@ -800,8 +799,6 @@ namespace Nop.Admin.Controllers
             }
 
             ViewBag.RefreshPage = true;
-            ViewBag.btnId = btnId;
-            ViewBag.formId = formId;
             return View(model);
         }
 
@@ -886,7 +883,7 @@ namespace Nop.Admin.Controllers
 
         [HttpPost]
         [FormValueRequired("save")]
-        public virtual IActionResult ManufacturerAddPopup(string btnId, string formId, DiscountModel.AddManufacturerToDiscountModel model)
+        public virtual IActionResult ManufacturerAddPopup(DiscountModel.AddManufacturerToDiscountModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageDiscounts))
                 return AccessDeniedView();
@@ -897,7 +894,7 @@ namespace Nop.Admin.Controllers
 
             if (model.SelectedManufacturerIds != null)
             {
-                foreach (int id in model.SelectedManufacturerIds)
+                foreach (var id in model.SelectedManufacturerIds)
                 {
                     var manufacturer = _manufacturerService.GetManufacturerById(id);
                     if (manufacturer != null)
@@ -911,8 +908,6 @@ namespace Nop.Admin.Controllers
             }
 
             ViewBag.RefreshPage = true;
-            ViewBag.btnId = btnId;
-            ViewBag.formId = formId;
             return View(model);
         }
 

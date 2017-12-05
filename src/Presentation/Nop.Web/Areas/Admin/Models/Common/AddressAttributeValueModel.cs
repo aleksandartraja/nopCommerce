@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
 using FluentValidation.Attributes;
-using Nop.Admin.Validators.Common;
-using Nop.Web.Framework;
+using Nop.Web.Areas.Admin.Validators.Common;
 using Nop.Web.Framework.Localization;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Common
+namespace Nop.Web.Areas.Admin.Models.Common
 {
     [Validator(typeof(AddressAttributeValueValidator))]
     public partial class AddressAttributeValueModel : BaseNopEntityModel, ILocalizedModel<AddressAttributeValueLocalizedModel>
@@ -29,7 +27,6 @@ namespace Nop.Admin.Models.Common
         public int DisplayOrder {get;set;}
 
         public IList<AddressAttributeValueLocalizedModel> Locales { get; set; }
-
     }
 
     public partial class AddressAttributeValueLocalizedModel : ILocalizedModelLocal

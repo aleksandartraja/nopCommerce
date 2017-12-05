@@ -1,13 +1,14 @@
 ﻿@model CountryModel
 
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_country_details_states_top", additionalData = Model.Id })
     <div class="panel panel-default">
         @if (Model.Id > 0)
         {
             <div class="panel-body">
                 <div id="states-grid"></div>
 
-                <script>
+                <script type="text/javascript">
                     $(document).ready(function () {
                         $("#states-grid").kendoGrid({
                             dataSource: {
@@ -122,4 +123,5 @@
             </div>
         }
     </div>
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_country_details_states_bottom", additionalData = Model.Id })
 </div>

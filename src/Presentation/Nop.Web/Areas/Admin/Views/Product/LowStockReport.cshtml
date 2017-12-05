@@ -10,6 +10,7 @@
     Html.SetActiveMenuItemSystemName("Low stock report");
 }
 
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Catalog.LowStockReport")
@@ -25,7 +26,7 @@
             <div class="panel-body">
                 <div id="products-grid"></div>
 
-                <script>
+                <script type="text/javascript">
                     $(document).ready(function() {
                         $("#products-grid").kendoGrid({
                             dataSource: {

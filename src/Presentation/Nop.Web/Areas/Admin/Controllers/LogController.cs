@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Models.Logging;
+using Nop.Web.Areas.Admin.Models.Logging;
 using Nop.Core;
 using Nop.Core.Domain.Logging;
 using Nop.Services;
@@ -13,37 +13,43 @@ using Nop.Services.Logging;
 using Nop.Services.Security;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
+using Nop.Core.Html;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class LogController : BaseAdminController
     {
         #region Fields
 
-        private readonly ILogger _logger;
-        private readonly IWorkContext _workContext;
-        private readonly ILocalizationService _localizationService;
+        private readonly ICustomerActivityService _customerActivityService;
         private readonly IDateTimeHelper _dateTimeHelper;
+        private readonly ILocalizationService _localizationService;
+        private readonly ILogger _logger;
         private readonly IPermissionService _permissionService;
+        private readonly IWorkContext _workContext;
 
         #endregion
 
         #region Ctor
 
-        public LogController(ILogger logger, IWorkContext workContext,
-            ILocalizationService localizationService, IDateTimeHelper dateTimeHelper,
-            IPermissionService permissionService)
+        public LogController(ICustomerActivityService customerActivityService,
+            IDateTimeHelper dateTimeHelper,
+            ILocalizationService localizationService,
+            ILogger logger,
+            IPermissionService permissionService,
+            IWorkContext workContext)
         {
-            this._logger = logger;
-            this._workContext = workContext;
-            this._localizationService = localizationService;
+            this._customerActivityService = customerActivityService;
             this._dateTimeHelper = dateTimeHelper;
+            this._localizationService = localizationService;
+            this._logger = logger;
             this._permissionService = permissionService;
+            this._workContext = workContext;
         }
 
         #endregion
 
-        #region Ctor
+        #region Methods
 
         public virtual IActionResult Index()
         {
@@ -55,8 +61,10 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSystemLog))
                 return AccessDeniedView();
 
-            var model = new LogListModel();
-            model.AvailableLogLevels = LogLevel.Debug.ToSelectList(false).ToList();
+            var model = new LogListModel
+            {
+                AvailableLogLevels = LogLevel.Debug.ToSelectList(false).ToList()
+            };
             model.AvailableLogLevels.Insert(0, new SelectListItem { Text = _localizationService.GetResource("Admin.Common.All"), Value = "0" });
 
             return View(model);
@@ -68,32 +76,29 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSystemLog))
                 return AccessDeniedKendoGridJson();
 
-            DateTime? createdOnFromValue = (model.CreatedOnFrom == null) ? null
-                            : (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.CreatedOnFrom.Value, _dateTimeHelper.CurrentTimeZone);
+            var createdOnFromValue = model.CreatedOnFrom != null
+                ? (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.CreatedOnFrom.Value, _dateTimeHelper.CurrentTimeZone) : null;
 
-            DateTime? createdToFromValue = (model.CreatedOnTo == null) ? null
-                            : (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.CreatedOnTo.Value, _dateTimeHelper.CurrentTimeZone).AddDays(1);
+            var createdToFromValue = model.CreatedOnTo != null
+                ? (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.CreatedOnTo.Value, _dateTimeHelper.CurrentTimeZone).AddDays(1) : null;
 
-            LogLevel? logLevel = model.LogLevelId > 0 ? (LogLevel?)(model.LogLevelId) : null;
+            var logLevel = model.LogLevelId > 0 ? (LogLevel?)(model.LogLevelId) : null;
 
-
-            var logItems = _logger.GetAllLogs(createdOnFromValue, createdToFromValue, model.Message,
-                logLevel, command.Page - 1, command.PageSize);
+            var logItems = _logger.GetAllLogs(createdOnFromValue, createdToFromValue, model.Message, logLevel, command.Page - 1, command.PageSize);
             var gridModel = new DataSourceResult
             {
-                Data = logItems.Select(x => new LogModel
+                Data = logItems.Select(logItem => new LogModel
                 {
-                    Id = x.Id,
-                    LogLevel = x.LogLevel.GetLocalizedEnum(_localizationService, _workContext),
-                    ShortMessage = x.ShortMessage,
-                    //little performance optimization: ensure that "FullMessage" is not returned
-                    FullMessage = "",
-                    IpAddress = x.IpAddress,
-                    CustomerId = x.CustomerId,
-                    CustomerEmail = x.Customer != null ? x.Customer.Email : null,
-                    PageUrl = x.PageUrl,
-                    ReferrerUrl = x.ReferrerUrl,
-                    CreatedOn = _dateTimeHelper.ConvertToUserTime(x.CreatedOnUtc, DateTimeKind.Utc)
+                    Id = logItem.Id,
+                    LogLevel = logItem.LogLevel.GetLocalizedEnum(_localizationService, _workContext),
+                    ShortMessage = HtmlHelper.FormatText(logItem.ShortMessage, false, true, false, false, false, false),
+                    FullMessage = string.Empty, //little performance optimization: ensure that "FullMessage" is not returned
+                    IpAddress = logItem.IpAddress,
+                    CustomerId = logItem.CustomerId,
+                    CustomerEmail = logItem.Customer?.Email,
+                    PageUrl = logItem.PageUrl,
+                    ReferrerUrl = logItem.ReferrerUrl,
+                    CreatedOn = _dateTimeHelper.ConvertToUserTime(logItem.CreatedOnUtc, DateTimeKind.Utc)
                 }),
                 Total = logItems.TotalCount
             };
@@ -109,6 +114,9 @@ namespace Nop.Admin.Controllers
                 return AccessDeniedView();
 
             _logger.ClearLog();
+
+            //activity log
+            _customerActivityService.InsertActivity("DeleteSystemLog", _localizationService.GetResource("ActivityLog.DeleteSystemLog"));
 
             SuccessNotification(_localizationService.GetResource("Admin.System.Log.Cleared"));
             return RedirectToAction("List");
@@ -128,11 +136,11 @@ namespace Nop.Admin.Controllers
             {
                 Id = log.Id,
                 LogLevel = log.LogLevel.GetLocalizedEnum(_localizationService, _workContext),
-                ShortMessage = log.ShortMessage,
-                FullMessage = log.FullMessage,
+                ShortMessage = HtmlHelper.FormatText(log.ShortMessage, false, true, false, false, false, false),
+                FullMessage = HtmlHelper.FormatText(log.FullMessage, false, true, false, false, false, false),
                 IpAddress = log.IpAddress,
                 CustomerId = log.CustomerId,
-                CustomerEmail = log.Customer != null ? log.Customer.Email : null,
+                CustomerEmail = log.Customer?.Email,
                 PageUrl = log.PageUrl,
                 ReferrerUrl = log.ReferrerUrl,
                 CreatedOn = _dateTimeHelper.ConvertToUserTime(log.CreatedOnUtc, DateTimeKind.Utc)
@@ -154,6 +162,8 @@ namespace Nop.Admin.Controllers
 
             _logger.DeleteLog(log);
 
+            //activity log
+            _customerActivityService.InsertActivity("DeleteSystemLog", _localizationService.GetResource("ActivityLog.DeleteSystemLog"));
 
             SuccessNotification(_localizationService.GetResource("Admin.System.Log.Deleted"));
             return RedirectToAction("List");
@@ -166,9 +176,10 @@ namespace Nop.Admin.Controllers
                 return AccessDeniedView();
 
             if (selectedIds != null)
-            {
                 _logger.DeleteLogs(_logger.GetLogByIds(selectedIds.ToArray()).ToList());
-            }
+
+            //activity log
+            _customerActivityService.InsertActivity("DeleteSystemLog", _localizationService.GetResource("ActivityLog.DeleteSystemLog"));
 
             return Json(new {Result = true});
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Models.Orders;
+using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
@@ -20,7 +20,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class ReturnRequestController : BaseAdminController
     {
@@ -39,7 +39,7 @@ namespace Nop.Admin.Controllers
 
         #endregion Fields
 
-        #region Constructors
+        #region Ctor
 
         public ReturnRequestController(IReturnRequestService returnRequestService,
             IOrderService orderService,
@@ -72,10 +72,10 @@ namespace Nop.Admin.Controllers
             ReturnRequest returnRequest, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (returnRequest == null)
-                throw new ArgumentNullException("returnRequest");
+                throw new ArgumentNullException(nameof(returnRequest));
 
             var orderItem = _orderService.GetOrderItemById(returnRequest.OrderItemId);
             if (orderItem != null)
@@ -215,7 +215,6 @@ namespace Nop.Admin.Controllers
                 return continueEditing ? RedirectToAction("Edit", new { id = returnRequest.Id}) : RedirectToAction("List");
             }
 
-
             //If we got this far, something failed, redisplay form
             PrepareReturnRequestModel(model, returnRequest, true);
             return View(model);
@@ -240,7 +239,7 @@ namespace Nop.Admin.Controllers
                 return RedirectToAction("Edit", new { id = returnRequest.Id });
             }
             
-            int queuedEmailId = _workflowMessageService.SendReturnRequestStatusChangedCustomerNotification(returnRequest, orderItem, orderItem.Order.CustomerLanguageId);
+            var queuedEmailId = _workflowMessageService.SendReturnRequestStatusChangedCustomerNotification(returnRequest, orderItem, orderItem.Order.CustomerLanguageId);
             if (queuedEmailId > 0)
                 SuccessNotification(_localizationService.GetResource("Admin.ReturnRequests.Notified"));
             return RedirectToAction("Edit",  new {id = returnRequest.Id});

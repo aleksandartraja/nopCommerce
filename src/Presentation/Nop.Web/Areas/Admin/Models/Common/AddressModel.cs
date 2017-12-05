@@ -1,14 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Common;
+using Nop.Web.Areas.Admin.Validators.Common;
 using Nop.Core.Domain.Catalog;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Common
+namespace Nop.Web.Areas.Admin.Models.Common
 {
     [Validator(typeof(AddressValidator))]
     public partial class AddressModel : BaseNopEntityModel
@@ -26,6 +25,7 @@ namespace Nop.Admin.Models.Common
         [NopResourceDisplayName("Admin.Address.Fields.LastName")]
         public string LastName { get; set; }
 
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Admin.Address.Fields.Email")]
         public string Email { get; set; }
 
@@ -56,6 +56,7 @@ namespace Nop.Admin.Models.Common
         [NopResourceDisplayName("Admin.Address.Fields.ZipPostalCode")]
         public string ZipPostalCode { get; set; }
 
+        [DataType(DataType.PhoneNumber)]
         [NopResourceDisplayName("Admin.Address.Fields.PhoneNumber")]
         public string PhoneNumber { get; set; }
 
@@ -70,11 +71,8 @@ namespace Nop.Admin.Models.Common
         public string FormattedCustomAddressAttributes { get; set; }
         public IList<AddressAttributeModel> CustomAddressAttributes { get; set; }
 
-
         public IList<SelectListItem> AvailableCountries { get; set; }
         public IList<SelectListItem> AvailableStates { get; set; }
-
-
 
         public bool FirstNameEnabled { get; set; }
         public bool FirstNameRequired { get; set; }
@@ -99,7 +97,6 @@ namespace Nop.Admin.Models.Common
         public bool PhoneRequired { get; set; }
         public bool FaxEnabled { get; set; }
         public bool FaxRequired { get; set; }
-
 
         #region Nested classes
 

@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Customers
+namespace Nop.Web.Areas.Admin.Models.Customers
 {
     public partial class CustomerListModel : BaseNopModel
     {
@@ -16,7 +14,6 @@ namespace Nop.Admin.Models.Customers
             AvailableCustomerRoles = new List<SelectListItem>();
         }
 
-        [UIHint("MultiSelect")]
         [NopResourceDisplayName("Admin.Customers.Customers.List.CustomerRoles")]
         public IList<int> SearchCustomerRoleIds { get; set; }
         public IList<SelectListItem> AvailableCustomerRoles { get; set; }
@@ -33,14 +30,11 @@ namespace Nop.Admin.Models.Customers
         [NopResourceDisplayName("Admin.Customers.Customers.List.SearchLastName")]
         public string SearchLastName { get; set; }
 
-
         [NopResourceDisplayName("Admin.Customers.Customers.List.SearchDateOfBirth")]
         public string SearchDayOfBirth { get; set; }
         [NopResourceDisplayName("Admin.Customers.Customers.List.SearchDateOfBirth")]
         public string SearchMonthOfBirth { get; set; }
         public bool DateOfBirthEnabled { get; set; }
-
-
 
         [NopResourceDisplayName("Admin.Customers.Customers.List.SearchCompany")]
         public string SearchCompany { get; set; }

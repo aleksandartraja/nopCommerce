@@ -1,11 +1,9 @@
 ﻿using FluentValidation.Attributes;
-using Nop.Admin.Validators.Tasks;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Validators.Tasks;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Tasks
+namespace Nop.Web.Areas.Admin.Models.Tasks
 {
     [Validator(typeof(ScheduleTaskValidator))]
     public partial class ScheduleTaskModel : BaseNopEntityModel

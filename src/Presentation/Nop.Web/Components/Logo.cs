@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using System.Threading.Tasks;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class LogoViewComponent : ViewComponent
+    public class LogoViewComponent : NopViewComponent
     {
         private readonly ICommonModelFactory _commonModelFactory;
 
@@ -13,7 +13,7 @@ namespace Nop.Web.Components
             this._commonModelFactory = commonModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             var model = _commonModelFactory.PrepareLogoModel();
             return View(model);

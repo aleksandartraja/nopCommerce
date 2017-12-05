@@ -1,7 +1,7 @@
 ﻿using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Payments
+namespace Nop.Web.Areas.Admin.Models.Payments
 {
     public partial class PaymentMethodModel : BaseNopModel
     {
@@ -16,6 +16,9 @@ namespace Nop.Admin.Models.Payments
 
         [NopResourceDisplayName("Admin.Configuration.Payment.Methods.Fields.IsActive")]
         public bool IsActive { get; set; }
+
+        [NopResourceDisplayName("Admin.Configuration.Payment.Methods.Configure")]
+        public string ConfigurationUrl { get; set; }
 
         [NopResourceDisplayName("Admin.Configuration.Payment.Methods.Fields.Logo")]
         public string LogoUrl { get; set; }

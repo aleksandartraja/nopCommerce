@@ -1,24 +1,23 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.ExternalAuthentication;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Plugins;
 using Nop.Services.Authentication.External;
 using Nop.Services.Configuration;
 using Nop.Services.Security;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.ExternalAuthentication;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class ExternalAuthenticationController : BaseAdminController
 	{
 		#region Fields
 
-        private readonly IOpenAuthenticationService _openAuthenticationService;
+        private readonly IExternalAuthenticationService _externalAuthenticationService;
         private readonly ExternalAuthenticationSettings _externalAuthenticationSettings;
         private readonly ISettingService _settingService;
         private readonly IPermissionService _permissionService;
@@ -28,13 +27,13 @@ namespace Nop.Admin.Controllers
 
         #region Ctor
 
-        public ExternalAuthenticationController(IOpenAuthenticationService openAuthenticationService, 
+        public ExternalAuthenticationController(IExternalAuthenticationService externalAuthenticationService, 
             ExternalAuthenticationSettings externalAuthenticationSettings,
             ISettingService settingService,
             IPermissionService permissionService,
             IPluginFinder pluginFinder)
 		{
-            this._openAuthenticationService = openAuthenticationService;
+            this._externalAuthenticationService = externalAuthenticationService;
             this._externalAuthenticationSettings = externalAuthenticationSettings;
             this._settingService = settingService;
             this._permissionService = permissionService;
@@ -60,11 +59,12 @@ namespace Nop.Admin.Controllers
                 return AccessDeniedKendoGridJson();
 
             var methodsModel = new List<AuthenticationMethodModel>();
-            var methods = _openAuthenticationService.LoadAllExternalAuthenticationMethods();
+            var methods = _externalAuthenticationService.LoadAllExternalAuthenticationMethods();
             foreach (var method in methods)
             {
                 var tmp1 = method.ToModel();
                 tmp1.IsActive = method.IsMethodActive(_externalAuthenticationSettings);
+                tmp1.ConfigurationUrl = method.GetConfigurationPageUrl();
                 methodsModel.Add(tmp1);
             }
             methodsModel = methodsModel.ToList();
@@ -83,7 +83,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageExternalAuthenticationMethods))
                 return AccessDeniedView();
 
-            var eam = _openAuthenticationService.LoadExternalAuthenticationMethodBySystemName(model.SystemName);
+            var eam = _externalAuthenticationService.LoadExternalAuthenticationMethodBySystemName(model.SystemName);
             if (eam.IsMethodActive(_externalAuthenticationSettings))
             {
                 if (!model.IsActive)
@@ -104,37 +104,16 @@ namespace Nop.Admin.Controllers
             }
             var pluginDescriptor = eam.PluginDescriptor;
             pluginDescriptor.DisplayOrder = model.DisplayOrder;
-            PluginFileParser.SavePluginDescriptionFile(pluginDescriptor);
+
+            //update the description file
+            PluginManager.SavePluginDescriptor(pluginDescriptor);
+
             //reset plugin cache
             _pluginFinder.ReloadPlugins();
 
             return new NullJsonResult();
         }
-
-        #if NET451
-
-        public virtual IActionResult ConfigureMethod(string systemName)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageExternalAuthenticationMethods))
-                return AccessDeniedView();
-
-            var eam = _openAuthenticationService.LoadExternalAuthenticationMethodBySystemName(systemName);
-            if (eam == null)
-                //No authentication method found with the specified id
-                return RedirectToAction("Methods");
-
-            var model = eam.ToModel();
-            string actionName, controllerName;
-            RouteValueDictionary routeValues;
-            eam.GetConfigurationRoute(out actionName, out controllerName, out routeValues);
-            model.ConfigurationActionName = actionName;
-            model.ConfigurationControllerName = controllerName;
-            model.ConfigurationRouteValues = routeValues;
-            return View(model);
-        }
-
-        #endif
-
+        
         #endregion
     }
 }

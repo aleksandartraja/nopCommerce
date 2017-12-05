@@ -14,12 +14,16 @@ namespace Nop.Web.Framework.Mvc.Filters
     /// </summary>
     public class ValidatePasswordAttribute : TypeFilterAttribute
     {
+        #region Ctor
+
         /// <summary>
         /// Create instance of the filter attribute
         /// </summary>
         public ValidatePasswordAttribute() : base(typeof(ValidatePasswordFilter))
         {
         }
+
+        #endregion
 
         #region Nested filter
 
@@ -30,14 +34,17 @@ namespace Nop.Web.Framework.Mvc.Filters
         {
             #region Fields
 
+            private readonly IUrlHelperFactory _urlHelperFactory;
             private readonly IWorkContext _workContext;
 
             #endregion
 
             #region Ctor
 
-            public ValidatePasswordFilter(IWorkContext workContext)
+            public ValidatePasswordFilter(IUrlHelperFactory urlHelperFactory, 
+                IWorkContext workContext)
             {
+                this._urlHelperFactory = urlHelperFactory;
                 this._workContext = workContext;
             }
 
@@ -51,7 +58,10 @@ namespace Nop.Web.Framework.Mvc.Filters
             /// <param name="context">A context for action filters</param>
             public void OnActionExecuting(ActionExecutingContext context)
             {
-                if (context == null || context.HttpContext == null || context.HttpContext.Request == null)
+                if (context == null)
+                    throw new ArgumentNullException(nameof(context));
+
+                if (context.HttpContext.Request == null)
                     return;
 
                 if (!DataSettingsHelper.DatabaseIsInstalled())
@@ -73,7 +83,7 @@ namespace Nop.Web.Framework.Mvc.Filters
                     if (_workContext.CurrentCustomer.PasswordIsExpired())
                     {
                         //redirect to ChangePassword page if expires
-                        var changePasswordUrl = new UrlHelper(context).RouteUrl("CustomerChangePassword");
+                        var changePasswordUrl = _urlHelperFactory.GetUrlHelper(context).RouteUrl("CustomerChangePassword");
                         context.Result = new RedirectResult(changePasswordUrl);
                     }
                 }

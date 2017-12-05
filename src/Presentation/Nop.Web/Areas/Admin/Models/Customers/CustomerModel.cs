@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Customers;
+using Nop.Web.Areas.Admin.Validators.Customers;
 using Nop.Core.Domain.Catalog;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Customers
+namespace Nop.Web.Areas.Admin.Models.Customers
 {
     [Validator(typeof(CustomerValidator))]
     public partial class CustomerModel : BaseNopEntityModel
@@ -32,12 +31,16 @@ namespace Nop.Admin.Models.Customers
             this.AvailableNewsletterSubscriptionStores = new List<StoreModel>();
             this.RewardPointsAvailableStores = new List<SelectListItem>();
         }
-       
+
+        //MVC is suppressing further validation if the IFormCollection is passed to a controller method. That's why we add to the model
+        public IFormCollection Form { get; set; }
+
         public bool UsernamesEnabled { get; set; }
 
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.Username")]
         public string Username { get; set; }
 
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.Email")]
         public string Email { get; set; }
 
@@ -98,10 +101,12 @@ namespace Nop.Admin.Models.Customers
         public IList<SelectListItem> AvailableStates { get; set; }
 
         public bool PhoneEnabled { get; set; }
+        [DataType(DataType.PhoneNumber)]
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.Phone")]
         public string Phone { get; set; }
 
         public bool FaxEnabled { get; set; }
+        [DataType(DataType.PhoneNumber)]
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.Fax")]
         public string Fax { get; set; }
 
@@ -109,8 +114,6 @@ namespace Nop.Admin.Models.Customers
 
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.RegisteredInStore")]
         public string RegisteredInStore { get; set; }
-
-
 
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.AdminComment")]
         public string AdminComment { get; set; }
@@ -126,9 +129,6 @@ namespace Nop.Admin.Models.Customers
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.Affiliate")]
         public string AffiliateName { get; set; }
 
-
-
-
         //time zone
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.TimeZoneId")]
         public string TimeZoneId { get; set; }
@@ -136,10 +136,6 @@ namespace Nop.Admin.Models.Customers
         public bool AllowCustomersToSetTimeZone { get; set; }
 
         public IList<SelectListItem> AvailableTimeZones { get; set; }
-
-
-
-
 
         //EU VAT
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.VatNumber")]
@@ -149,41 +145,31 @@ namespace Nop.Admin.Models.Customers
 
         public bool DisplayVatNumber { get; set; }
 
-
-
-
-
         //registration date
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.CreatedOn")]
         public DateTime CreatedOn { get; set; }
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.LastActivityDate")]
         public DateTime LastActivityDate { get; set; }
 
-        //IP adderss
+        //IP address
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.IPAddress")]
         public string LastIpAddress { get; set; }
 
-
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.LastVisitedPage")]
         public string LastVisitedPage { get; set; }
-
 
         //customer roles
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.CustomerRoles")]
         public string CustomerRoleNames { get; set; }
         public List<SelectListItem> AvailableCustomerRoles { get; set; }
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.CustomerRoles")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedCustomerRoleIds { get; set; }
-
 
         //newsletter subscriptions (per store)
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.Newsletter")]
         public List<StoreModel> AvailableNewsletterSubscriptionStores { get; set; }
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.Newsletter")]
         public int[] SelectedNewsletterSubscriptionStoreIds { get; set; }
-
-
 
         //reward points history
         public bool DisplayRewardPointsHistory { get; set; }
@@ -196,8 +182,6 @@ namespace Nop.Admin.Models.Customers
         [NopResourceDisplayName("Admin.Customers.Customers.RewardPoints.Fields.AddRewardPointsStore")]
         public IList<SelectListItem> RewardPointsAvailableStores { get; set; }
 
-
-
         //send email model
         public SendEmailModel SendEmail { get; set; }
         //send PM model
@@ -209,7 +193,6 @@ namespace Nop.Admin.Models.Customers
 
         [NopResourceDisplayName("Admin.Customers.Customers.AssociatedExternalAuth")]
         public IList<AssociatedExternalAuthModel> AssociatedExternalAuthRecords { get; set; }
-
 
         #region Nested classes
 
@@ -343,7 +326,6 @@ namespace Nop.Admin.Models.Customers
             public AttributeControlType AttributeControlType { get; set; }
 
             public IList<CustomerAttributeValueModel> Values { get; set; }
-
         }
 
         public partial class CustomerAttributeValueModel : BaseNopEntityModel

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Routing;
 using Nop.Core.Plugins;
 
 namespace Nop.Services.Cms
@@ -16,9 +15,10 @@ namespace Nop.Services.Cms
         IList<string> GetWidgetZones();
 
         /// <summary>
-        /// Gets a route for displaying widget
+        /// Gets a view component for displaying plugin in public store
         /// </summary>
+        /// <param name="widgetZone">Name of the widget zone</param>
         /// <param name="viewComponentName">View component name</param>
-        void GetDisplayWidgetRoute(out string viewComponentName);
+        void GetPublicViewComponent(string widgetZone, out string viewComponentName);
     }
 }

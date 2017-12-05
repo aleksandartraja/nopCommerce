@@ -4,8 +4,6 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Plugins;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
 using Nop.Core.Domain.Customers;
@@ -16,21 +14,25 @@ using Nop.Core.Plugins;
 using Nop.Services;
 using Nop.Services.Authentication.External;
 using Nop.Services.Cms;
-using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
+using Nop.Services.Events;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Payments;
+using Nop.Services.Plugins;
 using Nop.Services.Security;
 using Nop.Services.Shipping;
 using Nop.Services.Shipping.Pickup;
 using Nop.Services.Stores;
 using Nop.Services.Tax;
+using Nop.Services.Themes;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Plugins;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class PluginController : BaseAdminController
 	{
@@ -51,7 +53,9 @@ namespace Nop.Admin.Controllers
         private readonly WidgetSettings _widgetSettings;
         private readonly ICustomerActivityService _customerActivityService;
         private readonly ICustomerService _customerService;
-        
+        private readonly IUploadService _uploadService;
+        private readonly IEventPublisher _eventPublisher;
+
         #endregion
 
         #region Ctor
@@ -70,7 +74,9 @@ namespace Nop.Admin.Controllers
             ExternalAuthenticationSettings externalAuthenticationSettings, 
             WidgetSettings widgetSettings,
             ICustomerActivityService customerActivityService,
-            ICustomerService customerService)
+            ICustomerService customerService,
+            IUploadService uploadService,
+            IEventPublisher eventPublisher)
         {
             this._pluginFinder = pluginFinder;
             this._officialFeedManager = officialFeedManager;
@@ -87,6 +93,8 @@ namespace Nop.Admin.Controllers
             this._widgetSettings = widgetSettings;
             this._customerActivityService = customerActivityService;
             this._customerService = customerService;
+            this._uploadService = uploadService;
+            this._eventPublisher = eventPublisher;
         }
 
 		#endregion 
@@ -142,50 +150,10 @@ namespace Nop.Admin.Controllers
             //configuration URLs
             if (pluginDescriptor.Installed)
             {
-                //specify configuration URL only when a plugin is already installed
-
-                //plugins do not provide a general URL for configuration
-                //because some of them have some custom URLs for configuration
-                //for example, discount requirement plugins require additional parameters and attached to a certain discount
+                //display configuration URL only when a plugin is already installed
                 var pluginInstance = pluginDescriptor.Instance();
-                string configurationUrl = null;
-                if (pluginInstance is IPaymentMethod)
-                {
-                    //payment plugin
-                    configurationUrl = Url.Action("ConfigureMethod", "Payment", new { systemName = pluginDescriptor.SystemName });
-                }
-                else if (pluginInstance is IShippingRateComputationMethod)
-                {
-                    //shipping rate computation method
-                    configurationUrl = Url.Action("ConfigureProvider", "Shipping", new { systemName = pluginDescriptor.SystemName });
-                }
-                else if (pluginInstance is IPickupPointProvider)
-                {
-                    //pickup point provider
-                    configurationUrl = Url.Action("ConfigurePickupPointProvider", "Shipping", new { systemName = pluginDescriptor.SystemName });
-                }
-                else if (pluginInstance is ITaxProvider)
-                {
-                    //tax provider
-                    configurationUrl = Url.Action("ConfigureProvider", "Tax", new { systemName = pluginDescriptor.SystemName });
-                }
-                else if (pluginInstance is IExternalAuthenticationMethod)
-                {
-                    //external auth method
-                    configurationUrl = Url.Action("ConfigureMethod", "ExternalAuthentication", new { systemName = pluginDescriptor.SystemName });
-                }
-                else if (pluginInstance is IWidgetPlugin)
-                {
-                    //widgets
-                    configurationUrl = Url.Action("ConfigureWidget", "Widget", new { systemName = pluginDescriptor.SystemName });
-                }
-                else if (pluginInstance is IMiscPlugin)
-                {
-                    //Misc plugins
-                    configurationUrl = Url.Action("ConfigureMiscPlugin", "Plugin", new { systemName = pluginDescriptor.SystemName });
-                }
-                pluginModel.ConfigurationUrl = configurationUrl;
-                
+                pluginModel.ConfigurationUrl = pluginInstance.GetConfigurationPageUrl();
+
 
                 //enabled/disabled (only for some plugin types)
                 if (pluginInstance is IPaymentMethod)
@@ -224,7 +192,6 @@ namespace Nop.Admin.Controllers
                     pluginModel.CanChangeEnabled = true;
                     pluginModel.IsEnabled = ((IWidgetPlugin)pluginInstance).IsWidgetActive(_widgetSettings);
                 }
-
             }
             return pluginModel;
         }
@@ -233,7 +200,7 @@ namespace Nop.Admin.Controllers
             IList<OfficialFeedCategory> allCategories)
         {
             if (category == null)
-                throw new ArgumentNullException("category");
+                throw new ArgumentNullException(nameof(category));
 
             var breadCrumb = new List<OfficialFeedCategory>();
             while (category != null)
@@ -244,7 +211,7 @@ namespace Nop.Admin.Controllers
             breadCrumb.Reverse();
 
             var result = "";
-            for (int i = 0; i <= breadCrumb.Count - 1; i++)
+            for (var i = 0; i <= breadCrumb.Count - 1; i++)
             {
                 result += breadCrumb[i].Name;
                 if (i != breadCrumb.Count - 1)
@@ -252,6 +219,7 @@ namespace Nop.Admin.Controllers
             }
             return result;
         }
+
         #endregion
 
         #region Methods
@@ -266,9 +234,11 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
 
-            var model = new PluginListModel();
-            //load modes
-            model.AvailableLoadModes = LoadPluginsMode.All.ToSelectList(false).ToList();
+            var model = new PluginListModel
+            {
+                //load modes
+                AvailableLoadModes = LoadPluginsMode.All.ToSelectList(false).ToList()
+            };
             //groups
             model.AvailableGroups.Add(new SelectListItem { Text = _localizationService.GetResource("Admin.Common.All"), Value = "" });
             foreach (var g in _pluginFinder.GetPluginGroups())
@@ -293,6 +263,59 @@ namespace Nop.Admin.Controllers
             };
 	        return Json(gridModel);
 	    }
+
+	    [HttpPost]
+	    public virtual IActionResult UploadPluginsAndThemes(IFormFile archivefile)
+	    {
+	        if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+	            return AccessDeniedView();
+
+	        try
+	        {
+                if (archivefile == null || archivefile.Length == 0)
+                {
+
+                    ErrorNotification(_localizationService.GetResource("Admin.Common.UploadFile"));
+                    return RedirectToAction("List");
+                }
+
+                var descriptors = _uploadService.UploadPluginsAndThemes(archivefile);
+                var pluginDescriptors = descriptors.OfType<PluginDescriptor>().ToList();
+                var themeDescriptors = descriptors.OfType<ThemeDescriptor>().ToList();
+
+                //activity log
+                foreach (var descriptor in pluginDescriptors)
+                {
+                    _customerActivityService.InsertActivity("UploadNewPlugin", 
+                        _localizationService.GetResource("ActivityLog.UploadNewPlugin"), descriptor.FriendlyName);
+                }
+
+                foreach (var descriptor in themeDescriptors)
+                {
+                    _customerActivityService.InsertActivity("UploadNewTheme",
+                        _localizationService.GetResource("ActivityLog.UploadNewTheme"), descriptor.FriendlyName);
+                }
+
+                //events
+                if (pluginDescriptors?.Any() ?? false)
+                    _eventPublisher.Publish(new PluginsUploadedEvent(pluginDescriptors));
+
+                if (themeDescriptors?.Any() ?? false)
+                    _eventPublisher.Publish(new ThemesUploadedEvent(themeDescriptors));
+
+                var message = string.Format(_localizationService.GetResource("Admin.Configuration.Plugins.Uploaded"), pluginDescriptors.Count, themeDescriptors.Count);
+                SuccessNotification(message);
+
+                //restart application
+                _webHelper.RestartAppDomain();
+	        }
+	        catch (Exception exc)
+	        {
+	            ErrorNotification(exc);
+	        }
+
+	        return RedirectToAction("List");
+        }
 
         [HttpPost, ActionName("List")]
         [FormValueRequired(FormValueRequirement.StartsWith, "install-plugin-link-")]
@@ -380,6 +403,41 @@ namespace Nop.Admin.Controllers
             return RedirectToAction("List");
         }
 
+	    [HttpPost, ActionName("List")]
+	    [FormValueRequired(FormValueRequirement.StartsWith, "delete-plugin-link-")]
+	    public virtual IActionResult Delete(IFormCollection form)
+	    {
+	        if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
+	            return AccessDeniedView();
+
+	        try
+	        {
+	            //get plugin system name
+	            string systemName = null;
+	            foreach (var formValue in form.Keys)
+	                if (formValue.StartsWith("delete-plugin-link-", StringComparison.InvariantCultureIgnoreCase))
+	                    systemName = formValue.Substring("delete-plugin-link-".Length);
+
+	            var pluginDescriptor = _pluginFinder.GetPluginDescriptorBySystemName(systemName, LoadPluginsMode.All);
+	            if (!PluginManager.DeletePlugin(pluginDescriptor))
+                    return RedirectToAction("List");
+
+                //activity log
+                _customerActivityService.InsertActivity("DeletePlugin", _localizationService.GetResource("ActivityLog.DeletePlugin"), pluginDescriptor.FriendlyName);
+
+	            SuccessNotification(_localizationService.GetResource("Admin.Configuration.Plugins.Deleted"));
+
+	            //restart application
+	            _webHelper.RestartAppDomain();
+	        }
+	        catch (Exception exc)
+	        {
+	            ErrorNotification(exc);
+	        }
+
+	        return RedirectToAction("List");
+	    }
+
         [HttpPost, ActionName("List")]
         [FormValueRequired("plugin-reload-grid")]
         public virtual IActionResult ReloadList()
@@ -391,24 +449,7 @@ namespace Nop.Admin.Controllers
             _webHelper.RestartAppDomain();
             return RedirectToAction("List");
         }
-
-        public virtual IActionResult ConfigureMiscPlugin(string systemName)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
-                return AccessDeniedView();
-
-
-            var descriptor = _pluginFinder.GetPluginDescriptorBySystemName<IMiscPlugin>(systemName);
-            if (descriptor == null || !descriptor.Installed)
-                return Redirect("List");
-
-            var plugin  = descriptor.Instance<IMiscPlugin>();
-
-            var url = plugin.GetConfigurationPageUrl();
-            //TODO implement logic when configuration page is not required
-            return Redirect(url);
-        }
-
+        
         //edit
         public virtual IActionResult EditPopup(string systemName)
         {
@@ -426,7 +467,7 @@ namespace Nop.Admin.Controllers
         }
 
         [HttpPost]
-        public virtual IActionResult EditPopup(string btnId, string formId, PluginModel model)
+        public virtual IActionResult EditPopup(PluginModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManagePlugins))
                 return AccessDeniedView();
@@ -447,9 +488,13 @@ namespace Nop.Admin.Controllers
                 pluginDescriptor.LimitedToCustomerRoles.Clear();
                 if (model.SelectedCustomerRoleIds.Any())
                     pluginDescriptor.LimitedToCustomerRoles = model.SelectedCustomerRoleIds;
-                PluginFileParser.SavePluginDescriptionFile(pluginDescriptor);
+
+                //update the description file
+                PluginManager.SavePluginDescriptor(pluginDescriptor);
+
                 //reset plugin cache
                 _pluginFinder.ReloadPlugins();
+
                 //locales
                 foreach (var localized in model.Locales)
                 {
@@ -594,8 +639,6 @@ namespace Nop.Admin.Controllers
                 }
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -648,17 +691,19 @@ namespace Nop.Admin.Controllers
                 pageIndex: command.Page - 1,
                 pageSize: command.PageSize);
 
-            var gridModel = new DataSourceResult();
-            gridModel.Data = plugins.Select(x => new OfficialFeedListModel.ItemOverview
+            var gridModel = new DataSourceResult
             {
-                Url = x.Url,
-                Name = x.Name,
-                CategoryName = x.Category,
-                SupportedVersions = x.SupportedVersions,
-                PictureUrl = x.PictureUrl,
-                Price = x.Price
-            });
-            gridModel.Total = plugins.TotalCount;
+                Data = plugins.Select(x => new OfficialFeedListModel.ItemOverview
+                {
+                    Url = x.Url,
+                    Name = x.Name,
+                    CategoryName = x.Category,
+                    SupportedVersions = x.SupportedVersions,
+                    PictureUrl = x.PictureUrl,
+                    Price = x.Price
+                }),
+                Total = plugins.TotalCount
+            };
 
             return Json(gridModel);
         }

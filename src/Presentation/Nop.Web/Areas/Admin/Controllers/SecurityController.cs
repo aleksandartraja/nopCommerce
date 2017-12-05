@@ -4,8 +4,8 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-using Nop.Admin.Models.Customers;
-using Nop.Admin.Models.Security;
+using Nop.Web.Areas.Admin.Models.Customers;
+using Nop.Web.Areas.Admin.Models.Security;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Services.Customers;
@@ -13,7 +13,7 @@ using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Security;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class SecurityController : BaseAdminController
 	{
@@ -27,7 +27,7 @@ namespace Nop.Admin.Controllers
 
 		#endregion
 
-		#region Constructors
+		#region Ctor
 
         public SecurityController(ILogger logger, IWorkContext workContext,
             IPermissionService permissionService,
@@ -49,12 +49,11 @@ namespace Nop.Admin.Controllers
             var currentCustomer = _workContext.CurrentCustomer;
             if (currentCustomer == null || currentCustomer.IsGuest())
             {
-                _logger.Information(string.Format("Access denied to anonymous request on {0}", pageUrl));
+                _logger.Information($"Access denied to anonymous request on {pageUrl}");
                 return View();
             }
 
-            _logger.Information(string.Format("Access denied to user #{0} '{1}' on {2}", currentCustomer.Email, currentCustomer.Email, pageUrl));
-
+            _logger.Information($"Access denied to user #{currentCustomer.Email} '{currentCustomer.Email}' on {pageUrl}");
 
             return View();
         }
@@ -88,7 +87,7 @@ namespace Nop.Admin.Controllers
             foreach (var pr in permissionRecords)
                 foreach (var cr in customerRoles)
                 {
-                    bool allowed = pr.CustomerRoles.Count(x => x.Id == cr.Id) > 0;
+                    var allowed = pr.CustomerRoles.Count(x => x.Id == cr.Id) > 0;
                     if (!model.Allowed.ContainsKey(pr.SystemName))
                         model.Allowed[pr.SystemName] = new Dictionary<int, bool>();
                     model.Allowed[pr.SystemName][cr.Id] = allowed;
@@ -106,10 +105,9 @@ namespace Nop.Admin.Controllers
             var permissionRecords = _permissionService.GetAllPermissionRecords();
             var customerRoles = _customerService.GetAllCustomerRoles(true);
 
-
             foreach (var cr in customerRoles)
             {
-                string formKey = "allow_" + cr.Id;
+                var formKey = "allow_" + cr.Id;
                 var permissionRecordSystemNamesToRestrict = !StringValues.IsNullOrEmpty(form[formKey])
                     ? form[formKey].ToString().Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).ToList()
                     : new List<string>();
@@ -117,7 +115,7 @@ namespace Nop.Admin.Controllers
                 foreach (var pr in permissionRecords)
                 {
 
-                    bool allow = permissionRecordSystemNamesToRestrict.Contains(pr.SystemName);
+                    var allow = permissionRecordSystemNamesToRestrict.Contains(pr.SystemName);
                     if (allow)
                     {
                         if (pr.CustomerRoles.FirstOrDefault(x => x.Id == cr.Id) == null)

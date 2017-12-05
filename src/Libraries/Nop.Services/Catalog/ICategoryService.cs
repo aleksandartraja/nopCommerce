@@ -43,7 +43,7 @@ namespace Nop.Services.Catalog
         /// <param name="showHidden">A value indicating whether to show hidden records</param>
         /// <returns>Categories</returns>
         IList<Category> GetAllCategoriesDisplayedOnHomePage(bool showHidden = false);
-                
+
         /// <summary>
         /// Gets a category
         /// </summary>
@@ -62,7 +62,7 @@ namespace Nop.Services.Catalog
         /// </summary>
         /// <param name="category">Category</param>
         void UpdateCategory(Category category);
-        
+
         /// <summary>
         /// Deletes a product category mapping
         /// </summary>
@@ -87,6 +87,7 @@ namespace Nop.Services.Catalog
         /// <param name="showHidden">A value indicating whether to show hidden records</param>
         /// <returns>Product category mapping collection</returns>
         IList<ProductCategory> GetProductCategoriesByProductId(int productId, bool showHidden = false);
+
         /// <summary>
         /// Gets a product category mapping collection
         /// </summary>
@@ -128,5 +129,12 @@ namespace Nop.Services.Catalog
         /// <param name="productIds">Products IDs</param>
         /// <returns>Category IDs for products</returns>
         IDictionary<int, int[]> GetProductCategoryIds(int[] productIds);
+
+        /// <summary>
+        /// Gets categories by identifier
+        /// </summary>
+        /// <param name="categoryIds">Category identifiers</param>
+        /// <returns>Categories</returns>
+        List<Category> GetCategoriesByIds(int[] categoryIds);
     }
 }

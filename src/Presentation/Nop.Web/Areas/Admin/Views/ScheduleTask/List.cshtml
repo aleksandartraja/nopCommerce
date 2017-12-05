@@ -6,13 +6,14 @@
     Html.SetActiveMenuItemSystemName("Schedule tasks");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.System.ScheduleTasks")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_schedule_task_list_buttons" })
     </div>
 </div>
 
@@ -37,7 +38,7 @@
                     </p>
                     <div id="schedule-tasks-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function () {
                             $("#schedule-tasks-grid").kendoGrid({
                                 dataSource: {

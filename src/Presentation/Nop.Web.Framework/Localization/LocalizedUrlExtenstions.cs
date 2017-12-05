@@ -3,7 +3,6 @@ using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Nop.Core.Domain.Localization;
-using Nop.Core.Extensions;
 using Nop.Core.Infrastructure;
 using Nop.Services.Localization;
 
@@ -28,7 +27,7 @@ namespace Nop.Web.Framework.Localization
             if (string.IsNullOrEmpty(url))
                 return false;
 
-            //remove application path from raw url
+            //remove application path from raw URL
             if (isRawPath)
                 url = url.RemoveApplicationPathFromRawUrl(pathBase);
 
@@ -43,7 +42,7 @@ namespace Nop.Web.Framework.Localization
                 .FirstOrDefault(urlLanguage => urlLanguage.UniqueSeoCode.Equals(firstSegment, StringComparison.InvariantCultureIgnoreCase));
 
             //if language exists and published passed URL is localized
-            return language.Return(urlLanguage => urlLanguage.Published, false);
+            return language?.Published ?? false;
         }
 
         /// <summary>
@@ -95,14 +94,15 @@ namespace Nop.Web.Framework.Localization
         /// <returns>Result</returns>
         public static string AddLanguageSeoCodeToUrl(this string url, PathString pathBase, bool isRawPath, Language language)
         {
-            if (string.IsNullOrEmpty(url))
-                return url;
-
             if (language == null)
-                throw new ArgumentNullException("language");
+                throw new ArgumentNullException(nameof(language));
+
+            //null validation is not required
+            //if (string.IsNullOrEmpty(url))
+            //    return url;
 
             //remove application path from raw URL
-            if (isRawPath)
+            if (isRawPath && !string.IsNullOrEmpty(url))
                 url = url.RemoveApplicationPathFromRawUrl(pathBase);
 
             //add language code

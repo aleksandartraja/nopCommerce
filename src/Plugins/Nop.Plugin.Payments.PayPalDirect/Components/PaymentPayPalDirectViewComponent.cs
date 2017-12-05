@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Plugin.Payments.PayPalDirect.Models;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Plugin.Payments.PayPalDirect.Components
 {
     [ViewComponent(Name = "PaymentPayPalDirect")]
-    public class PaymentPayPalDirectViewComponent : ViewComponent
+    public class PaymentPayPalDirectViewComponent : NopViewComponent
     {
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             var model = new PaymentInfoModel
             {
@@ -37,19 +38,22 @@ namespace Nop.Plugin.Payments.PayPalDirect.Components
                 model.ExpireMonths.Add(new SelectListItem { Text = i.ToString("D2"), Value = i.ToString(), });
             }
 
-            //set postback values
-            var form = this.Request.Form;
-            model.CardNumber = form["CardNumber"];
-            model.CardCode = form["CardCode"];
-            var selectedCcType = model.CreditCardTypes.FirstOrDefault(x => x.Value.Equals(form["CreditCardType"], StringComparison.InvariantCultureIgnoreCase));
-            if (selectedCcType != null)
-                selectedCcType.Selected = true;
-            var selectedMonth = model.ExpireMonths.FirstOrDefault(x => x.Value.Equals(form["ExpireMonth"], StringComparison.InvariantCultureIgnoreCase));
-            if (selectedMonth != null)
-                selectedMonth.Selected = true;
-            var selectedYear = model.ExpireYears.FirstOrDefault(x => x.Value.Equals(form["ExpireYear"], StringComparison.InvariantCultureIgnoreCase));
-            if (selectedYear != null)
-                selectedYear.Selected = true;
+            //set postback values (we cannot access "Form" with "GET" requests)
+            if (this.Request.Method != WebRequestMethods.Http.Get)
+            {
+                var form = this.Request.Form;
+                model.CardNumber = form["CardNumber"];
+                model.CardCode = form["CardCode"];
+                var selectedCcType = model.CreditCardTypes.FirstOrDefault(x => x.Value.Equals(form["CreditCardType"], StringComparison.InvariantCultureIgnoreCase));
+                if (selectedCcType != null)
+                    selectedCcType.Selected = true;
+                var selectedMonth = model.ExpireMonths.FirstOrDefault(x => x.Value.Equals(form["ExpireMonth"], StringComparison.InvariantCultureIgnoreCase));
+                if (selectedMonth != null)
+                    selectedMonth.Selected = true;
+                var selectedYear = model.ExpireYears.FirstOrDefault(x => x.Value.Equals(form["ExpireYear"], StringComparison.InvariantCultureIgnoreCase));
+                if (selectedYear != null)
+                    selectedYear.Selected = true;
+            }
 
             return View("~/Plugins/Payments.PayPalDirect/Views/PaymentInfo.cshtml", model);
         }

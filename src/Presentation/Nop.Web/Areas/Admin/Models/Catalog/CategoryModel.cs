@@ -2,14 +2,12 @@
 using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Catalog;
-using Nop.Web.Framework;
+using Nop.Web.Areas.Admin.Validators.Catalog;
 using Nop.Web.Framework.Localization;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Catalog
+namespace Nop.Web.Areas.Admin.Models.Catalog
 {
     [Validator(typeof(CategoryValidator))]
     public partial class CategoryModel : BaseNopEntityModel, ILocalizedModel<CategoryLocalizedModel>
@@ -95,26 +93,20 @@ namespace Nop.Admin.Models.Catalog
 
         //ACL (customer roles)
         [NopResourceDisplayName("Admin.Catalog.Categories.Fields.AclCustomerRoles")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedCustomerRoleIds { get; set; }
         public IList<SelectListItem> AvailableCustomerRoles { get; set; }
         
         //store mapping
         [NopResourceDisplayName("Admin.Catalog.Categories.Fields.LimitedToStores")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedStoreIds { get; set; }
         public IList<SelectListItem> AvailableStores { get; set; }
 
-
         public IList<SelectListItem> AvailableCategories { get; set; }
-
 
         //discounts
         [NopResourceDisplayName("Admin.Catalog.Categories.Fields.Discounts")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedDiscountIds { get; set; }
         public IList<SelectListItem> AvailableDiscounts { get; set; }
-
 
         #region Nested classes
 

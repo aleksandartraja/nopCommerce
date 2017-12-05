@@ -5,9 +5,9 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Helpers;
-using Nop.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Helpers;
+using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
@@ -29,7 +29,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class CategoryController : BaseAdminController
     {
@@ -60,7 +60,7 @@ namespace Nop.Admin.Controllers
         
         #endregion
         
-        #region Constructors
+        #region Ctor
 
         public CategoryController(ICategoryService categoryService, ICategoryTemplateService categoryTemplateService,
             IManufacturerService manufacturerService, IProductService productService, 
@@ -116,29 +116,29 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(category,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(category,
-                                                           x => x.Description,
-                                                           localized.Description,
-                                                           localized.LanguageId);
+                    x => x.Description,
+                    localized.Description,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(category,
-                                                           x => x.MetaKeywords,
-                                                           localized.MetaKeywords,
-                                                           localized.LanguageId);
+                    x => x.MetaKeywords,
+                    localized.MetaKeywords,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(category,
-                                                           x => x.MetaDescription,
-                                                           localized.MetaDescription,
-                                                           localized.LanguageId);
+                    x => x.MetaDescription,
+                    localized.MetaDescription,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(category,
-                                                           x => x.MetaTitle,
-                                                           localized.MetaTitle,
-                                                           localized.LanguageId);
+                    x => x.MetaTitle,
+                    localized.MetaTitle,
+                    localized.LanguageId);
 
                 //search engine name
                 var seName = category.ValidateSeName(localized.SeName, localized.Name, false);
@@ -156,7 +156,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareAllCategoriesModel(CategoryModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             model.AvailableCategories.Add(new SelectListItem
             {
@@ -171,7 +171,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareTemplatesModel(CategoryModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             var templates = _categoryTemplateService.GetAllCategoryTemplates();
             foreach (var template in templates)
@@ -187,7 +187,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareDiscountModel(CategoryModel model, Category category, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && category != null)
                 model.SelectedDiscountIds = category.AppliedDiscounts.Select(d => d.Id).ToList();
@@ -206,7 +206,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareAclModel(CategoryModel model, Category category, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && category != null)
                 model.SelectedCustomerRoleIds = _aclService.GetCustomerRoleIdsWithAccess(category).ToList();
@@ -250,7 +250,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareStoresMappingModel(CategoryModel model, Category category, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && category != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(category).ToList();
@@ -474,7 +474,7 @@ namespace Nop.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                int prevPictureId = category.PictureId;
+                var prevPictureId = category.PictureId;
                 category = model.ToEntity(category);
                 category.UpdatedOnUtc = DateTime.UtcNow;
                 _categoryService.UpdateCategory(category);
@@ -594,7 +594,7 @@ namespace Nop.Admin.Controllers
 
             try
             {
-                var bytes = _exportManager.ExportCategoriesToXlsx(_categoryService.GetAllCategories(showHidden: true).Where(p => !p.Deleted));
+                var bytes = _exportManager.ExportCategoriesToXlsx(_categoryService.GetAllCategories(showHidden: true).Where(p => !p.Deleted).ToList());
                 return File(bytes, MimeTypes.TextXlsx, "categories.xlsx");
             }
             catch (Exception exc)
@@ -634,6 +634,7 @@ namespace Nop.Admin.Controllers
                 return RedirectToAction("List");
             }
         }
+
         #endregion
         
         #region Products
@@ -756,14 +757,14 @@ namespace Nop.Admin.Controllers
         
         [HttpPost]
         [FormValueRequired("save")]
-        public virtual IActionResult ProductAddPopup(string btnId, string formId, CategoryModel.AddCategoryProductModel model)
+        public virtual IActionResult ProductAddPopup(CategoryModel.AddCategoryProductModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCategories))
                 return AccessDeniedView();
 
             if (model.SelectedProductIds != null)
             {
-                foreach (int id in model.SelectedProductIds)
+                foreach (var id in model.SelectedProductIds)
                 {
                     var product = _productService.GetProductById(id);
                     if (product != null)
@@ -785,8 +786,6 @@ namespace Nop.Admin.Controllers
             }
 
             ViewBag.RefreshPage = true;
-            ViewBag.btnId = btnId;
-            ViewBag.formId = formId;
             return View(model);
         }
 

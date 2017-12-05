@@ -49,21 +49,32 @@ namespace Nop.Services.Common
 
         #region Utilities
 
-        protected virtual string GetBackupDirectoryPath()
+        /// <summary>
+        /// Get directory path for backs
+        /// </summary>
+        /// <param name="ensureFolderCreated">A value indicating whether a directory should be created if it doesn't exist</param>
+        /// <returns></returns>
+        protected virtual string GetBackupDirectoryPath(bool ensureFolderCreated = true)
         {
-            return Path.Combine(_hostingEnvironment.WebRootPath, "db_backups\\");
+            var path = Path.Combine(_hostingEnvironment.WebRootPath, "db_backups\\");
+            if (ensureFolderCreated)
+                System.IO.Directory.CreateDirectory(path);
+            return path;
         }
 
+        /// <summary>
+        /// Check whether backups are supported
+        /// </summary>
         protected virtual void CheckBackupSupported()
         {
             if(_dataProvider.BackupSupported) return;
 
             throw new DataException("This database does not support backup");
         }
-
-#endregion
-
-#region Methods
+        
+        #endregion
+        
+        #region Methods
 
         /// <summary>
         /// Get the current ident value
@@ -76,8 +87,8 @@ namespace Nop.Services.Common
             {
                 //stored procedures are enabled and supported by the database
                 var tableName = _dbContext.GetTableName<T>();
-                var result = _dbContext.SqlQuery<decimal>(string.Format("SELECT IDENT_CURRENT('[{0}]')", tableName));
-                return Convert.ToInt32(result.FirstOrDefault());
+                var result = _dbContext.SqlQuery<decimal?>($"SELECT IDENT_CURRENT('[{tableName}]')").FirstOrDefault();
+                return result.HasValue ? Convert.ToInt32(result) : 1;
             }
             
             //stored procedures aren't supported
@@ -99,7 +110,7 @@ namespace Nop.Services.Common
                 if (currentIdent.HasValue && ident > currentIdent.Value)
                 {
                     var tableName = _dbContext.GetTableName<T>();
-                    _dbContext.ExecuteSqlCommand(string.Format("DBCC CHECKIDENT([{0}], RESEED, {1})", tableName, ident));
+                    _dbContext.ExecuteSqlCommand($"DBCC CHECKIDENT([{tableName}], RESEED, {ident})");
                 }
             }
             else
@@ -197,7 +208,7 @@ namespace Nop.Services.Common
         {
             return Path.Combine(GetBackupDirectoryPath(), backupFileName);
         }
-
-#endregion
+        
+        #endregion
     }
 }

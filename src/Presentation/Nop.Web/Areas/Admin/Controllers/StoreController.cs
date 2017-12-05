@@ -2,8 +2,8 @@
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Stores;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Stores;
 using Nop.Core.Domain.Stores;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
@@ -14,7 +14,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class StoreController : BaseAdminController
     {
@@ -30,7 +30,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public StoreController(IStoreService storeService,
             ISettingService settingService,
@@ -56,7 +56,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareLanguagesModel(StoreModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
             
             model.AvailableLanguages.Add(new SelectListItem
             {
@@ -103,7 +103,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageStores))
                 return AccessDeniedKendoGridJson();
 
-            var storeModels = _storeService.GetAllStores()
+            var storeModels = _storeService.GetAllStores(false)
                 .Select(x => x.ToModel())
                 .ToList();
 
@@ -165,7 +165,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageStores))
                 return AccessDeniedView();
 
-            var store = _storeService.GetStoreById(id);
+            var store = _storeService.GetStoreById(id, false);
             if (store == null)
                 //No store found with the specified id
                 return RedirectToAction("List");
@@ -188,7 +188,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageStores))
                 return AccessDeniedView();
 
-            var store = _storeService.GetStoreById(model.Id);
+            var store = _storeService.GetStoreById(model.Id, false);
             if (store == null)
                 //No store found with the specified id
                 return RedirectToAction("List");
@@ -224,7 +224,7 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageStores))
                 return AccessDeniedView();
 
-            var store = _storeService.GetStoreById(id);
+            var store = _storeService.GetStoreById(id, false);
             if (store == null)
                 //No store found with the specified id
                 return RedirectToAction("List");
@@ -243,7 +243,7 @@ namespace Nop.Admin.Controllers
                     .ToList();
                     _settingService.DeleteSettings(settingsToDelete);
                 //when we had two stores and now have only one store, we also should delete all "per store" settings
-                var allStores = _storeService.GetAllStores();
+                var allStores = _storeService.GetAllStores(false);
                 if (allStores.Count == 1)
                 {
                     settingsToDelete = _settingService
@@ -252,7 +252,6 @@ namespace Nop.Admin.Controllers
                         .ToList();
                         _settingService.DeleteSettings(settingsToDelete);
                 }
-
 
                 SuccessNotification(_localizationService.GetResource("Admin.Configuration.Stores.Deleted"));
                 return RedirectToAction("List");

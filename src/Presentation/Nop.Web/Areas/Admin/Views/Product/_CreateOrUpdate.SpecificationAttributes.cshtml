@@ -6,6 +6,7 @@
     <p>
         @T("Admin.Catalog.Products.SpecificationAttributes.Hint")
     </p>
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_product_details_specification_attributes_top", additionalData = Model.Id })
     @if (Model.Id > 0)
     {
         /*hide "add spec" table if no attributes are defined*/
@@ -15,7 +16,7 @@
                 <div class="panel-body">
                     <div id="specificationattributes-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#specificationattributes-grid").kendoGrid({
                                 dataSource: {
@@ -100,7 +101,7 @@
                                         encoded: false,
                                         editor: function setDropDownEditor(container, options) {
                                                     if (options.model.AttributeTypeId == @((int)SpecificationAttributeType.Option)) {
-                                                        var dropDownList = $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:ValueRaw"/>')
+                                                        var dropDownList = $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:SpecificationAttributeOptionId"/>')
                                                             .appendTo(container).kendoDropDownList().data("kendoDropDownList");
                                                         $.ajax({
                                                             type: "GET",
@@ -175,7 +176,7 @@
                 <div class="panel-body">
                     <script type="text/javascript">
                         $(document).ready(function() {
-                            $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeId)").change(function() {
+                            $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeId)").change(function() {
                                 var selectedAttributeId = $(this).val();
                                 $.ajax({
                                     cache: false,
@@ -183,7 +184,7 @@
                                     url: "@(Url.Action("GetOptionsByAttributeId", "SpecificationAttribute"))",
                                     data: { "attributeId": selectedAttributeId },
                                     success: function(data) {
-                                        var ddlSpecOptions = $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeOptionId)");
+                                        var ddlSpecOptions = $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeOptionId)");
                                         ddlSpecOptions.html('');
                                         $.each(data, function(id, option) {
                                             ddlSpecOptions.append($('<option></option>').val(option.id).html(option.name));
@@ -198,21 +199,21 @@
 
                         $(document).ready(function() {
                             $('#addProductSpec').click(function() {
-                                var attributeTypeId = $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.AttributeTypeId)").val();
-                                var specificationAttributeOptionId = $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeOptionId)").val();
-                                var customValue = $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.CustomValue)").val();
-                                var allowFiltering = $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.AllowFiltering)").is(':checked');
-                                var showOnProductPage = $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.ShowOnProductPage)").is(':checked');
-                                var displayOrder = $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.DisplayOrder)").val();
+                                var attributeTypeId = $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.AttributeTypeId)").val();
+                                var specificationAttributeOptionId = $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeOptionId)").val();
+                                var customValue = $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.CustomValue)").val();
+                                var allowFiltering = $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.AllowFiltering)").is(':checked');
+                                var showOnProductPage = $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.ShowOnProductPage)").is(':checked');
+                                var displayOrder = $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.DisplayOrder)").val();
 
                                 if (specificationAttributeOptionId === null) {
                                     //some validation
                                     if (attributeTypeId == @(((int) SpecificationAttributeType.Option).ToString())) {
                                         //option
-                                        alert('Select specification attribute option');
+                                        alert('@T("Admin.Catalog.Products.SpecificationAttributes.SelectOption")');
                                 } else {
                                     //other (text, hyperlink, etc)
-                                    alert('First, please create at least one specification attribute option');
+                                    alert('@T("Admin.Catalog.Products.SpecificationAttributes.NoAttributeOptions")');
                                 }
                             } else {
                                     $('#addProductSpec').attr('disabled', true);
@@ -249,12 +250,12 @@
 
 
                         $(document).ready(function() {
-                            $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.AttributeTypeId)").change(toggleAttributeType);
+                            $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.AttributeTypeId)").change(toggleAttributeType);
                             toggleAttributeType();
                         });
 
                         function toggleAttributeType() {
-                            var selectedTypeId = $("#@Html.FieldIdFor(model => model.AddSpecificationAttributeModel.AttributeTypeId)").val();
+                            var selectedTypeId = $("#@Html.IdFor(model => model.AddSpecificationAttributeModel.AttributeTypeId)").val();
                             if (selectedTypeId == @(((int) SpecificationAttributeType.Option).ToString())) {
                                 $('#pnlSpecificationAttributeOptionId').show();
                             $('#pnlCustomValue').hide();
@@ -277,65 +278,65 @@
 
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AddSpecificationAttributeModel.AttributeTypeId)
+                            <nop-label asp-for="AddSpecificationAttributeModel.AttributeTypeId" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDropDownListFor(model => model.AddSpecificationAttributeModel.AttributeTypeId, ((SpecificationAttributeType)Model.AddSpecificationAttributeModel.AttributeTypeId).ToSelectList())
-                            @Html.ValidationMessageFor(model => model.AddSpecificationAttributeModel.AttributeTypeId)
+                            <nop-select asp-for="AddSpecificationAttributeModel.AttributeTypeId" asp-items="@(((SpecificationAttributeType)Model.AddSpecificationAttributeModel.AttributeTypeId).ToSelectList())" />
+                            <span asp-validation-for="AddSpecificationAttributeModel.AttributeTypeId"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeId)
+                            <nop-label asp-for="AddSpecificationAttributeModel.SpecificationAttributeId" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDropDownListFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeId, Model.AddSpecificationAttributeModel.AvailableAttributes)
-                            @Html.ValidationMessageFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeId)
+                            <nop-select asp-for="AddSpecificationAttributeModel.SpecificationAttributeId" asp-items="Model.AddSpecificationAttributeModel.AvailableAttributes" />
+                            <span asp-validation-for="AddSpecificationAttributeModel.SpecificationAttributeId"></span>
                         </div>
                     </div>
                     <div class="form-group" id="pnlSpecificationAttributeOptionId">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeOptionId)
+                            <nop-label asp-for="AddSpecificationAttributeModel.SpecificationAttributeOptionId" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDropDownListFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeOptionId, Model.AddSpecificationAttributeModel.AvailableOptions)
-                            @Html.ValidationMessageFor(model => model.AddSpecificationAttributeModel.SpecificationAttributeOptionId)
+                            <nop-select asp-for="AddSpecificationAttributeModel.SpecificationAttributeOptionId" asp-items="Model.AddSpecificationAttributeModel.AvailableOptions" />
+                            <span asp-validation-for="AddSpecificationAttributeModel.SpecificationAttributeOptionId"></span>
                         </div>
                     </div>
                     <div class="form-group" id="pnlCustomValue">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AddSpecificationAttributeModel.CustomValue)
+                            <nop-label asp-for="AddSpecificationAttributeModel.CustomValue" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.AddSpecificationAttributeModel.CustomValue)
-                            @Html.ValidationMessageFor(model => model.AddSpecificationAttributeModel.CustomValue)
+                            <nop-editor asp-for="AddSpecificationAttributeModel.CustomValue" />
+                            <span asp-validation-for="AddSpecificationAttributeModel.CustomValue"></span>
                         </div>
                     </div>
                     <div class="form-group" id="pnlAllowFiltering">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AddSpecificationAttributeModel.AllowFiltering)
+                            <nop-label asp-for="AddSpecificationAttributeModel.AllowFiltering" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.AddSpecificationAttributeModel.AllowFiltering)
-                            @Html.ValidationMessageFor(model => model.AddSpecificationAttributeModel.AllowFiltering)
+                            <nop-editor asp-for="AddSpecificationAttributeModel.AllowFiltering" />
+                            <span asp-validation-for="AddSpecificationAttributeModel.AllowFiltering"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AddSpecificationAttributeModel.ShowOnProductPage)
+                            <nop-label asp-for="AddSpecificationAttributeModel.ShowOnProductPage" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.AddSpecificationAttributeModel.ShowOnProductPage)
-                            @Html.ValidationMessageFor(model => model.AddSpecificationAttributeModel.ShowOnProductPage)
+                            <nop-editor asp-for="AddSpecificationAttributeModel.ShowOnProductPage" />
+                            <span asp-validation-for="AddSpecificationAttributeModel.ShowOnProductPage"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AddSpecificationAttributeModel.DisplayOrder)
+                            <nop-label asp-for="AddSpecificationAttributeModel.DisplayOrder" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.AddSpecificationAttributeModel.DisplayOrder)
-                            @Html.ValidationMessageFor(model => model.AddSpecificationAttributeModel.DisplayOrder)
+                            <nop-editor asp-for="AddSpecificationAttributeModel.DisplayOrder" />
+                            <span asp-validation-for="AddSpecificationAttributeModel.DisplayOrder"></span>
                         </div>
                     </div>
                     <div class="form-group">
@@ -363,4 +364,5 @@
             </div>
         </div>
     }
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_product_details_specification_attributes_bottom", additionalData = Model.Id })
 </div>

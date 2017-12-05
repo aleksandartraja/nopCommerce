@@ -1,14 +1,11 @@
-﻿using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
-using Nop.Web.Framework.Mvc.ModelBinding;
+﻿using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Settings
+namespace Nop.Web.Areas.Admin.Models.Settings
 {
     public partial class VendorSettingsModel : BaseNopModel
     {
         public int ActiveStoreScopeConfiguration { get; set; }
-
 
         [NopResourceDisplayName("Admin.Configuration.Settings.Vendor.VendorsBlockItemsToDisplay")]
         public int VendorsBlockItemsToDisplay { get; set; }
@@ -25,6 +22,10 @@ namespace Nop.Admin.Models.Settings
         [NopResourceDisplayName("Admin.Configuration.Settings.Vendor.AllowCustomersToApplyForVendorAccount")]
         public bool AllowCustomersToApplyForVendorAccount { get; set; }
         public bool AllowCustomersToApplyForVendorAccount_OverrideForStore { get; set; }
+
+        [NopResourceDisplayName("Admin.Configuration.Settings.Vendor.TermsOfServiceEnabled")]
+        public bool TermsOfServiceEnabled { get; set; }
+        public bool TermsOfServiceEnabled_OverrideForStore { get; set; }
 
         [NopResourceDisplayName("Admin.Configuration.Settings.Vendor.AllowSearchByVendor")]
         public bool AllowSearchByVendor { get; set; }

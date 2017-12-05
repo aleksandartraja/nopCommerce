@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Template;
 using Nop.Core;
@@ -28,6 +27,16 @@ namespace Nop.Web.Framework.Seo
 
         #region Ctor
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="target">Target</param>
+        /// <param name="routeName">Route name</param>
+        /// <param name="routeTemplate">Route remplate</param>
+        /// <param name="defaults">Defaults</param>
+        /// <param name="constraints">Constraints</param>
+        /// <param name="dataTokens">Data tokens</param>
+        /// <param name="inlineConstraintResolver">Inline constraint resolver</param>
         public GenericPathRoute(IRouter target, string routeName, string routeTemplate, RouteValueDictionary defaults, 
             IDictionary<string, object> constraints, RouteValueDictionary dataTokens, IInlineConstraintResolver inlineConstraintResolver)
             : base(target, routeName, routeTemplate, defaults, constraints, dataTokens, inlineConstraintResolver)
@@ -48,7 +57,7 @@ namespace Nop.Web.Framework.Seo
         {
             //remove language code from the path if it's localized URL
             var path = context.HttpContext.Request.Path.Value;
-            if (path.IsLocalizedUrl(context.HttpContext.Request.PathBase, false, out Language language))
+            if (this.SeoFriendlyUrlsForLanguagesEnabled && path.IsLocalizedUrl(context.HttpContext.Request.PathBase, false, out Language _))
                 path = path.RemoveLanguageSeoCodeFromUrl(context.HttpContext.Request.PathBase, false);
 
             //parse route data
@@ -92,6 +101,9 @@ namespace Nop.Web.Framework.Seo
             if (urlRecord == null)
                 return Task.CompletedTask;
 
+            //virtual directory path
+            var pathBase = context.HttpContext.Request.PathBase;
+
             //if URL record is not active let's find the latest one
             if (!urlRecord.IsActive)
             {
@@ -103,7 +115,7 @@ namespace Nop.Web.Framework.Seo
                 var redirectionRouteData = new RouteData(context.RouteData);
                 redirectionRouteData.Values["controller"] = "Common";
                 redirectionRouteData.Values["action"] = "InternalRedirect";
-                redirectionRouteData.Values["url"] = $"/{activeSlug}"; //TODO support virtual directories
+                redirectionRouteData.Values["url"] = $"{pathBase}/{activeSlug}{context.HttpContext.Request.QueryString}";
                 redirectionRouteData.Values["permanentRedirect"] = true;
                 context.HttpContext.Items["nop.RedirectFromGenericPathRoute"] = true;
                 context.RouteData = redirectionRouteData;
@@ -122,7 +134,7 @@ namespace Nop.Web.Framework.Seo
                 var redirectionRouteData = new RouteData(context.RouteData);
                 redirectionRouteData.Values["controller"] = "Common";
                 redirectionRouteData.Values["action"] = "InternalRedirect";
-                redirectionRouteData.Values["url"] = $"/{slugForCurrentLanguage}"; //TODO support virtual directories
+                redirectionRouteData.Values["url"] = $"{pathBase}/{slugForCurrentLanguage}{context.HttpContext.Request.QueryString}";
                 redirectionRouteData.Values["permanentRedirect"] = false;
                 context.HttpContext.Items["nop.RedirectFromGenericPathRoute"] = true;
                 context.RouteData = redirectionRouteData;

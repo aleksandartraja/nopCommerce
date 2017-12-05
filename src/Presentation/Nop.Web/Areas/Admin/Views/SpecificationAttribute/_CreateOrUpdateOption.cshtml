@@ -5,13 +5,13 @@
     Html.AddCssFileParts("~/lib/farbtastic/farbtastic.css");
 }
 
-@Html.ValidationSummary(false)
-@Html.HiddenFor(model => model.Id)
-@Html.HiddenFor(model => model.SpecificationAttributeId)
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+<input asp-for="SpecificationAttributeId" type="hidden" />
 
 @{
     //pre-set some color (required for farbtastic)
-    if (String.IsNullOrEmpty(Model.ColorSquaresRgb))
+    if (string.IsNullOrEmpty(Model.ColorSquaresRgb))
     {
         Model.ColorSquaresRgb = "#FFFFFF";
     }
@@ -20,7 +20,7 @@
 @if (ViewBag.RefreshPage == true)
 {
     <script type="text/javascript">
-        try {window.opener.document.forms['@(ViewBag.formId)'].@(ViewBag.btnId).click();}
+        try {window.opener.document.forms['@(Context.Request.Query["formId"])'].@(Context.Request.Query["btnId"]).click();}
         catch (e){}
         window.close();
     </script>
@@ -28,12 +28,12 @@
 
 <script type="text/javascript">
     $(document).ready(function() {
-        $("#@Html.FieldIdFor(model => model.EnableColorSquaresRgb)").click(toggleEnableColorSquaresRgb);
+        $("#@Html.IdFor(model => model.EnableColorSquaresRgb)").click(toggleEnableColorSquaresRgb);
         toggleEnableColorSquaresRgb();
     });
 
     function toggleEnableColorSquaresRgb() {
-        if ($('#@Html.FieldIdFor(model => model.EnableColorSquaresRgb)').is(':checked')) {
+        if ($('#@Html.IdFor(model => model.EnableColorSquaresRgb)').is(':checked')) {
             $('#pnlColorSquaresRgb').show();
         } else {
             $('#pnlColorSquaresRgb').hide();
@@ -44,69 +44,71 @@
 <div class="content">
     <div class="form-horizontal">
         <div class="panel-group">
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_specification_attribute_option_details_top", additionalData = Model.Id })
             <div class="panel panel-default panel-popup">
                 <div class="panel-body">
                     @(Html.LocalizedEditor<SpecificationAttributeOptionModel, SpecificationAttributeOptionLocalizedModel>("specificationattribute-localized",
                     @<div>
                         <div class="form-group">
                             <div class="col-sm-3">
-                                @Html.NopLabelFor(model => model.Locales[item].Name)
+                                <nop-label asp-for="@Model.Locales[item].Name" />
                             </div>
                             <div class="col-sm-9">
-                                @Html.NopEditorFor(model => model.Locales[item].Name)
-                                @Html.ValidationMessageFor(model => model.Locales[item].Name)
+                                <nop-editor asp-for="@Model.Locales[item].Name" />
+                                <span asp-validation-for="@Model.Locales[item].Name"></span>
                             </div>
                         </div>
-                        @Html.HiddenFor(model => model.Locales[item].LanguageId)
+                        <input type="hidden" asp-for="@Model.Locales[item].LanguageId" />
                     </div>
     ,
                     @<div>
                         <div class="form-group">
                             <div class="col-sm-3">
-                                @Html.NopLabelFor(model => model.Name)
+                                <nop-label asp-for="Name" />
                             </div>
                             <div class="col-sm-9">
-                                @Html.NopEditorFor(model => model.Name, required: true)
-                                @Html.ValidationMessageFor(model => model.Name)
+                                <nop-editor asp-for="Name" asp-required="true" />
+                                <span asp-validation-for="Name"></span>
                             </div>
                         </div>
                     </div>
     ))
                     <div class="form-group">
                         <div class="col-sm-3">
-                            @Html.NopLabelFor(model => model.EnableColorSquaresRgb)
+                            <nop-label asp-for="EnableColorSquaresRgb" />
                         </div>
                         <div class="col-sm-9">
-                            @Html.NopEditorFor(model => model.EnableColorSquaresRgb)
-                            @Html.ValidationMessageFor(model => model.EnableColorSquaresRgb)
+                            <nop-editor asp-for="EnableColorSquaresRgb" />
+                            <span asp-validation-for="EnableColorSquaresRgb"></span>
                         </div>
                     </div>
                     <div class="form-group" id="pnlColorSquaresRgb">
                         <div class="col-sm-3">
-                            @Html.NopLabelFor(model => model.ColorSquaresRgb)
+                            <nop-label asp-for="ColorSquaresRgb" />
                         </div>
                         <div class="col-sm-9">
-                            @Html.NopEditorFor(model => model.ColorSquaresRgb)
+                            <nop-editor asp-for="ColorSquaresRgb" />
                             <div id="color-picker"></div>
                             <script type="text/javascript">
                                 $(document).ready(function(){
-                                    $('#color-picker').farbtastic('#@Html.FieldIdFor(model => model.ColorSquaresRgb)');
+                                    $('#color-picker').farbtastic('#@Html.IdFor(model => model.ColorSquaresRgb)');
                                 });
                             </script>
-                            @Html.ValidationMessageFor(model => model.ColorSquaresRgb)
+                            <span asp-validation-for="ColorSquaresRgb"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-sm-3">
-                            @Html.NopLabelFor(model => model.DisplayOrder)
+                            <nop-label asp-for="DisplayOrder" />
                         </div>
                         <div class="col-sm-9">
-                            @Html.NopEditorFor(model => model.DisplayOrder)
-                            @Html.ValidationMessageFor(model => model.DisplayOrder)
+                            <nop-editor asp-for="DisplayOrder" />
+                            <span asp-validation-for="DisplayOrder"></span>
                         </div>
                     </div>
                 </div>
             </div>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_specification_attribute_option_details_bottom", additionalData = Model.Id })
         </div>
     </div>
 </div>

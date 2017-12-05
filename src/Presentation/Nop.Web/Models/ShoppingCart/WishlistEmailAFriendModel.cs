@@ -1,6 +1,7 @@
-﻿using FluentValidation.Attributes;
-using Nop.Web.Framework.Mvc.Models;
+﻿using System.ComponentModel.DataAnnotations;
+using FluentValidation.Attributes;
 using Nop.Web.Framework.Mvc.ModelBinding;
+using Nop.Web.Framework.Mvc.Models;
 using Nop.Web.Validators.ShoppingCart;
 
 namespace Nop.Web.Models.ShoppingCart
@@ -8,6 +9,7 @@ namespace Nop.Web.Models.ShoppingCart
     [Validator(typeof(WishlistEmailAFriendValidator))]
     public partial class WishlistEmailAFriendModel : BaseNopModel
     {
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Wishlist.EmailAFriend.FriendEmail")]
         public string FriendEmail { get; set; }
         

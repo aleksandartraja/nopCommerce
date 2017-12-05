@@ -1,11 +1,9 @@
 ﻿@model StoreScopeConfigurationModel
 @inject IHttpContextAccessor httpContextAccessor
 @inject IWebHelper webHelper
-
 @using System.Net
 @using Microsoft.AspNetCore.Http
 @using Nop.Core
-
 @{
     var rawUrl = webHelper.GetRawUrl(httpContextAccessor.HttpContext.Request);
 
@@ -14,8 +12,7 @@
         Text = store.Name,
         Value = webHelper.ModifyQueryString(Url.Action("ChangeStoreScopeConfiguration", "Setting", new { storeid = store.Id }), "returnurl=" + WebUtility.UrlEncode(rawUrl), null),
         Selected = store.Id.Equals(Model.StoreId)
-    })
-        .ToList();
+    }).ToList();
     stores.Insert(0, new SelectListItem
     {
         Text = T("Admin.Configuration.Settings.StoreScope.AllStores").Text,
@@ -31,7 +28,7 @@
                 @T("Admin.Configuration.Settings.StoreScope")
             </label>
         </div>
-        @Html.NopDropDownList("store-scope-configuration", stores, htmlAttributes: new { onchange = "setLocation(this.value);", style = "width: auto;min-width: 300px;" })
+        <nop-select asp-for-name="store-scope-configuration" asp-items="@stores" onchange="setLocation(this.value);" style="width: auto;min-width: 300px;" />
         @if (Model.StoreId > 0)
         {
             <div class="checkbox">
@@ -43,5 +40,3 @@
         }
     </div>
 </div>
-
-

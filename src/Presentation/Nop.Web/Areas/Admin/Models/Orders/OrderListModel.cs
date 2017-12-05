@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Orders
+namespace Nop.Web.Areas.Admin.Models.Orders
 {
     public partial class OrderListModel : BaseNopModel
     {
@@ -30,15 +30,12 @@ namespace Nop.Admin.Models.Orders
         public DateTime? EndDate { get; set; }
 
         [NopResourceDisplayName("Admin.Orders.List.OrderStatus")]
-        [UIHint("MultiSelect")]
         public int[] OrderStatusIds { get; set; }
 
         [NopResourceDisplayName("Admin.Orders.List.PaymentStatus")]
-        [UIHint("MultiSelect")]
         public int[] PaymentStatusIds { get; set; }
 
         [NopResourceDisplayName("Admin.Orders.List.ShippingStatus")]
-        [UIHint("MultiSelect")]
         public int[] ShippingStatusIds { get; set; }
 
         [NopResourceDisplayName("Admin.Orders.List.PaymentMethod")]
@@ -72,7 +69,6 @@ namespace Nop.Admin.Models.Orders
         public string GoDirectlyToCustomOrderNumber { get; set; }
 
         public bool IsLoggedInAsVendor { get; set; }
-
 
         public IList<SelectListItem> AvailableOrderStatuses { get; set; }
         public IList<SelectListItem> AvailablePaymentStatuses { get; set; }

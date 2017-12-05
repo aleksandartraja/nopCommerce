@@ -7,10 +7,14 @@ using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Forums;
 using Nop.Core.Domain.Seo;
 using Nop.Core.Infrastructure;
+using Nop.Data;
 using Nop.Services.Localization;
 
 namespace Nop.Services.Seo
 {
+    /// <summary>
+    /// SEO extensions
+    /// </summary>
     public static class SeoExtensions
     {
         #region Fields
@@ -42,8 +46,8 @@ namespace Nop.Services.Seo
         public static string GetSeName(this ProductTag productTag, int languageId)
         {
             if (productTag == null)
-                throw new ArgumentNullException("productTag");
-            string seName = GetSeName(productTag.GetLocalized(x => x.Name, languageId));
+                throw new ArgumentNullException(nameof(productTag));
+            var seName = GetSeName(productTag.GetLocalized(x => x.Name, languageId));
             return seName;
         }
 
@@ -59,8 +63,8 @@ namespace Nop.Services.Seo
         public static string GetSeName(this ForumGroup forumGroup)
         {
             if (forumGroup == null)
-                throw new ArgumentNullException("forumGroup");
-            string seName = GetSeName(forumGroup.Name);
+                throw new ArgumentNullException(nameof(forumGroup));
+            var seName = GetSeName(forumGroup.Name);
             return seName;
         }
 
@@ -72,8 +76,8 @@ namespace Nop.Services.Seo
         public static string GetSeName(this Forum forum)
         {
             if (forum == null)
-                throw new ArgumentNullException("forum");
-            string seName = GetSeName(forum.Name);
+                throw new ArgumentNullException(nameof(forum));
+            var seName = GetSeName(forum.Name);
             return seName;
         }
 
@@ -85,8 +89,8 @@ namespace Nop.Services.Seo
         public static string GetSeName(this ForumTopic forumTopic)
         {
             if (forumTopic == null)
-                throw new ArgumentNullException("forumTopic");
-            string seName = GetSeName(forumTopic.Subject);
+                throw new ArgumentNullException(nameof(forumTopic));
+            var seName = GetSeName(forumTopic.Subject);
 
             // Trim SE name to avoid URLs that are too long
             var maxLength = 100;
@@ -129,9 +133,9 @@ namespace Nop.Services.Seo
             where T : BaseEntity, ISlugSupported
         {
             if (entity == null)
-                throw new ArgumentNullException("entity");
+                throw new ArgumentNullException(nameof(entity));
 
-            string entityName = typeof(T).Name;
+            var entityName = entity.GetUnproxiedEntityType().Name;
             return GetSeName(entity.Id, entityName, languageId, returnDefaultValue, ensureTwoPublishedLanguages);
         }
 
@@ -147,13 +151,13 @@ namespace Nop.Services.Seo
         public static string GetSeName(int entityId, string entityName, int languageId, bool returnDefaultValue = true,
             bool ensureTwoPublishedLanguages = true)
         {
-            string result = string.Empty;
+            var result = string.Empty;
 
             var urlRecordService = EngineContext.Current.Resolve<IUrlRecordService>();
             if (languageId > 0)
             {
                 //ensure that we have at least two published languages
-                bool loadLocalizedValue = true;
+                var loadLocalizedValue = true;
                 if (ensureTwoPublishedLanguages)
                 {
                     var lService = EngineContext.Current.Resolve<ILanguageService>();
@@ -167,7 +171,7 @@ namespace Nop.Services.Seo
                 }
             }
             //set default value if required
-            if (String.IsNullOrEmpty(result) && returnDefaultValue)
+            if (string.IsNullOrEmpty(result) && returnDefaultValue)
             {
                 result = urlRecordService.GetActiveSlug(entityId, entityName, 0);
             }
@@ -187,9 +191,9 @@ namespace Nop.Services.Seo
              where T : BaseEntity, ISlugSupported
         {
             if (entity == null)
-                throw new ArgumentNullException("entity");
+                throw new ArgumentNullException(nameof(entity));
 
-            return ValidateSeName(entity.Id, typeof(T).Name, seName, name, ensureNotEmpty);
+            return ValidateSeName(entity.Id, entity.GetUnproxiedEntityType().Name, seName, name, ensureNotEmpty);
         }
 
         /// <summary>
@@ -204,7 +208,7 @@ namespace Nop.Services.Seo
         public static string ValidateSeName(int entityId, string entityName, string seName, string name, bool ensureNotEmpty)
         {
             //use name if sename is not specified
-            if (String.IsNullOrWhiteSpace(seName) && !String.IsNullOrWhiteSpace(name))
+            if (string.IsNullOrWhiteSpace(seName) && !string.IsNullOrWhiteSpace(name))
                 seName = name;
             
             //validation
@@ -216,7 +220,7 @@ namespace Nop.Services.Seo
             //that's why we limit it to 200 here (consider a store URL + probably added {0}-{1} below)
             seName = CommonHelper.EnsureMaximumLength(seName, 200);
 
-            if (String.IsNullOrWhiteSpace(seName))
+            if (string.IsNullOrWhiteSpace(seName))
             {
                 if (ensureNotEmpty)
                 {
@@ -233,7 +237,8 @@ namespace Nop.Services.Seo
             //ensure this sename is not reserved yet
             var urlRecordService = EngineContext.Current.Resolve<IUrlRecordService>();
             var seoSettings = EngineContext.Current.Resolve<SeoSettings>();
-            int i = 2;
+            var languageService = EngineContext.Current.Resolve<ILanguageService>();
+            var i = 2;
             var tempSeName = seName;
             while (true)
             {
@@ -242,17 +247,18 @@ namespace Nop.Services.Seo
                 var reserved1 = urlRecord != null && !(urlRecord.EntityId == entityId && urlRecord.EntityName.Equals(entityName, StringComparison.InvariantCultureIgnoreCase));
                 //and it's not in the list of reserved slugs
                 var reserved2 = seoSettings.ReservedUrlRecordSlugs.Contains(tempSeName, StringComparer.InvariantCultureIgnoreCase);
-                if (!reserved1 && !reserved2)
+                //and it's not equal to a language code
+                var reserved3 = languageService.GetAllLanguages(true).Any(language => language.UniqueSeoCode.Equals(tempSeName, StringComparison.InvariantCultureIgnoreCase));
+                if (!reserved1 && !reserved2 && !reserved3)
                     break;
 
-                tempSeName = string.Format("{0}-{1}", seName, i);
+                tempSeName = $"{seName}-{i}";
                 i++;
             }
             seName = tempSeName;
 
             return seName;
         }
-
 
         /// <summary>
         /// Get SE name
@@ -274,9 +280,9 @@ namespace Nop.Services.Seo
         /// <returns>Result</returns>
         public static string GetSeName(string name, bool convertNonWesternChars, bool allowUnicodeCharsInUrls)
         {
-            if (String.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(name))
                 return name;
-            string okChars = "abcdefghijklmnopqrstuvwxyz1234567890 _-";
+            var okChars = "abcdefghijklmnopqrstuvwxyz1234567890 _-";
             name = name.Trim().ToLowerInvariant();
 
             if (convertNonWesternChars)
@@ -286,9 +292,9 @@ namespace Nop.Services.Seo
             }
 
             var sb = new StringBuilder();
-            foreach (char c in name.ToCharArray())
+            foreach (var c in name.ToCharArray())
             {
-                string c2 = c.ToString();
+                var c2 = c.ToString();
                 if (convertNonWesternChars)
                 {
                     if (_seoCharacterTable.ContainsKey(c2))
@@ -305,7 +311,7 @@ namespace Nop.Services.Seo
                     sb.Append(c2);
                 }
             }
-            string name2 = sb.ToString();
+            var name2 = sb.ToString();
             name2 = name2.Replace(" ", "-");
             while (name2.Contains("--"))
                 name2 = name2.Replace("--", "-");
@@ -1361,7 +1367,6 @@ namespace Nop.Services.Seo
                     _seoCharacterTable.Add(ToUnichar("045E"), "u");  // Byelorussian SMALL LETTER ў
                 }
             }
-
         }
 
         /// <summary>

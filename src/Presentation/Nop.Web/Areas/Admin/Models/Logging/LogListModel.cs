@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Logging
+namespace Nop.Web.Areas.Admin.Models.Logging
 {
     public partial class LogListModel : BaseNopModel
     {
@@ -29,7 +27,6 @@ namespace Nop.Admin.Models.Logging
 
         [NopResourceDisplayName("Admin.System.Log.List.LogLevel")]
         public int LogLevelId { get; set; }
-
 
         public IList<SelectListItem> AvailableLogLevels { get; set; }
     }

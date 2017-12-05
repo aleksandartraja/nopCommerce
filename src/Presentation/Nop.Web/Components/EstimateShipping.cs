@@ -1,15 +1,14 @@
 ﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Factories;
-using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Orders;
-using Nop.Web.Models.ShoppingCart;
+using Nop.Web.Factories;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class EstimateShippingViewComponent : ViewComponent
+    public class EstimateShippingViewComponent : NopViewComponent
     {
         private readonly IShoppingCartModelFactory _shoppingCartModelFactory;
         private readonly IStoreContext _storeContext;
@@ -24,7 +23,7 @@ namespace Nop.Web.Components
             this._workContext = workContext;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(bool? prepareAndDisplayOrderReviewData)
+        public IViewComponentResult Invoke(bool? prepareAndDisplayOrderReviewData)
         {
             var cart = _workContext.CurrentCustomer.ShoppingCartItems
                 .Where(sci => sci.ShoppingCartType == ShoppingCartType.ShoppingCart)

@@ -1,13 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using Nop.Core.Domain.Catalog;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Catalog
+namespace Nop.Web.Areas.Admin.Models.Catalog
 {
     public partial class AddProductAttributeCombinationModel : BaseNopModel
     {
+        //MVC is suppressing further validation if the IFormCollection is passed to a controller method. That's why we add to the model
+        public IFormCollection Form { get; set; }
+
         public AddProductAttributeCombinationModel()
         {
             ProductAttributes = new List<ProductAttributeModel>();
@@ -70,6 +74,7 @@ namespace Nop.Admin.Models.Catalog
 
             public bool IsPreSelected { get; set; }
         }
+
         #endregion
     }
 }

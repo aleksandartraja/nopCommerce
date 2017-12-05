@@ -39,7 +39,7 @@ namespace Nop.Web.Factories
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public BlogModelFactory(IBlogService blogService,
             IWorkContext workContext,
@@ -76,7 +76,7 @@ namespace Nop.Web.Factories
         public virtual BlogCommentModel PrepareBlogPostCommentModel(BlogComment blogComment)
         {
             if (blogComment == null)
-                throw new ArgumentNullException("blogComment");
+                throw new ArgumentNullException(nameof(blogComment));
 
             var model = new BlogCommentModel
             {
@@ -108,10 +108,10 @@ namespace Nop.Web.Factories
         public virtual void PrepareBlogPostModel(BlogPostModel model, BlogPost blogPost, bool prepareComments)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (blogPost == null)
-                throw new ArgumentNullException("blogPost");
+                throw new ArgumentNullException(nameof(blogPost));
 
             model.Id = blogPost.Id;
             model.MetaTitle = blogPost.MetaTitle;
@@ -153,7 +153,7 @@ namespace Nop.Web.Factories
         public virtual BlogPostListModel PrepareBlogPostListModel(BlogPagingFilteringModel command)
         {
             if (command == null)
-                throw new ArgumentNullException("command");
+                throw new ArgumentNullException(nameof(command));
 
             var model = new BlogPostListModel();
             model.PagingFilteringContext.Tag = command.Tag;
@@ -163,11 +163,11 @@ namespace Nop.Web.Factories
             if (command.PageSize <= 0) command.PageSize = _blogSettings.PostsPageSize;
             if (command.PageNumber <= 0) command.PageNumber = 1;
 
-            DateTime? dateFrom = command.GetFromMonth();
-            DateTime? dateTo = command.GetToMonth();
+            var dateFrom = command.GetFromMonth();
+            var dateTo = command.GetToMonth();
 
             IPagedList<BlogPost> blogPosts;
-            if (String.IsNullOrEmpty(command.Tag))
+            if (string.IsNullOrEmpty(command.Tag))
             {
                 blogPosts = _blogService.GetAllBlogPosts(_storeContext.CurrentStore.Id,
                     _workContext.WorkingLanguage.Id,
@@ -256,7 +256,7 @@ namespace Nop.Web.Factories
                     }
 
 
-                    int current = 0;
+                    var current = 0;
                     foreach (var kvp in months)
                     {
                         var date = kvp.Key;

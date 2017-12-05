@@ -9,6 +9,9 @@ using Nop.Core;
 
 namespace Nop.Data
 {
+    /// <summary>
+    /// DB context extensions
+    /// </summary>
     public static class DbContextExtensions
     {
         #region Utilities
@@ -16,10 +19,10 @@ namespace Nop.Data
         private static T InnerGetCopy<T>(IDbContext context, T currentCopy, Func<DbEntityEntry<T>, DbPropertyValues> func) where T : BaseEntity
         {
             //Get the database context
-            DbContext dbContext = CastOrThrow(context);
+            var dbContext = CastOrThrow(context);
 
             //Get the entity tracking object
-            DbEntityEntry<T> entry = GetEntityOrReturnNull(currentCopy, dbContext);
+            var entry = GetEntityOrReturnNull(currentCopy, dbContext);
 
             //The output 
             T output = null;
@@ -27,7 +30,7 @@ namespace Nop.Data
             //Try and get the values
             if (entry != null)
             {
-                DbPropertyValues dbPropertyValues = func(entry);
+                var dbPropertyValues = func(entry);
                 if (dbPropertyValues != null)
                 {
                     output = dbPropertyValues.ToObject() as T;
@@ -97,10 +100,10 @@ namespace Nop.Data
         public static void DropPluginTable(this DbContext context, string tableName)
         {
             if (context == null)
-                throw new ArgumentNullException("context");
+                throw new ArgumentNullException(nameof(context));
 
-            if (String.IsNullOrEmpty(tableName))
-                throw new ArgumentNullException("tableName");
+            if (string.IsNullOrEmpty(tableName))
+                throw new ArgumentNullException(nameof(tableName));
 
             //drop the table
             if (context.Database.SqlQuery<int>("SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = {0}", tableName).Any<int>())
@@ -131,7 +134,7 @@ namespace Nop.Data
             var entitySetBase = containers.SelectMany(c => c.BaseEntitySets.Where(bes => bes.Name == typeof(T).Name)).First();
 
             // Here are variables that will hold table and schema name
-            string tableName = entitySetBase.MetadataProperties.First(p => p.Name == "Table").Value.ToString();
+            var tableName = entitySetBase.MetadataProperties.First(p => p.Name == "Table").Value.ToString();
             //string schemaName = productEntitySetBase.MetadataProperties.First(p => p.Name == "Schema").Value.ToString();
             return tableName;
         }
@@ -158,13 +161,11 @@ namespace Nop.Data
         /// <returns></returns>
         public static IDictionary<string, int> GetColumnsMaxLength(this IDbContext context, string entityTypeName, params string[] columnNames)
         {
-            int temp;
-
             var fildFacets = GetFildFacets(context, entityTypeName, "String", columnNames);
 
             var queryResult = fildFacets
                 .Select(f => new { Name = f.Key, MaxLength = f.Value["MaxLength"].Value })
-                .Where(p => int.TryParse(p.MaxLength.ToString(), out temp))
+                .Where(p => int.TryParse(p.MaxLength.ToString(), out int _))
                 .ToDictionary(p => p.Name, p => Convert.ToInt32(p.MaxLength));
 
             return queryResult;
@@ -214,6 +215,11 @@ namespace Nop.Data
             return queryResult;
         }
 
+        /// <summary>
+        /// Get database name
+        /// </summary>
+        /// <param name="context">DB context</param>
+        /// <returns>Database name</returns>
         public static string DbName(this IDbContext context)
         {
             var connection = ((IObjectContextAdapter)context).ObjectContext.Connection as EntityConnection;

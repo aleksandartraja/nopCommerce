@@ -1,13 +1,14 @@
 ﻿@model ProductModel
 
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_product_details_pictures_top", additionalData = Model.Id })
     @if (Model.Id > 0)
     {
         <div class="panel panel-default">
             <div class="panel-body">
                 <div id="productpictures-grid"></div>
 
-                <script>
+                <script type="text/javascript">
                     $(document).ready(function() {
                         $("#productpictures-grid").kendoGrid({
                             dataSource: {
@@ -123,10 +124,10 @@
                 <script type="text/javascript">
                     $(document).ready(function() {
                         $('#addProductPicture').click(function() {
-                            var pictureId = $("#@Html.FieldIdFor(model => model.AddPictureModel.PictureId)").val();
-                            var overrideAltAttribute = $("#@Html.FieldIdFor(model => model.AddPictureModel.OverrideAltAttribute)").val();
-                            var overrideTitleAttribute = $("#@Html.FieldIdFor(model => model.AddPictureModel.OverrideTitleAttribute)").val();
-                            var displayOrder = $("#@Html.FieldIdFor(model => model.AddPictureModel.DisplayOrder)").val();
+                            var pictureId = $("#@Html.IdFor(model => model.AddPictureModel.PictureId)").val();
+                            var overrideAltAttribute = $("#@Html.IdFor(model => model.AddPictureModel.OverrideAltAttribute)").val();
+                            var overrideTitleAttribute = $("#@Html.IdFor(model => model.AddPictureModel.OverrideTitleAttribute)").val();
+                            var displayOrder = $("#@Html.IdFor(model => model.AddPictureModel.DisplayOrder)").val();
 
                             if (pictureId == 0) {
                                 alert('Upload picture first');
@@ -164,38 +165,38 @@
                 </script>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.AddPictureModel.PictureId)
+                        <nop-label asp-for="AddPictureModel.PictureId" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.AddPictureModel.PictureId)
-                        @Html.ValidationMessageFor(model => model.AddPictureModel.PictureId)
+                        <nop-editor asp-for="AddPictureModel.PictureId" />
+                        <span asp-validation-for="AddPictureModel.PictureId"></span>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.AddPictureModel.OverrideAltAttribute)
+                        <nop-label asp-for="AddPictureModel.OverrideAltAttribute" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.AddPictureModel.OverrideAltAttribute)
-                        @Html.ValidationMessageFor(model => model.AddPictureModel.OverrideAltAttribute)
+                        <nop-editor asp-for="AddPictureModel.OverrideAltAttribute" />
+                        <span asp-validation-for="AddPictureModel.OverrideAltAttribute"></span>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.AddPictureModel.OverrideTitleAttribute)
+                        <nop-label asp-for="AddPictureModel.OverrideTitleAttribute" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.AddPictureModel.OverrideTitleAttribute)
-                        @Html.ValidationMessageFor(model => model.AddPictureModel.OverrideTitleAttribute)
+                        <nop-editor asp-for="AddPictureModel.OverrideTitleAttribute" />
+                        <span asp-validation-for="AddPictureModel.OverrideTitleAttribute"></span>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.AddPictureModel.DisplayOrder)
+                        <nop-label asp-for="AddPictureModel.DisplayOrder" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.AddPictureModel.DisplayOrder)
-                        @Html.ValidationMessageFor(model => model.AddPictureModel.DisplayOrder)
+                        <nop-editor asp-for="AddPictureModel.DisplayOrder" />
+                        <span asp-validation-for="AddPictureModel.DisplayOrder"></span>
                     </div>
                 </div>
                 <div class="form-group">
@@ -214,4 +215,5 @@
             </div>
         </div>
     }
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_product_details_pictures_bottom", additionalData = Model.Id })
 </div>

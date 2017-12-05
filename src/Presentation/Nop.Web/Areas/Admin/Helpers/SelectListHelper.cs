@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Infrastructure.Cache;
+using Nop.Web.Areas.Admin.Infrastructure.Cache;
 using Nop.Core.Caching;
 using Nop.Services.Catalog;
 using Nop.Services.Vendors;
 
-namespace Nop.Admin.Helpers
+namespace Nop.Web.Areas.Admin.Helpers
 {
     /// <summary>
     /// Select list helper
@@ -24,12 +24,12 @@ namespace Nop.Admin.Helpers
         public static List<SelectListItem> GetCategoryList(ICategoryService categoryService, ICacheManager cacheManager, bool showHidden = false)
         {
             if (categoryService == null)
-                throw new ArgumentNullException("categoryService");
+                throw new ArgumentNullException(nameof(categoryService));
 
             if (cacheManager == null)
-                throw new ArgumentNullException("cacheManager");
+                throw new ArgumentNullException(nameof(cacheManager));
 
-            string cacheKey = string.Format(ModelCacheEventConsumer.CATEGORIES_LIST_KEY, showHidden);
+            var cacheKey = string.Format(ModelCacheEventConsumer.CATEGORIES_LIST_KEY, showHidden);
             var listItems = cacheManager.Get(cacheKey, () =>
             {
                 var categories = categoryService.GetAllCategories(showHidden: showHidden);
@@ -64,12 +64,12 @@ namespace Nop.Admin.Helpers
         public static List<SelectListItem> GetManufacturerList(IManufacturerService manufacturerService, ICacheManager cacheManager, bool showHidden = false)
         {
             if (manufacturerService == null)
-                throw new ArgumentNullException("manufacturerService");
+                throw new ArgumentNullException(nameof(manufacturerService));
 
             if (cacheManager == null)
-                throw new ArgumentNullException("cacheManager");
+                throw new ArgumentNullException(nameof(cacheManager));
 
-            string cacheKey = string.Format(ModelCacheEventConsumer.MANUFACTURERS_LIST_KEY, showHidden);
+            var cacheKey = string.Format(ModelCacheEventConsumer.MANUFACTURERS_LIST_KEY, showHidden);
             var listItems = cacheManager.Get(cacheKey, () =>
             {
                 var manufacturers = manufacturerService.GetAllManufacturers(showHidden: showHidden);
@@ -104,12 +104,12 @@ namespace Nop.Admin.Helpers
         public static List<SelectListItem> GetVendorList(IVendorService vendorService, ICacheManager cacheManager, bool showHidden = false)
         {
             if (vendorService == null)
-                throw new ArgumentNullException("vendorService");
+                throw new ArgumentNullException(nameof(vendorService));
 
             if (cacheManager == null)
-                throw new ArgumentNullException("cacheManager");
+                throw new ArgumentNullException(nameof(cacheManager));
 
-            string cacheKey = string.Format(ModelCacheEventConsumer.VENDORS_LIST_KEY, showHidden);
+            var cacheKey = string.Format(ModelCacheEventConsumer.VENDORS_LIST_KEY, showHidden);
             var listItems = cacheManager.Get(cacheKey, () =>
             {
                 var vendors = vendorService.GetAllVendors(showHidden: showHidden);

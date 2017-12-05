@@ -10,27 +10,28 @@
     Html.SetActiveMenuItemSystemName("Affiliates");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token/>
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Affiliates")
     </h1>
     <div class="pull-right">
-        <a href="@Url.Action("Create")" class="btn bg-blue">
+        <a asp-action="Create" class="btn bg-blue">
             <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
         </a>
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_affiliate_list_buttons" })
     </div>
 </div>
 
 <script type="text/javascript">
     $(document).ready(function() {
-        $("#@Html.FieldIdFor(model => model.LoadOnlyWithOrders)").click(toggleLoadOnlyWithOrders);
+        $("#@Html.IdFor(model => model.LoadOnlyWithOrders)").click(toggleLoadOnlyWithOrders);
         toggleLoadOnlyWithOrders();
     });
 
     function toggleLoadOnlyWithOrders() {
-        if ($('#@Html.FieldIdFor(model => model.LoadOnlyWithOrders)').is(':checked')) {
+        if ($('#@Html.IdFor(model => model.LoadOnlyWithOrders)').is(':checked')) {
             $('#pnlOrdersCreatedFromUtc').show();
             $('#pnlOrdersCreatedToUtc').show();
         } else {
@@ -52,52 +53,54 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchFirstName)
+                                    <nop-label asp-for="SearchFirstName" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.SearchFirstName)
+                                    <nop-editor asp-for="SearchFirstName" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchLastName)
+                                    <nop-label asp-for="SearchLastName" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.SearchLastName)
+                                    <nop-editor asp-for="SearchLastName" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchFriendlyUrlName)
+                                    <nop-label asp-for="SearchFriendlyUrlName" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.SearchFriendlyUrlName)
+                                    <nop-editor asp-for="SearchFriendlyUrlName" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.LoadOnlyWithOrders)
+                                    <nop-label asp-for="LoadOnlyWithOrders" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.LoadOnlyWithOrders)
+                                    <nop-editor asp-for="LoadOnlyWithOrders" />
                                 </div>
                             </div>
-                            <div class="form-group" id="pnlOrdersCreatedFromUtc">
-                                <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.OrdersCreatedFromUtc)
+                            <nop-nested-setting asp-for="LoadOnlyWithOrders" >
+                                <div class="form-group" id="pnlOrdersCreatedFromUtc">
+                                    <div class="col-md-4">
+                                        <nop-label asp-for="OrdersCreatedFromUtc" />
+                                    </div>
+                                    <div class="col-md-8">
+                                        <nop-editor asp-for="OrdersCreatedFromUtc" />
+                                    </div>
                                 </div>
-                                <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.OrdersCreatedFromUtc)
+                                <div class="form-group" id="pnlOrdersCreatedToUtc">
+                                    <div class="col-md-4">
+                                        <nop-label asp-for="OrdersCreatedToUtc" />
+                                    </div>
+                                    <div class="col-md-8">
+                                        <nop-editor asp-for="OrdersCreatedToUtc" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="form-group" id="pnlOrdersCreatedToUtc">
-                                <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.OrdersCreatedToUtc)
-                                </div>
-                                <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.OrdersCreatedToUtc)
-                                </div>
-                            </div>
+                            </nop-nested-setting>
                             <div class="form-group">
                                 <div class="col-md-8 col-md-offset-4">
                                     <button type="button" id="search-affiliates" class="btn btn-primary btn-search">
@@ -115,7 +118,7 @@
                 <div class="panel-body">
                     <div id="affiliates-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#affiliates-grid").kendoGrid({
                                 dataSource: {
@@ -184,7 +187,6 @@
 
                     <script type="text/javascript">
                         $(document).ready(function() {
-
                             $('#search-affiliates').click(function() {
                                 var grid = $('#affiliates-grid').data('kendoGrid');
                                 grid.dataSource.page(1); //new search. Set page size to 1
@@ -194,9 +196,9 @@
                         });
 
 
-                        $("".concat("#@Html.FieldIdFor(model => model.SearchFirstName),",
-                            "#@Html.FieldIdFor(model => model.SearchLastName),",
-                            "#@Html.FieldIdFor(model => model.SearchFriendlyUrlName)")).keydown(function(event) {
+                        $("".concat("#@Html.IdFor(model => model.SearchFirstName),",
+                            "#@Html.IdFor(model => model.SearchLastName),",
+                            "#@Html.IdFor(model => model.SearchFriendlyUrlName)")).keydown(function(event) {
                                 if (event.keyCode === 13) {
                                     $("#search-affiliates").click();
                                     return false;
@@ -205,12 +207,12 @@
 
                         function additionalData() {
                             var data = {
-                                SearchFirstName: $('#@Html.FieldIdFor(model => model.SearchFirstName)').val(),
-                                SearchLastName: $('#@Html.FieldIdFor(model => model.SearchLastName)').val(),
-                                SearchFriendlyUrlName: $('#@Html.FieldIdFor(model => model.SearchFriendlyUrlName)').val(),
-                                LoadOnlyWithOrders: $('#@Html.FieldIdFor(model => model.LoadOnlyWithOrders)').is(':checked'),
-                                OrdersCreatedFromUtc: $('#@Html.FieldIdFor(model => model.OrdersCreatedFromUtc)').val(),
-                                OrdersCreatedToUtc: $('#@Html.FieldIdFor(model => model.OrdersCreatedToUtc)').val()
+                                SearchFirstName: $('#@Html.IdFor(model => model.SearchFirstName)').val(),
+                                SearchLastName: $('#@Html.IdFor(model => model.SearchLastName)').val(),
+                                SearchFriendlyUrlName: $('#@Html.IdFor(model => model.SearchFriendlyUrlName)').val(),
+                                LoadOnlyWithOrders: $('#@Html.IdFor(model => model.LoadOnlyWithOrders)').is(':checked'),
+                                OrdersCreatedFromUtc: $('#@Html.IdFor(model => model.OrdersCreatedFromUtc)').val(),
+                                OrdersCreatedToUtc: $('#@Html.IdFor(model => model.OrdersCreatedToUtc)').val()
                             };
                             addAntiForgeryToken(data);
                             return data;

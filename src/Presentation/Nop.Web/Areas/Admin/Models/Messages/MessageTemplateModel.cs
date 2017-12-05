@@ -2,14 +2,12 @@
 using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Messages;
-using Nop.Web.Framework;
+using Nop.Web.Areas.Admin.Validators.Messages;
 using Nop.Web.Framework.Localization;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Messages
+namespace Nop.Web.Areas.Admin.Models.Messages
 {
     [Validator(typeof(MessageTemplateValidator))]
     public partial class MessageTemplateModel : BaseNopEntityModel, ILocalizedModel<MessageTemplateLocalizedModel>
@@ -22,7 +20,6 @@ namespace Nop.Admin.Models.Messages
             SelectedStoreIds = new List<int>();
             AvailableStores = new List<SelectListItem>();
         }
-
 
         [NopResourceDisplayName("Admin.ContentManagement.MessageTemplates.Fields.AllowedTokens")]
         public string AllowedTokens { get; set; }
@@ -61,14 +58,11 @@ namespace Nop.Admin.Models.Messages
 
         //store mapping
         [NopResourceDisplayName("Admin.ContentManagement.MessageTemplates.Fields.LimitedToStores")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedStoreIds { get; set; }
         public IList<SelectListItem> AvailableStores { get; set; }
         //comma-separated list of stores used on the list page
         [NopResourceDisplayName("Admin.ContentManagement.MessageTemplates.Fields.LimitedToStores")]
         public string ListOfStores { get; set; }
-
-
 
         public IList<MessageTemplateLocalizedModel> Locales { get; set; }
     }
@@ -79,6 +73,7 @@ namespace Nop.Admin.Models.Messages
         {
             AvailableEmailAccounts = new List<SelectListItem>();
         }
+
         public int LanguageId { get; set; }
 
         [NopResourceDisplayName("Admin.ContentManagement.MessageTemplates.Fields.BccEmailAddresses")]

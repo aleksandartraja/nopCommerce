@@ -5,13 +5,14 @@
     Html.SetActiveMenuItemSystemName("Payment methods");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Configuration.Payment.Methods")
     </h1>
     <div class="pull-right">
        &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_payment_method_list_buttons" })
     </div>
 </div>
 
@@ -20,9 +21,12 @@
         <div class="panel-group">
             <div class="panel panel-default">
                 <div class="panel-body">
+                    <p>
+                        @T("Admin.Configuration.Payment.Methods.DownloadMorePlugins")
+                    </p>
                     <div id="paymentmethods-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#paymentmethods-grid").kendoGrid({
                                 dataSource: {
@@ -150,7 +154,7 @@
                                     field: "SystemName",
                                     title: "@T("Admin.Configuration.Payment.Methods.Configure")",
                                     width: 150,
-                                    template: '<a class="btn btn-default" href="ConfigureMethod?systemName=#=SystemName#"><i class="fa fa-cog"></i>@T("Admin.Configuration.Payment.Methods.Configure")</a>'
+                                    template: '# if(ConfigurationUrl && ConfigurationUrl.length > 0) {# <a class="btn btn-default" href="#=ConfigurationUrl#"><i class="fa fa-cog"></i>@T("Admin.Configuration.Payment.Methods.Configure")</a>#} #'
                                 }, {
                                     command: {
                                         name: "edit",

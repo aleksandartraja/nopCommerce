@@ -1,4 +1,3 @@
-
 namespace Nop.Core.Configuration
 {
     /// <summary>
@@ -7,14 +6,20 @@ namespace Nop.Core.Configuration
     public partial class NopConfig
     {
         /// <summary>
-        /// Gets or sets a value indicating whether the site is run on multiple instances (e.g. web farm, Windows Azure with multiple instances, etc).
-        /// Do not enable it if you run on Azure but use one instance only
+        /// Gets or sets a value indicating whether to display the full error in production environment.
+        /// It's ignored (always enabled) in development environment
         /// </summary>
-        public bool MultipleInstancesEnabled { get; set; }
+        public bool DisplayFullErrorStack { get; set; }
+
         /// <summary>
-        /// Gets or sets a value indicating whether the site is run on Windows Azure Web Apps
+        /// Gets or sets a value of "Cache-Control" header value for static content
         /// </summary>
-        public bool RunOnAzureWebApps { get; set; }
+        public string StaticFilesCacheControl { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether we compress response
+        /// </summary>
+        public bool UseResponseCompression { get; set; }
 
         /// <summary>
         /// Gets or sets connection string for Azure BLOB storage
@@ -37,7 +42,11 @@ namespace Nop.Core.Configuration
         /// Gets or sets Redis connection string. Used when Redis caching is enabled
         /// </summary>
         public string RedisCachingConnectionString { get; set; }
-        
+        /// <summary>
+        /// Gets or sets a value indicating whether the data protection system should be configured to persist keys in the Redis database
+        /// </summary>
+        public bool PersistDataProtectionKeysToRedis { get; set; }
+
         /// <summary>
         /// Gets or sets path to database with user agent strings
         /// </summary>
@@ -72,9 +81,13 @@ namespace Nop.Core.Configuration
         public bool IgnoreStartupTasks { get; set; }
 
         /// <summary>
-        /// Gets or sets a value of "Cache-Control" header value for static content
+        /// Gets or sets a value indicating whether to clear /Plugins/bin directory on application startup
         /// </summary>
-        public string StaticFilesCacheControl { get; set; }
+        public bool ClearPluginShadowDirectoryOnStartup { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to load an assembly into the load-from context, bypassing some security checks.
+        /// </summary>
+        public bool UseUnsafeLoadAssembly { get; set; }
     }
 }

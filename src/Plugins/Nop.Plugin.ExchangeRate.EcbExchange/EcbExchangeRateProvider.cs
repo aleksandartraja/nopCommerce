@@ -42,7 +42,7 @@ namespace Nop.Plugin.ExchangeRate.EcbExchange
         public IList<Core.Domain.Directory.ExchangeRate> GetCurrencyLiveRates(string exchangeRateCurrencyCode)
         {
             if (exchangeRateCurrencyCode == null)
-                throw new ArgumentNullException("exchangeRateCurrencyCode");
+                throw new ArgumentNullException(nameof(exchangeRateCurrencyCode));
 
             //add euro with rate 1
             var ratesToEuro = new List<Core.Domain.Directory.ExchangeRate>
@@ -72,15 +72,13 @@ namespace Nop.Plugin.ExchangeRate.EcbExchange
 
                     //get daily rates
                     var dailyRates = document.SelectSingleNode("gesmes:Envelope/ns:Cube/ns:Cube", namespaces);
-                    DateTime updateDate;
-                    if (!DateTime.TryParseExact(dailyRates.Attributes["time"].Value, "yyyy-MM-dd", null, DateTimeStyles.None, out updateDate))
+                    if (!DateTime.TryParseExact(dailyRates.Attributes["time"].Value, "yyyy-MM-dd", null, DateTimeStyles.None, out DateTime updateDate))
                         updateDate = DateTime.UtcNow;
 
                     foreach (XmlNode currency in dailyRates.ChildNodes)
                     {
                         //get rate
-                        decimal currencyRate;
-                        if (!decimal.TryParse(currency.Attributes["rate"].Value, out currencyRate))
+                        if (!decimal.TryParse(currency.Attributes["rate"].Value, out decimal currencyRate))
                             continue;
 
                         ratesToEuro.Add(new Core.Domain.Directory.ExchangeRate()

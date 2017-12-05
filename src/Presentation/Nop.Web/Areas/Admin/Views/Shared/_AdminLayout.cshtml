@@ -2,11 +2,11 @@
 @inject IWorkContext workContext
 @inject IDateTimeHelper dateTimeHelper
 @inject IPermissionService permissionService
+@inject IEventPublisher eventPublisher
 @inject IHttpContextAccessor httpContextAccessor
 @inject CommonSettings commonSettings
 @inject LocalizationSettings localizationSettings
 @inject StoreInformationSettings storeInformationSettings
-
 @using System.Globalization
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Http
@@ -19,7 +19,6 @@
 @using Nop.Services.Customers
 @using Nop.Services.Helpers
 @using Nop.Services.Security;
-
 @{
     var rawUrl = webHelper.GetRawUrl(httpContextAccessor.HttpContext.Request);
     
@@ -40,9 +39,9 @@
         Html.AppendCssFileParts("~/lib/bootstrap/css/bootstrap.min.css");
     }
 
-    Html.AppendCssFileParts(string.Format("~/lib/kendo/{0}/kendo.rtl.min.css", kendoVersion));
-    Html.AppendCssFileParts(string.Format("~/lib/kendo/{0}/kendo.default.min.css", kendoVersion));
-    Html.AppendCssFileParts(string.Format("~/lib/kendo/{0}/kendo.common.min.css", kendoVersion));
+    Html.AppendCssFileParts($"~/lib/kendo/{kendoVersion}/kendo.rtl.min.css");
+    Html.AppendCssFileParts($"~/lib/kendo/{kendoVersion}/kendo.default.min.css");
+    Html.AppendCssFileParts($"~/lib/kendo/{kendoVersion}/kendo.common.min.css");
     Html.AppendCssFileParts("~/lib/jquery-ui-themes/smoothness/jquery-ui-1.10.3.custom.min.css");
     Html.AppendCssFileParts("~/lib/fontAwesome/css/font-awesome-4.6.3.min.css");
     Html.AppendCssFileParts("~/lib/typeahead/typeahead.css");
@@ -51,7 +50,7 @@
     Html.AppendCssFileParts("~/lib/adminLTE/skins/_all-skins.min.css");
 
     //scripts
-    Html.AppendScriptParts(string.Format("~/lib/kendo/{0}/kendo.web.min.js", kendoVersion));
+    Html.AppendScriptParts($"~/lib/kendo/{kendoVersion}/kendo.web.min.js");
     Html.AppendScriptParts("~/js/admin.search.js");
     Html.AppendScriptParts("~/js/admin.navigation.js");
     Html.AppendScriptParts("~/js/admin.common.js");
@@ -66,7 +65,7 @@
     Html.AppendScriptParts("~/lib/jquery-1.10.2.min.js");
 
     //page title
-    string adminPageTitle = !String.IsNullOrWhiteSpace(ViewBag.Title) ? ViewBag.Title + " / " : "";
+    string adminPageTitle = !string.IsNullOrWhiteSpace(ViewBag.Title) ? ViewBag.Title + " / " : "";
     adminPageTitle += T("Admin.PageTitle").Text;
 
     //has "Manage Maintenance" permission?
@@ -75,7 +74,7 @@
     //X-UA-Compatible tag
     if (commonSettings.RenderXuaCompatible)
     {
-        Html.AppendHeadCustomParts(string.Format("<meta http-equiv=\"X-UA-Compatible\" content=\"{0}\"/>", commonSettings.XuaCompatibleValue));
+        Html.AppendHeadCustomParts($"<meta http-equiv=\"X-UA-Compatible\" content=\"{commonSettings.XuaCompatibleValue}\"/>");
     }
 
     //sidebar
@@ -85,9 +84,11 @@
     //avatar
     var currentCustomer = workContext.CurrentCustomer;
 
+    //event
+    eventPublisher.Publish(new PageRenderingEvent(this.Html));
+
     //info: we specify "Admin" area for actions and widgets here for cases when we use this layout in a plugin that is running in a different area than "admin"
 }
-
 <!DOCTYPE html>
 <html@(supportRtl ? Html.Raw(" dir=\"rtl\"") : null)>
     <head>
@@ -98,7 +99,7 @@
         @Html.NopCssFiles(this.Url, ResourceLocation.Head, false)
         @Html.NopScripts(this.Url, ResourceLocation.Head, false)
     </head>
-    <body class="hold-transition skin-blue sidebar-mini @if (hideSidebar)
+    <body class="hold-transition skin-blue sidebar-mini @if (hideSidebar) 
                                                     {<text>sidebar-collapse</text>}">
         <div class="throbber">
             <div class="curtain">
@@ -147,18 +148,14 @@
                                         @currentCustomer.GetFullName()
                                     </li>
                                     <li>
-                                        <a href="@Url.Action("Logout", "Customer", new {area = ""}, null)">
-                                            @T("Admin.Header.Logout")
-                                        </a>
+                                        <a asp-controller="Customer" asp-action="Logout" asp-area="">@T("Admin.Header.Logout")</a>
                                     </li>
                                 }
                                 <li>
                                     @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_header_middle" })
                                 </li>
                                 <li>
-                                    <a href="@Url.Action("Index", "Home", new {area = ""})">
-                                        @T("Admin.Header.PublicStore")
-                                    </a>
+                                    <a asp-controller="Home" asp-action="Index" asp-area="">@T("Admin.Header.PublicStore")</a>
                                 </li>
                                 @if (canManageMaintenance)
                                 {
@@ -166,20 +163,16 @@
                                         <a href="#" data-toggle="dropdown"><i class="fa fa-gears"></i></a>
                                         <ul class="maintenance-menu dropdown-menu bg-light-blue" role="menu">
                                             <li>
-                                                @using (Html.BeginForm("ClearCache", "Common", new { area = "Admin" }))
-                                                {
-                                                    @Html.AntiForgeryToken()
-                                                    @Html.Hidden("returnurl", rawUrl)
+                                                <form asp-controller="Common" asp-action="ClearCache" asp-area="@AreaNames.Admin">
+                                                    <input name="returnurl" type="hidden" value="@rawUrl">
                                                     <button type="submit" class="bg-light-blue">
                                                         <span>@T("Admin.Header.ClearCache")</span>
                                                     </button>
-                                                }
+                                                </form>
                                             </li>
                                             <li>
-                                                @using (Html.BeginForm("RestartApplication", "Common", new { area = "Admin" }))
-                                                {
-                                                    @Html.AntiForgeryToken()
-                                                    @Html.Hidden("returnurl", rawUrl)
+                                                <form asp-controller="Common" asp-action="RestartApplication" asp-area="@AreaNames.Admin">
+                                                    <input name="returnurl" type="hidden" value="@rawUrl">
                                                     <button id="restart-application" type="submit" class="bg-light-blue">
                                                         <span>@T("Admin.Header.RestartApplication")</span>
                                                     </button>
@@ -190,7 +183,7 @@
                                                             });
                                                         });
                                                     </script>
-                                                }
+                                                </form>
                                             </li>
                                         </ul>
                                     </li>
@@ -216,7 +209,7 @@
                                 <input type="text" class="form-control admin-search-box typeahead" placeholder="@T("Admin.Menu.Search")">
                             </div>
                         </div>
-                        <script>
+                        <script type="text/javascript">
                             $(document).ready(function () {
                                 Admin.Search.init();
                             });
@@ -236,9 +229,9 @@
                 @if (!storeInformationSettings.HidePoweredByNopCommerce)
                 {
                     @*Would you like to remove the "Powered by nopCommerce" link in the bottom of the footer?
-                        Please find more info at http://www.nopcommerce.com/copyrightremoval.aspx*@
+                        Please find more info at https://www.nopcommerce.com/copyrightremoval.aspx*@
                     <div class="pull-left">
-                        Powered by <a href="http://www.nopcommerce.com/?utm_source=admin-panel&utm_medium=footer&utm_campaign=admin-panel" target="_blank">nopCommerce</a>
+                        Powered by <a href="https://www.nopcommerce.com/?utm_source=admin-panel&utm_medium=footer&utm_campaign=admin-panel" target="_blank">nopCommerce</a>
                     </div>
                 }
                 <div class="pull-right hidden-xs">
@@ -252,7 +245,7 @@
                 </div>
             </div>
         </div>
-        <script>
+        <script type="text/javascript">
             var AdminLTEOptions = {
                 boxWidgetOptions: {
                     boxWidgetIcons: {
@@ -262,10 +255,10 @@
                 }
             };
         </script>
-        @Html.NopCssFiles(this.Url, ResourceLocation.Foot)
-        @Html.NopScripts(this.Url, ResourceLocation.Foot)
+        @Html.NopCssFiles(this.Url, ResourceLocation.Footer)
+        @Html.NopScripts(this.Url, ResourceLocation.Footer)
         <a id="backTop" class="btn btn-back-top bg-teal"></a>
-        <script>
+        <script type="text/javascript">
             $(document).ready(function () {
                 $('#backTop').backTop();
 

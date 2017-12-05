@@ -11,13 +11,13 @@
     Html.SetActiveMenuItemSystemName("Manufacturers");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Catalog.Manufacturers")
     </h1>
     <div class="pull-right">
-        <a href="@Url.Action("Create")" class="btn bg-blue">
+        <a asp-action="Create" class="btn bg-blue">
             <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
         </a>
@@ -32,13 +32,13 @@
             </button>
             <ul class="dropdown-menu" role="menu">
                 <li>
-                    <a href="@Url.Action("ExportXml")">
+                    <a asp-action="ExportXml">
                         <i class="fa fa-file-code-o"></i>
                         @T("Admin.Common.ExportToXml")
                     </a>
                 </li>
                 <li>
-                    <a href="@Url.Action("ExportXlsx")">
+                    <a  asp-action="ExportXlsx">
                         <i class="fa fa-file-excel-o"></i>
                         @T("Admin.Common.ExportToExcel")
                     </a>
@@ -49,6 +49,7 @@
             <i class="fa fa-upload"></i>
             @T("Admin.Common.Import")
         </button>
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_manufacturer_list_buttons" })
     </div>
 </div>
 
@@ -61,18 +62,18 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchManufacturerName)
+                                    <nop-label asp-for="SearchManufacturerName" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.SearchManufacturerName)
+                                    <nop-editor asp-for="SearchManufacturerName" />
                                 </div>
                             </div>
                             <div class="form-group" @(Model.AvailableStores.SelectionIsNotPossible() ? Html.Raw("style=\"display:none\"") : null)>
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchStoreId)
+                                    <nop-label asp-for="SearchStoreId" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopDropDownList("SearchStoreId", Model.AvailableStores)
+                                    <nop-select asp-for="SearchStoreId" asp-items="Model.AvailableStores" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -92,7 +93,7 @@
                 <div class="panel-body">
                     <div id="manufacturers-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#manufacturers-grid").kendoGrid({
                                 dataSource: {
@@ -168,7 +169,7 @@
                                 return false;
                             });
 
-                            $("#@Html.FieldIdFor(model => model.SearchManufacturerName)").keydown(function(event) {
+                            $("#@Html.IdFor(model => model.SearchManufacturerName)").keydown(function(event) {
                                 if (event.keyCode == 13) {
                                     $("#search-manufacturers").click();
                                     return false;
@@ -178,7 +179,7 @@
 
                         function additionalData() {
                             var data = {
-                                SearchManufacturerName: $('#@Html.FieldIdFor(model => model.SearchManufacturerName)').val(),
+                                SearchManufacturerName: $('#@Html.IdFor(model => model.SearchManufacturerName)').val(),
                                 SearchStoreId: $('#SearchStoreId').val()
                             };
                             addAntiForgeryToken(data);
@@ -199,11 +200,9 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportFromExcel")</h4>
             </div>
-            @using (Html.BeginForm("ImportFromXlsx", "Manufacturer", FormMethod.Post, new { enctype = "multipart/form-data" }))
-            {
+            <form asp-controller="Manufacturer" asp-action="ImportFromXlsx" method="post" enctype="multipart/form-data">
                 <div class="form-horizontal">
                     <div class="modal-body">
-                        @Html.AntiForgeryToken()
                         <ul class="common-list">
                             <li>
                                 <em>@T("Admin.Catalog.Manufacturers.List.ImportFromExcelTip")</em>
@@ -231,7 +230,7 @@
                         </button>
                     </div>
                 </div>
-            }
+            </form>
         </div>
     </div>
 </div>

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Vendors;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Vendors;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Vendors;
 using Nop.Services.Common;
@@ -22,7 +22,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class VendorController : BaseAdminController
     {
@@ -45,7 +45,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public VendorController(ICustomerService customerService, 
             ILocalizationService localizationService,
@@ -94,29 +94,29 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(vendor,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(vendor,
-                                                           x => x.Description,
-                                                           localized.Description,
-                                                           localized.LanguageId);
+                    x => x.Description,
+                    localized.Description,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(vendor,
-                                                           x => x.MetaKeywords,
-                                                           localized.MetaKeywords,
-                                                           localized.LanguageId);
+                    x => x.MetaKeywords,
+                    localized.MetaKeywords,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(vendor,
-                                                           x => x.MetaDescription,
-                                                           localized.MetaDescription,
-                                                           localized.LanguageId);
+                    x => x.MetaDescription,
+                    localized.MetaDescription,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(vendor,
-                                                           x => x.MetaTitle,
-                                                           localized.MetaTitle,
-                                                           localized.LanguageId);
+                    x => x.MetaTitle,
+                    localized.MetaTitle,
+                    localized.LanguageId);
 
                 //search engine name
                 var seName = vendor.ValidateSeName(localized.SeName, localized.Name, false);
@@ -127,7 +127,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareVendorModel(VendorModel model, Vendor vendor, bool excludeProperties, bool prepareEntireAddressModel)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             var address = _addressService.GetAddressById(vendor != null ? vendor.AddressId : 0);
 
@@ -334,7 +334,7 @@ namespace Nop.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                int prevPictureId = vendor.PictureId;
+                var prevPictureId = vendor.PictureId;
                 vendor = model.ToEntity(vendor);
                 _vendorService.UpdateVendor(vendor);
 

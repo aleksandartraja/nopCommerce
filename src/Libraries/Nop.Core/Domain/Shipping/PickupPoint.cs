@@ -7,6 +7,9 @@ using System.Xml.Serialization;
 
 namespace Nop.Core.Domain.Shipping
 {
+    /// <summary>
+    /// Pickup point
+    /// </summary>
     public partial class PickupPoint
     {
         /// <summary>
@@ -70,13 +73,29 @@ namespace Nop.Core.Domain.Shipping
         public decimal PickupFee { get; set; }
 
         /// <summary>
-        /// Gets or sets an oppening hours
+        /// Gets or sets an opening hours
         /// </summary>
         public string OpeningHours { get; set; }
+
+        /// <summary>
+        /// Gets or sets the display order
+        /// </summary>
+        public int DisplayOrder { get; set; }
     }
 
+    /// <summary>
+    /// Type converter for "PickupPoint"
+    /// </summary>
     public class PickupPointTypeConverter : TypeConverter
     {
+        /// <summary>
+        /// Gets a value indicating whether this converter can        
+        /// convert an object in the given source type to the native type of the converter
+        /// using the context.
+        /// </summary>
+        /// <param name="context">Context</param>
+        /// <param name="sourceType">Source type</param>
+        /// <returns>Result</returns>
         public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
         {
             if (sourceType == typeof(string))
@@ -84,7 +103,14 @@ namespace Nop.Core.Domain.Shipping
 
             return base.CanConvertFrom(context, sourceType);
         }
-
+        
+        /// <summary>
+        /// Converts the given object to the converter's native type.
+        /// </summary>
+        /// <param name="context">Context</param>
+        /// <param name="culture">Culture</param>
+        /// <param name="value">Value</param>
+        /// <returns>Result</returns>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             if (value is string)
@@ -109,6 +135,14 @@ namespace Nop.Core.Domain.Shipping
             return base.ConvertFrom(context, culture, value);
         }
 
+        /// <summary>
+        /// Converts the given value object to the specified destination type using the specified context and arguments
+        /// </summary>
+        /// <param name="context">Context</param>
+        /// <param name="culture">Culture</param>
+        /// <param name="value">Value</param>
+        /// <param name="destinationType">Destination type</param>
+        /// <returns>Result</returns>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
             if (destinationType == typeof(string))

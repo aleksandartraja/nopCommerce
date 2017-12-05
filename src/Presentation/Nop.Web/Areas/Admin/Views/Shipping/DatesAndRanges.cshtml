@@ -5,13 +5,14 @@
     Html.SetActiveMenuItemSystemName("Dates and ranges");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Configuration.Shipping.DatesAndRanges")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_dates_and_ranges_buttons" })
     </div>
 </div>
 
@@ -28,7 +29,7 @@
                     </p>
                     <div id="deliverydate-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#deliverydate-grid").kendoGrid({
                                 dataSource: {
@@ -90,7 +91,7 @@
                     </script>
                 </div>
                 <div class="panel-footer">
-                    <a href="@Url.Action("CreateDeliveryDate")" class="btn btn-primary">
+                    <a asp-action="CreateDeliveryDate" class="btn btn-primary">
                         <i class="fa fa-plus-square"></i>
                         @T("Admin.Common.AddNew")
                     </a>
@@ -106,7 +107,7 @@
                     </p>
                     <div id="productavailabilityrange-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#productavailabilityrange-grid").kendoGrid({
                                 dataSource: {
@@ -168,7 +169,7 @@
                     </script>
                 </div>
                 <div class="panel-footer">
-                    <a href="@Url.Action("CreateProductAvailabilityRange")" class="btn btn-primary">
+                    <a asp-action="CreateProductAvailabilityRange" class="btn btn-primary">
                         <i class="fa fa-plus-square"></i>
                         @T("Admin.Common.AddNew")
                     </a>

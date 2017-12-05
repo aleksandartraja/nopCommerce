@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Helpers;
-using Nop.Admin.Models.Customers;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Helpers;
+using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Tax;
 using Nop.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
@@ -22,7 +23,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class CustomerRoleController : BaseAdminController
 	{
@@ -38,11 +39,12 @@ namespace Nop.Admin.Controllers
         private readonly IStoreService _storeService;
         private readonly IVendorService _vendorService;
         private readonly IWorkContext _workContext;
+	    private readonly TaxSettings _taxSettings;
         private readonly IStaticCacheManager _cacheManager;
 
-		#endregion
+        #endregion
 
-		#region Constructors
+        #region Ctor
 
         public CustomerRoleController(ICustomerService customerService,
             ILocalizationService localizationService, 
@@ -53,7 +55,8 @@ namespace Nop.Admin.Controllers
             IManufacturerService manufacturerService,
             IStoreService storeService,
             IVendorService vendorService,
-            IWorkContext workContext, 
+            IWorkContext workContext,
+            TaxSettings taxSettings,
             IStaticCacheManager cacheManager)
 		{
             this._customerService = customerService;
@@ -66,6 +69,7 @@ namespace Nop.Admin.Controllers
             this._storeService = storeService;
             this._vendorService = vendorService;
             this._workContext = workContext;
+		    this._taxSettings = taxSettings;
             this._cacheManager = cacheManager;
 		}
 
@@ -73,15 +77,17 @@ namespace Nop.Admin.Controllers
 
         #region Utilities
 
-        protected virtual CustomerRoleModel PrepareCustomerRoleModel(CustomerRole customerRole)
+        protected virtual void PrepareCustomerRoleModel(CustomerRoleModel model, CustomerRole customerRole)
         {
-            var model = customerRole.ToModel();
-            var product = _productService.GetProductById(customerRole.PurchasedWithProductId);
-            if (product != null)
+            if (customerRole != null)
             {
-                model.PurchasedWithProductName = product.Name;
+                var product = _productService.GetProductById(customerRole.PurchasedWithProductId);
+                if (product != null)
+                {
+                    model.PurchasedWithProductName = product.Name;
+                }
             }
-            return model;
+            model.TaxDisplayTypeValues = _taxSettings.TaxDisplayType.ToSelectList();
         }
 
         #endregion
@@ -110,8 +116,13 @@ namespace Nop.Admin.Controllers
             var customerRoles = _customerService.GetAllCustomerRoles(true);
             var gridModel = new DataSourceResult
 			{
-                Data = customerRoles.Select(PrepareCustomerRoleModel),
-                Total = customerRoles.Count()
+                Data = customerRoles.Select(cr =>
+                {
+                    var model = cr.ToModel();
+                    PrepareCustomerRoleModel(model, cr);
+                    return model;
+                }),
+                Total = customerRoles.Count
 			};
 
             return Json(gridModel);
@@ -123,6 +134,7 @@ namespace Nop.Admin.Controllers
                 return AccessDeniedView();
             
             var model = new CustomerRoleModel();
+            PrepareCustomerRoleModel(model, null);
             //default values
             model.Active = true;
             return View(model);
@@ -147,6 +159,7 @@ namespace Nop.Admin.Controllers
             }
 
             //If we got this far, something failed, redisplay form
+            PrepareCustomerRoleModel(model, null);
             return View(model);
         }
 
@@ -159,8 +172,9 @@ namespace Nop.Admin.Controllers
             if (customerRole == null)
                 //No customer role found with the specified id
                 return RedirectToAction("List");
-		    
-            var model = PrepareCustomerRoleModel(customerRole);
+
+            var model = customerRole.ToModel();
+            PrepareCustomerRoleModel(model, customerRole);
             return View(model);
 		}
 
@@ -200,6 +214,7 @@ namespace Nop.Admin.Controllers
                 }
 
                 //If we got this far, something failed, redisplay form
+                PrepareCustomerRoleModel(model, customerRole);
                 return View(model);
             }
             catch (Exception exc)
@@ -235,7 +250,6 @@ namespace Nop.Admin.Controllers
                 ErrorNotification(exc.Message);
                 return RedirectToAction("Edit", new { id = customerRole.Id });
             }
-
 		}
 
         public virtual IActionResult AssociateProductToCustomerRolePopup()
@@ -243,9 +257,11 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
                 return AccessDeniedView();
 
-            var model = new CustomerRoleModel.AssociateProductToCustomerRoleModel();
-            //a vendor should have access only to his products
-            model.IsLoggedInAsVendor = _workContext.CurrentVendor != null;
+            var model = new CustomerRoleModel.AssociateProductToCustomerRoleModel
+            {
+                //a vendor should have access only to his products
+                IsLoggedInAsVendor = _workContext.CurrentVendor != null
+            };
 
             //categories
             model.AvailableCategories.Add(new SelectListItem { Text = _localizationService.GetResource("Admin.Common.All"), Value = "0" });
@@ -301,17 +317,18 @@ namespace Nop.Admin.Controllers
                 pageSize: command.PageSize,
                 showHidden: true
                 );
-            var gridModel = new DataSourceResult();
-            gridModel.Data = products.Select(x => x.ToModel());
-            gridModel.Total = products.TotalCount;
+            var gridModel = new DataSourceResult
+            {
+                Data = products.Select(x => x.ToModel()),
+                Total = products.TotalCount
+            };
 
             return Json(gridModel);
         }
 
         [HttpPost]
         [FormValueRequired("save")]
-        public virtual IActionResult AssociateProductToCustomerRolePopup(string btnId, string productIdInput,
-            string productNameInput, CustomerRoleModel.AssociateProductToCustomerRoleModel model)
+        public virtual IActionResult AssociateProductToCustomerRolePopup(CustomerRoleModel.AssociateProductToCustomerRoleModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
                 return AccessDeniedView();
@@ -327,9 +344,6 @@ namespace Nop.Admin.Controllers
             //a vendor should have access only to his products
             model.IsLoggedInAsVendor = _workContext.CurrentVendor != null;
             ViewBag.RefreshPage = true;
-            ViewBag.productIdInput = productIdInput;
-            ViewBag.productNameInput = productNameInput;
-            ViewBag.btnId = btnId;
             ViewBag.productId = associatedProduct.Id;
             ViewBag.productName = associatedProduct.Name;
             return View(model);

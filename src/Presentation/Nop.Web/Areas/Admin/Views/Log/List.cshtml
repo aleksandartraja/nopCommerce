@@ -10,9 +10,8 @@
     Html.SetActiveMenuItemSystemName("Log");
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+
+<form asp-controller="Log" asp-action="List" method="post">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.System.Log")
@@ -26,7 +25,8 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.System.Log.ClearLog")
             </button>
-            @Html.ActionConfirmation("clearall")
+            <nop-action-confirmation asp-button-id="clearall" />
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_log_list_buttons" })
         </div>
     </div>
 
@@ -39,34 +39,34 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.CreatedOnFrom)
+                                        <nop-label asp-for="CreatedOnFrom" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopEditorFor(model => model.CreatedOnFrom)
+                                        <nop-editor asp-for="CreatedOnFrom" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.CreatedOnTo)
+                                        <nop-label asp-for="CreatedOnTo" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopEditorFor(model => model.CreatedOnTo)
+                                        <nop-editor asp-for="CreatedOnTo" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.Message)
+                                        <nop-label asp-for="Message" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopEditorFor(model => model.Message)
+                                        <nop-editor asp-for="Message" />
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <div class="col-md-4">
-                                        @Html.NopLabelFor(model => model.LogLevelId)
+                                        <nop-label asp-for="LogLevelId" />
                                     </div>
                                     <div class="col-md-8">
-                                        @Html.NopDropDownList("LogLevelId", Model.AvailableLogLevels)
+                                        <nop-select asp-for="LogLevelId" asp-items="Model.AvailableLogLevels" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -86,7 +86,7 @@
                     <div class="panel-body">
                         <div id="log-grid"></div>
 
-                        <script>
+                        <script type="text/javascript">
                             $(document).ready(function() {
                                 $("#log-grid").kendoGrid({
                                     dataSource: {
@@ -135,7 +135,8 @@
                                         width: 100
                                     }, {
                                         field: "ShortMessage",
-                                        title: "@T("Admin.System.Log.Fields.ShortMessage")"
+                                        title: "@T("Admin.System.Log.Fields.ShortMessage")",
+                                        encoded: false
                                     }, {
                                         field: "CreatedOn",
                                         title: "@T("Admin.System.Log.Fields.CreatedOn")",
@@ -171,7 +172,7 @@
                                     return false;
                                 });
 
-                                $("#@Html.FieldIdFor(model => model.Message)").keydown(function(event) {
+                                $("#@Html.IdFor(model => model.Message)").keydown(function(event) {
                                     if (event.keyCode == 13) {
                                         $("#search-log").click();
                                         return false;
@@ -237,10 +238,10 @@
 
                             function additionalData() {
                                 var data = {
-                                    CreatedOnFrom: $('#@Html.FieldIdFor(model => model.CreatedOnFrom)').val(),
-                                    CreatedOnTo: $('#@Html.FieldIdFor(model => model.CreatedOnTo)').val(),
-                                    Message: $('#@Html.FieldIdFor(model => model.Message)').val(),
-                                    LogLevelId: $('#@Html.FieldIdFor(model => model.LogLevelId)').val()
+                                    CreatedOnFrom: $('#@Html.IdFor(model => model.CreatedOnFrom)').val(),
+                                    CreatedOnTo: $('#@Html.IdFor(model => model.CreatedOnTo)').val(),
+                                    Message: $('#@Html.IdFor(model => model.Message)').val(),
+                                    LogLevelId: $('#@Html.IdFor(model => model.LogLevelId)').val()
                                 };
                                 addAntiForgeryToken(data);
                                 return data;
@@ -268,4 +269,4 @@
             </div>
         </div>
     </div>
-}
+</form>

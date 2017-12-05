@@ -6,10 +6,10 @@
     Layout = "_ColumnsOne";
 
     //title
-    Html.AddTitleParts(!String.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Name);
+    Html.AddTitleParts(!string.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Name);
     //meta
     Html.AddMetaDescriptionParts(Model.MetaDescription);
-    Html.AddMetaKeywordParts(Model.MetaKeywords);
+    Html.AddHeadCustomParts(Model.MetaKeywords);
     //page class
     Html.AppendPageCssClassParts("html-product-details-page");
 
@@ -17,7 +17,7 @@
     if (seoSettings.CanonicalUrlsEnabled)
     {
         var productUrl = Url.RouteUrl("Product", new { SeName = Model.SeName }, this.Url.ActionContext.HttpContext.Request.Scheme);
-        Html.AddCanonicalUrlParts(productUrl);
+        Html.AddCanonicalUrlParts(productUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
     }
 
     //open graph META tags
@@ -51,8 +51,7 @@
 <div class="page product-details-page">
     <div class="page-body">
         @await Component.InvokeAsync("Widget", new { widgetZone = "productdetails_top", additionalData = Model.Id })
-        @using (Html.BeginRouteForm("Product", new { SeName = Model.SeName }, FormMethod.Post, null, new { id = "product-details-form" }))
-        {
+        <form asp-route="Product" asp-route-sename="@Model.SeName" method="post" id="product-details-form">
             <div itemscope itemtype="http://schema.org/Product" data-productid="@Model.Id">
                 <div class="product-essential">
                     @await Component.InvokeAsync("Widget", new { widgetZone = "productdetails_before_pictures", additionalData = Model.Id })
@@ -66,7 +65,7 @@
                                 @Model.Name
                             </h1>
                         </div>
-                        @if (!String.IsNullOrEmpty(Model.ShortDescription))
+                        @if (!string.IsNullOrEmpty(Model.ShortDescription))
                         {
                             <div class="short-description">
                                 @Html.Raw(Model.ShortDescription)
@@ -87,7 +86,7 @@
                         @await Html.PartialAsync("_ShareButton", Model)
                         @await Component.InvokeAsync("Widget", new { widgetZone = "productdetails_overview_bottom", additionalData = Model.Id })
                     </div>
-                    @if (!String.IsNullOrEmpty(Model.FullDescription))
+                    @if (!string.IsNullOrEmpty(Model.FullDescription))
                     {
                         <div class="full-description" itemprop="description">
                             @Html.Raw(Model.FullDescription)
@@ -101,7 +100,7 @@
                         @foreach (var variant in Model.AssociatedProducts)
                         {
                             <div class="product-variant-line" data-productid="@variant.Id">
-                                @if (!String.IsNullOrWhiteSpace(variant.DefaultPictureModel.ImageUrl))
+                                @if (!string.IsNullOrWhiteSpace(variant.DefaultPictureModel.ImageUrl))
                                 {
                                     <div class="variant-picture">
                                         <img alt="@variant.DefaultPictureModel.AlternateText" src="@variant.DefaultPictureModel.ImageUrl"
@@ -109,13 +108,13 @@
                                     </div>
                                 }
                                 <div class="variant-overview">
-                                    @if (!String.IsNullOrWhiteSpace(variant.Name))
+                                    @if (!string.IsNullOrWhiteSpace(variant.Name))
                                     {
                                         <div class="variant-name">
                                             @variant.Name
                                         </div>
                                     }
-                                    @if (!String.IsNullOrWhiteSpace(variant.ShortDescription))
+                                    @if (!string.IsNullOrWhiteSpace(variant.ShortDescription))
                                     {
                                         <div class="variant-description">
                                             @Html.Raw(variant.ShortDescription)
@@ -132,43 +131,43 @@
                                     <!--attributes-->
                                     @{
                                         var dataDictAttributes = new ViewDataDictionary(ViewData);
-                                        dataDictAttributes.TemplateInfo.HtmlFieldPrefix = string.Format("attributes_{0}", variant.Id);
+                                        dataDictAttributes.TemplateInfo.HtmlFieldPrefix = $"attributes_{variant.Id}";
                                         @await Html.PartialAsync("_ProductAttributes", variant.ProductAttributes, dataDictAttributes)
                                     }
                                     <!--gift card-->
                                     @{
                                         var dataDictGiftCard = new ViewDataDictionary(ViewData);
-                                        dataDictGiftCard.TemplateInfo.HtmlFieldPrefix = string.Format("giftcard_{0}", variant.Id);
+                                        dataDictGiftCard.TemplateInfo.HtmlFieldPrefix = $"giftcard_{variant.Id}";
                                         @await Html.PartialAsync("_GiftCardInfo", variant.GiftCard, dataDictGiftCard)
                                     }
                                     <!--rental info-->
                                     @{
                                         var dataDictRental = new ViewDataDictionary(ViewData);
-                                        dataDictRental.TemplateInfo.HtmlFieldPrefix = string.Format("rental_{0}", variant.Id);
+                                        dataDictRental.TemplateInfo.HtmlFieldPrefix = $"rental_{variant.Id}";
                                         @await Html.PartialAsync("_RentalInfo", variant, dataDictRental)
                                     }
                                     <!--price & add to cart-->
                                     @{
                                         var dataDictPrice = new ViewDataDictionary(ViewData);
-                                        dataDictPrice.TemplateInfo.HtmlFieldPrefix = string.Format("price_{0}", variant.Id);
+                                        dataDictPrice.TemplateInfo.HtmlFieldPrefix = $"price_{variant.Id}";
                                         @await Html.PartialAsync("_ProductPrice", variant.ProductPrice, dataDictPrice)
                                     }
                                     <!--price breaks-->
                                     @await Html.PartialAsync("_ProductTierPrices", variant.TierPrices)
                                     @{
                                         var dataDictAddToCart = new ViewDataDictionary(ViewData);
-                                        dataDictAddToCart.TemplateInfo.HtmlFieldPrefix = string.Format("addtocart_{0}", variant.Id);
+                                        dataDictAddToCart.TemplateInfo.HtmlFieldPrefix = $"addtocart_{variant.Id}";
                                         @await Html.PartialAsync("_AddToCart", variant.AddToCart, dataDictAddToCart)
                                     }
                                     <!--wishlist-->
                                     @{
                                         var dataDictAddToWishlist = new ViewDataDictionary(ViewData);
-                                        dataDictAddToWishlist.TemplateInfo.HtmlFieldPrefix = string.Format("addtocart_{0}", variant.Id);
+                                        dataDictAddToWishlist.TemplateInfo.HtmlFieldPrefix = $"addtocart_{variant.Id}";
                                         @await Html.PartialAsync("_AddToWishlist", variant.AddToCart, dataDictAddToWishlist)
                                     }
                                 </div>
                             </div>
-                        }
+                                        }
                         @if (Model.AssociatedProducts.Count == 0)
                         {
                             <div class="no-associated-products">
@@ -180,10 +179,10 @@
                     @await Html.PartialAsync("_ProductTags", Model.ProductTags)
                 </div>
                 @*we do not display "also purchased" for grouped products
-                @await Component.InvokeAsync("ProductsAlsoPurchased", new { productId = Model.Id })*@
+                    @await Component.InvokeAsync("ProductsAlsoPurchased", new { productId = Model.Id })*@
                 @await Component.InvokeAsync("RelatedProducts", new { productId = Model.Id })
             </div>
-        }
+        </form>
         @await Component.InvokeAsync("Widget", new { widgetZone = "productdetails_bottom", additionalData = Model.Id })
     </div>
 </div>

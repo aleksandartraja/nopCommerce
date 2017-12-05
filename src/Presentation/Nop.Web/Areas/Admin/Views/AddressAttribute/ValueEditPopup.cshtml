@@ -5,10 +5,9 @@
     //page title
     ViewBag.Title = T("Admin.Address.AddressAttributes.Values.EditValueDetails").Text;
 }
-
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="AddressAttribute" asp-action="ValueEditPopup"
+      asp-route-btnId="@Context.Request.Query["btnId"]"
+      asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Address.AddressAttributes.Values.EditValueDetails")
@@ -18,7 +17,8 @@
                 <i class="fa fa-floppy-o"></i>
                 @T("Admin.Common.Save")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_address_attribute_value_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdateValue", Model)
-}
+</form>

@@ -1,804 +1,1128 @@
-﻿#if NET451
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Services.Security;
-using Nop.Web.Framework.Security;
+using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     //Controller for Roxy fileman (http://www.roxyfileman.com/) for TinyMCE editor
-    //the original file was \RoxyFileman-1.4.3-net\fileman\asp_net\main.ashx
-    //some custom changes by wooncherk contribution
+    //the original file was \RoxyFileman-1.4.5-net\fileman\asp_net\main.ashx
 
     //do not validate request token (XSRF)
     [AdminAntiForgery(true)]
     public class RoxyFilemanController : BaseAdminController
     {
+        #region Constants
+
+        /// <summary>
+        /// Default path to root directory of uploaded files (if appropriate settings are not specified)
+        /// </summary>
+        private const string DEFAULT_ROOT_DIRECTORY = "/images/uploaded";
+
+        /// <summary>
+        /// Path to directory of language files
+        /// </summary>
+        private const string LANGUAGE_DIRECTORY = "/lib/Roxy_Fileman/lang";
+
+        /// <summary>
+        /// Path to configuration file
+        /// </summary>
+        private const string CONFIGURATION_FILE = "/lib/Roxy_Fileman/conf.json";
+
+        #endregion
+
         #region Fields
 
-        Dictionary<string, string> _settings = null;
-        Dictionary<string, string> _lang = null;
-        //custom code by nopCommerce team
-        string confFile = "~/wwwroot/lib/Roxy_Fileman/conf.json";
-        
-        //custom code by nopCommerce team
+        private Dictionary<string, string> _settings;
+        private Dictionary<string, string> _languageResources;
+
+        private readonly IHostingEnvironment _hostingEnvironment;
         private readonly IPermissionService _permissionService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IWorkContext _workContext;
 
         #endregion
 
         #region Ctor
 
-        //custom code by nopCommerce team
-        public RoxyFilemanController(IPermissionService permissionService, IHttpContextAccessor httpContextAccessor)
+        public RoxyFilemanController(IHostingEnvironment hostingEnvironment,
+            IPermissionService permissionService,
+            IWorkContext workContext)
         {
+            this._hostingEnvironment = hostingEnvironment;
             this._permissionService = permissionService;
-            this._httpContextAccessor = httpContextAccessor;
+            this._workContext = workContext;
         }
 
         #endregion
 
         #region Methods
 
-        public virtual void ProcessRequest() {
-            string action = "DIRLIST";
-
-            //custom code by nopCommerce team
-            if (!_permissionService.Authorize(StandardPermissionProvider.HtmlEditorManagePictures))
-                _httpContextAccessor.HttpContext.Response.WriteAsync(GetErrorRes("You don't have required permission"));
-
-            try{
-                if (!StringValues.IsNullOrEmpty(_httpContextAccessor.HttpContext.Request.Form["a"]))
-                    action = _httpContextAccessor.HttpContext.Request.Form["a"];
-
-                //custom code by nopCommerce team
-                //VerifyAction(action);
-                switch (action.ToUpper())
-                {
-                    case "DIRLIST":
-                        ListDirTree(_httpContextAccessor.HttpContext.Request.Form["type"]);
-                        break;
-                    case "FILESLIST":
-                        ListFiles(_httpContextAccessor.HttpContext.Request.Form["d"], _httpContextAccessor.HttpContext.Request.Form["type"]);
-                        break;
-                    case "COPYDIR":
-                        CopyDir(_httpContextAccessor.HttpContext.Request.Form["d"], _httpContextAccessor.HttpContext.Request.Form["n"]);
-                        break;
-                    case "COPYFILE":
-                        CopyFile(_httpContextAccessor.HttpContext.Request.Form["f"], _httpContextAccessor.HttpContext.Request.Form["n"]);
-                        break;
-                    case "CREATEDIR":
-                        CreateDir(_httpContextAccessor.HttpContext.Request.Form["d"], _httpContextAccessor.HttpContext.Request.Form["n"]);
-                        break;
-                    case "DELETEDIR":
-                        DeleteDir(_httpContextAccessor.HttpContext.Request.Form["d"]);
-                        break;
-                    case "DELETEFILE":
-                        DeleteFile(_httpContextAccessor.HttpContext.Request.Form["f"]);
-                        break;
-                    case "DOWNLOAD":
-                        DownloadFile(_httpContextAccessor.HttpContext.Request.Form["f"]);
-                        break;
-                    case "DOWNLOADDIR":
-                        DownloadDir(_httpContextAccessor.HttpContext.Request.Form["d"]);
-                        break;
-                    case "MOVEDIR":
-                        MoveDir(_httpContextAccessor.HttpContext.Request.Form["d"], _httpContextAccessor.HttpContext.Request.Form["n"]);
-                        break;
-                    case "MOVEFILE":
-                        MoveFile(_httpContextAccessor.HttpContext.Request.Form["f"], _httpContextAccessor.HttpContext.Request.Form["n"]);
-                        break;
-                    case "RENAMEDIR":
-                        RenameDir(_httpContextAccessor.HttpContext.Request.Form["d"], _httpContextAccessor.HttpContext.Request.Form["n"]);
-                        break;
-                    case "RENAMEFILE":
-                        RenameFile(_httpContextAccessor.HttpContext.Request.Form["f"], _httpContextAccessor.HttpContext.Request.Form["n"]);
-                        break;
-                    case "GENERATETHUMB":
-                        int w = 140, h = 0;
-                        int.TryParse(_httpContextAccessor.HttpContext.Request.Form["width"].ToString().Replace("px", ""), out w);
-                        int.TryParse(_httpContextAccessor.HttpContext.Request.Form["height"].ToString().Replace("px", ""), out h);
-                        ShowThumbnail(_httpContextAccessor.HttpContext.Request.Form["f"], w, h);
-                        break;
-                    case "UPLOAD":
-                        Upload(_httpContextAccessor.HttpContext.Request.Form["d"]);
-                        break;
-                    default:
-                        _httpContextAccessor.HttpContext.Response.WriteAsync(GetErrorRes("This action is not implemented."));
-                        break;
-                }
-        
+        /// <summary>
+        /// Create configuration file for RoxyFileman
+        /// </summary>
+        public virtual void CreateConfiguration()
+        {
+            var filePath = GetFullPath(CONFIGURATION_FILE);
+            
+            //create file if not exists
+            if (!System.IO.File.Exists(filePath))
+            {
+                //we use 'using' to close the file after it's created
+                using (System.IO.File.Create(filePath)) { }
             }
-            catch(Exception ex){
-                if (action == "UPLOAD" && !IsAjaxUpload())
-                {
-                    _httpContextAccessor.HttpContext.Response.WriteAsync("<script>");
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(
-                        "parent.fileUploaded(" + GetErrorRes(LangRes("E_UploadNoFiles")) + ");");
-                    _httpContextAccessor.HttpContext.Response.WriteAsync("</script>");
-                }
-                else{
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetErrorRes(ex.Message));
-                }
-            }
+
+            //try to read existing configuration
+            var existingText = System.IO.File.ReadAllText(filePath);
+            var existingConfiguration = JsonConvert.DeserializeAnonymousType(existingText, new
+            {
+                FILES_ROOT = string.Empty,
+                SESSION_PATH_KEY = string.Empty,
+                THUMBS_VIEW_WIDTH = string.Empty,
+                THUMBS_VIEW_HEIGHT = string.Empty,
+                PREVIEW_THUMB_WIDTH = string.Empty,
+                PREVIEW_THUMB_HEIGHT = string.Empty,
+                MAX_IMAGE_WIDTH = string.Empty,
+                MAX_IMAGE_HEIGHT = string.Empty,
+                DEFAULTVIEW = string.Empty,
+                FORBIDDEN_UPLOADS = string.Empty,
+                ALLOWED_UPLOADS = string.Empty,
+                FILEPERMISSIONS = string.Empty,
+                DIRPERMISSIONS = string.Empty,
+                LANG = string.Empty,
+                DATEFORMAT = string.Empty,
+                OPEN_LAST_DIR = string.Empty,
+                INTEGRATION = string.Empty,
+                RETURN_URL_PREFIX = string.Empty,
+                DIRLIST = string.Empty,
+                CREATEDIR = string.Empty,
+                DELETEDIR = string.Empty,
+                MOVEDIR = string.Empty,
+                COPYDIR = string.Empty,
+                RENAMEDIR = string.Empty,
+                FILESLIST = string.Empty,
+                UPLOAD = string.Empty,
+                DOWNLOAD = string.Empty,
+                DOWNLOADDIR = string.Empty,
+                DELETEFILE = string.Empty,
+                MOVEFILE = string.Empty,
+                COPYFILE = string.Empty,
+                RENAMEFILE = string.Empty,
+                GENERATETHUMB = string.Empty,
+            });
+
+            //check whether the path base has changed, otherwise there is no need to overwrite the configuration file
+            var currentPathBase = this.HttpContext.Request.PathBase.ToString();
+            if (existingConfiguration?.RETURN_URL_PREFIX?.Equals(currentPathBase) ?? false)
+                return;
+
+            //create configuration
+            var configuration = new
+            {
+                FILES_ROOT = existingConfiguration?.FILES_ROOT ?? "/images/uploaded",
+                SESSION_PATH_KEY = existingConfiguration?.SESSION_PATH_KEY ?? string.Empty,
+                THUMBS_VIEW_WIDTH = existingConfiguration?.THUMBS_VIEW_WIDTH ?? "140",
+                THUMBS_VIEW_HEIGHT = existingConfiguration?.THUMBS_VIEW_HEIGHT ?? "120",
+                PREVIEW_THUMB_WIDTH = existingConfiguration?.PREVIEW_THUMB_WIDTH ?? "300",
+                PREVIEW_THUMB_HEIGHT = existingConfiguration?.PREVIEW_THUMB_HEIGHT ?? "200",
+                MAX_IMAGE_WIDTH = existingConfiguration?.MAX_IMAGE_WIDTH ?? "1000",
+                MAX_IMAGE_HEIGHT = existingConfiguration?.MAX_IMAGE_HEIGHT ?? "1000",
+                DEFAULTVIEW = existingConfiguration?.DEFAULTVIEW ?? "list",
+                FORBIDDEN_UPLOADS = existingConfiguration?.FORBIDDEN_UPLOADS ?? "zip js jsp jsb mhtml mht xhtml xht php phtml " +
+                    "php3 php4 php5 phps shtml jhtml pl sh py cgi exe application gadget hta cpl msc jar vb jse ws wsf wsc wsh " +
+                    "ps1 ps2 psc1 psc2 msh msh1 msh2 inf reg scf msp scr dll msi vbs bat com pif cmd vxd cpl htpasswd htaccess",
+                ALLOWED_UPLOADS = existingConfiguration?.ALLOWED_UPLOADS ?? string.Empty,
+                FILEPERMISSIONS = existingConfiguration?.FILEPERMISSIONS ?? "0644",
+                DIRPERMISSIONS = existingConfiguration?.DIRPERMISSIONS ?? "0755",
+                LANG = existingConfiguration?.LANG ?? _workContext.WorkingLanguage.UniqueSeoCode,
+                DATEFORMAT = existingConfiguration?.DATEFORMAT ?? "dd/MM/yyyy HH:mm",
+                OPEN_LAST_DIR = existingConfiguration?.OPEN_LAST_DIR ?? "yes",
+
+                //no need user to configure
+                INTEGRATION = "tinymce4",
+                RETURN_URL_PREFIX = currentPathBase,
+                DIRLIST = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=DIRLIST",
+                CREATEDIR = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=CREATEDIR",
+                DELETEDIR = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=DELETEDIR",
+                MOVEDIR = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=MOVEDIR",
+                COPYDIR = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=COPYDIR",
+                RENAMEDIR = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=RENAMEDIR",
+                FILESLIST = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=FILESLIST",
+                UPLOAD = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=UPLOAD",
+                DOWNLOAD = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=DOWNLOAD",
+                DOWNLOADDIR = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=DOWNLOADDIR",
+                DELETEFILE = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=DELETEFILE",
+                MOVEFILE = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=MOVEFILE",
+                COPYFILE = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=COPYFILE",
+                RENAMEFILE = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=RENAMEFILE",
+                GENERATETHUMB = $"{this.HttpContext.Request.PathBase}/Admin/RoxyFileman/ProcessRequest?a=GENERATETHUMB",
+            };
+
+            //save the file
+            var text = JsonConvert.SerializeObject(configuration, Formatting.Indented);
+            System.IO.File.WriteAllText(filePath, text);
         }
-        
+
+        /// <summary>
+        /// Process request
+        /// </summary>
+        public virtual void ProcessRequest()
+        {
+            //async requests are disabled in the js code, so use .Wait() method here
+            ProcessRequestAsync().Wait();
+        }
+
         #endregion
 
         #region Utitlies
 
-        private string FixPath(string path)
+        /// <summary>
+        /// Process the incoming request
+        /// </summary>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task ProcessRequestAsync()
         {
-            //custom code by nopCommerce team
-            if (path == null)
-                path = "";
-
-            if (!path.StartsWith("~")){
-                if (!path.StartsWith("/"))
-                    path = "/" + path;
-                path = "~" + path;
-            }
-
-            //custom code by nopCommerce team
-            var rootDirectory = GetSetting("FILES_ROOT");
-            if (!path.ToLowerInvariant().Contains(rootDirectory.ToLowerInvariant()))
-                path = rootDirectory;
-
-            return CommonHelper.MapPath(path);
-        }
-
-        private string GetLangFile(){
-            string filename = "../lang/" + GetSetting("LANG") + ".json";
-            if (!System.IO.File.Exists(CommonHelper.MapPath(filename)))
-                filename = "../lang/en.json";
-            return filename;
-        }
-
-        protected virtual string LangRes(string name)
-        {
-            string ret = name;
-            if (_lang == null)
-                _lang = ParseJSON(GetLangFile());
-            if (_lang.ContainsKey(name))
-                ret = _lang[name];
-
-            return ret;
-        }
-
-        protected virtual string GetFileType(string ext){
-            string ret = "file";
-            ext = ext.ToLower();
-            if(ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".gif")
-                ret = "image";
-              else if(ext == ".swf" || ext == ".flv")
-                ret = "flash";
-            return ret;
-        }
-
-        protected virtual bool CanHandleFile(string filename)
-        {
-            bool ret = false;
-            FileInfo file = new FileInfo(filename);
-            string ext = file.Extension.Replace(".", "").ToLower();
-            string setting = GetSetting("FORBIDDEN_UPLOADS").Trim().ToLower();
-            if (setting != "")
+            var action = "DIRLIST";
+            try
             {
-                ArrayList tmp = new ArrayList();
-                tmp.AddRange(Regex.Split(setting, "\\s+"));
-                if (!tmp.Contains(ext))
-                    ret = true;
+                if (!_permissionService.Authorize(StandardPermissionProvider.HtmlEditorManagePictures))
+                    throw new Exception("You don't have required permission");
+
+                if (!StringValues.IsNullOrEmpty(HttpContext.Request.Query["a"]))
+                    action = HttpContext.Request.Query["a"];
+
+                switch (action.ToUpper())
+                {
+                    case "DIRLIST":
+                        await GetDirectoriesAsync(HttpContext.Request.Query["type"]);
+                        break;
+                    case "FILESLIST":
+                        await GetFilesAsync(HttpContext.Request.Query["d"], HttpContext.Request.Query["type"]);
+                        break;
+                    case "COPYDIR":
+                        await CopyDirectoryAsync(HttpContext.Request.Query["d"], HttpContext.Request.Query["n"]);
+                        break;
+                    case "COPYFILE":
+                        await CopyFileAsync(HttpContext.Request.Query["f"], HttpContext.Request.Query["n"]);
+                        break;
+                    case "CREATEDIR":
+                        await CreateDirectoryAsync(HttpContext.Request.Query["d"], HttpContext.Request.Query["n"]);
+                        break;
+                    case "DELETEDIR":
+                        await DeleteDirectoryAsync(HttpContext.Request.Query["d"]);
+                        break;
+                    case "DELETEFILE":
+                        await DeleteFileAsync(HttpContext.Request.Query["f"]);
+                        break;
+                    case "DOWNLOAD":
+                        await DownloadFileAsync(HttpContext.Request.Query["f"]);
+                        break;
+                    case "DOWNLOADDIR":
+                        await DownloadDirectoryAsync(HttpContext.Request.Query["d"]);
+                        break;
+                    case "MOVEDIR":
+                        await MoveDirectoryAsync(HttpContext.Request.Query["d"], HttpContext.Request.Query["n"]);
+                        break;
+                    case "MOVEFILE":
+                        await MoveFileAsync(HttpContext.Request.Query["f"], HttpContext.Request.Query["n"]);
+                        break;
+                    case "RENAMEDIR":
+                        await RenameDirectoryAsync(HttpContext.Request.Query["d"], HttpContext.Request.Query["n"]);
+                        break;
+                    case "RENAMEFILE":
+                        await RenameFileAsync(HttpContext.Request.Query["f"], HttpContext.Request.Query["n"]);
+                        break;
+                    case "GENERATETHUMB":
+                        int.TryParse(HttpContext.Request.Query["width"].ToString().Replace("px", ""), out int w);
+                        int.TryParse(HttpContext.Request.Query["height"].ToString().Replace("px", ""), out int h);
+                        CreateThumbnail(HttpContext.Request.Query["f"], w, h);
+                        break;
+                    case "UPLOAD":
+                        await UploadFilesAsync(HttpContext.Request.Form["d"]);
+                        break;
+                    default:
+                        await HttpContext.Response.WriteAsync(GetErrorResponse("This action is not implemented."));
+                        break;
+                }
             }
-            setting = GetSetting("ALLOWED_UPLOADS").Trim().ToLower();
-            if (setting != "")
+            catch (Exception ex)
             {
-                ArrayList tmp = new ArrayList();
-                tmp.AddRange(Regex.Split(setting, "\\s+"));
-                if (!tmp.Contains(ext))
-                    ret = false;
+                if (action == "UPLOAD" && !IsAjaxRequest())
+                    await HttpContext.Response.WriteAsync($"<script>parent.fileUploaded({GetErrorResponse(GetLanguageResource("E_UploadNoFiles"))});</script>");
+                else
+                    await HttpContext.Response.WriteAsync(GetErrorResponse(ex.Message));
             }
-        
-            return ret;
         }
 
-        protected virtual Dictionary<string, string> ParseJSON(string file){
-            Dictionary<string, string> ret = new Dictionary<string,string>();
-            string json = "";
-            try{
-                json = System.IO.File.ReadAllText(CommonHelper.MapPath(file), System.Text.Encoding.UTF8);
+        /// <summary>
+        /// Get the virtual path to root directory of uploaded files 
+        /// </summary>
+        /// <returns>Path</returns>
+        protected virtual string GetRootDirectory()
+        {
+            var filesRoot = GetSetting("FILES_ROOT");
+
+            var sessionPathKey = GetSetting("SESSION_PATH_KEY");
+            if (!string.IsNullOrEmpty(sessionPathKey))
+                filesRoot = HttpContext.Session.GetString(sessionPathKey);
+
+            if (string.IsNullOrEmpty(filesRoot))
+                filesRoot = DEFAULT_ROOT_DIRECTORY;
+
+            return filesRoot;
+        }
+
+        /// <summary>
+        /// Get a virtual path with the root directory
+        /// </summary>
+        /// <param name="path">Path</param>
+        /// <returns>Path</returns>
+        protected virtual string GetVirtualPath(string path)
+        {
+            path = path ?? string.Empty;
+
+            var rootDirectory = GetRootDirectory();
+            if (!path.StartsWith(rootDirectory))
+                path = rootDirectory + path;
+
+            return path;
+        }
+
+        /// <summary>
+        /// Get the absolute path by virtual path
+        /// </summary>
+        /// <param name="virtualPath">Virtual path</param>
+        /// <returns>Path</returns>
+        protected virtual string GetFullPath(string virtualPath)
+        {
+            virtualPath = virtualPath ?? string.Empty;
+            if (!virtualPath.StartsWith("/"))
+                virtualPath = "/" + virtualPath;
+            virtualPath = virtualPath.TrimEnd('/');
+            virtualPath = virtualPath.Replace('/', '\\');
+
+            return _hostingEnvironment.WebRootPath + virtualPath;
+        }
+
+        /// <summary>
+        /// Get a value of the configuration setting
+        /// </summary>
+        /// <param name="key">Setting key</param>
+        /// <returns>Setting value</returns>
+        protected virtual string GetSetting(string key)
+        {
+            if (_settings == null)
+                _settings = ParseJson(GetFullPath(CONFIGURATION_FILE));
+
+            if (_settings.TryGetValue(key, out string value))
+                return value;
+
+            return null;
+        }
+
+        /// <summary>
+        /// Get the language resource value
+        /// </summary>
+        /// <param name="key">Language resource key</param>
+        /// <returns>Language resource value</returns>
+        protected virtual string GetLanguageResource(string key)
+        {
+            if (_languageResources == null)
+                _languageResources = ParseJson(GetLanguageFile());
+
+            if (_languageResources.TryGetValue(key, out string value))
+                return value;
+
+            return key;
+        }
+
+        /// <summary>
+        /// Get the absolute path to the language resources file
+        /// </summary>
+        /// <returns>Path</returns>
+        protected virtual string GetLanguageFile()
+        {
+            var languageCode = GetSetting("LANG");
+            var languageFile = $"{LANGUAGE_DIRECTORY}/{languageCode}.json";
+
+            if (!System.IO.File.Exists(GetFullPath(languageFile)))
+                languageFile = $"{LANGUAGE_DIRECTORY}/en.json";
+
+            return GetFullPath(languageFile);
+        }
+
+        /// <summary>
+        /// Parse the JSON file
+        /// </summary>
+        /// <param name="file">Path to the file</param>
+        /// <returns>Collection of keys and values from the parsed file</returns>
+        protected virtual Dictionary<string, string> ParseJson(string file)
+        {
+            var result = new Dictionary<string, string>();
+            var json = string.Empty;
+            try
+            {
+                json = System.IO.File.ReadAllText(file, System.Text.Encoding.UTF8)?.Trim();
             }
-            catch{}
+            catch { }
+            
+            if (string.IsNullOrEmpty(json))
+                return result;
+
+            if (json.StartsWith("{"))
+                json = json.Substring(1, json.Length - 2);
 
             json = json.Trim();
-            if(json != ""){
-                if (json.StartsWith("{"))
-                    json = json.Substring(1, json.Length - 2);
-                json = json.Trim();
-                json = json.Substring(1, json.Length - 2);
-                string[] lines = Regex.Split(json, "\"\\s*,\\s*\"");
-                foreach(string line in lines){
-                    string[] tmp = Regex.Split(line, "\"\\s*:\\s*\"");
-                    try{
-                        if (tmp[0] != "" && !ret.ContainsKey(tmp[0]))
+            json = json.Substring(1, json.Length - 2);
+
+            var lines = Regex.Split(json, "\"\\s*,\\s*\"");
+            foreach (var line in lines)
+            {
+                var tmp = Regex.Split(line, "\"\\s*:\\s*\"");
+                try
+                {
+                    if (!string.IsNullOrEmpty(tmp[0]) && !result.ContainsKey(tmp[0]))
+                        result.Add(tmp[0], tmp[1]);
+                }
+                catch { }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get a file type by file extension
+        /// </summary>
+        /// <param name="fileExtension">File extension</param>
+        /// <returns>File type</returns>
+        protected virtual string GetFileType(string fileExtension)
+        {
+            var fileType = "file";
+
+            fileExtension = fileExtension.ToLower();
+            if (fileExtension == ".jpg" || fileExtension == ".jpeg" || fileExtension == ".png" || fileExtension == ".gif")
+                fileType = "image";
+
+            if (fileExtension == ".swf" || fileExtension == ".flv")
+                fileType = "flash";
+
+            return fileType;
+        }
+
+        /// <summary>
+        /// Check whether there are any restrictions on handling the file
+        /// </summary>
+        /// <param name="path">Path to the file</param>
+        /// <returns>True if the file can be handled; otherwise false</returns>
+        protected virtual bool CanHandleFile(string path)
+        {
+            var result = false;
+            var fileExtension = new FileInfo(path).Extension.Replace(".", "").ToLower();
+
+            var forbiddenUploads = GetSetting("FORBIDDEN_UPLOADS").Trim().ToLower();
+            if (!string.IsNullOrEmpty(forbiddenUploads))
+            {
+                var forbiddenFileExtensions = new ArrayList(Regex.Split(forbiddenUploads, "\\s+"));
+                result = !forbiddenFileExtensions.Contains(fileExtension);
+            }
+
+            var allowedUploads = GetSetting("ALLOWED_UPLOADS").Trim().ToLower();
+            if (!string.IsNullOrEmpty(allowedUploads))
+            {
+                var allowedFileExtensions = new ArrayList(Regex.Split(allowedUploads, "\\s+"));
+                result = allowedFileExtensions.Contains(fileExtension);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get the string to write to the response
+        /// </summary>
+        /// <param name="type">Type of the response</param>
+        /// <param name="message">Additional message</param>
+        /// <returns>String to write to the response</returns>
+        protected virtual string GetResponse(string type, string message)
+        {
+            return $"{{\"res\":\"{type}\",\"msg\":\"{message?.Replace("\"", "\\\"")}\"}}";
+        }
+
+        /// <summary>
+        /// Get the string to write a success response
+        /// </summary>
+        /// <param name="message">Additional message</param>
+        /// <returns>String to write to the response</returns>
+        protected virtual string GetSuccessResponse(string message = null)
+        {
+            return GetResponse("ok", message);
+        }
+
+        /// <summary>
+        /// Get the string to write an error response
+        /// </summary>
+        /// <param name="message">Additional message</param>
+        /// <returns>String to write to the response</returns>
+        protected virtual string GetErrorResponse(string message = null)
+        {
+            return GetResponse("error", message);
+        }
+
+        /// <summary>
+        /// Get all available directories as a directory tree
+        /// </summary>
+        /// <param name="type">Type of the file</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task GetDirectoriesAsync(string type)
+        {
+            var rootDirectoryPath = GetFullPath(GetVirtualPath(null));
+            var rootDirectory = new DirectoryInfo(rootDirectoryPath);
+            if (!rootDirectory.Exists)
+                throw new Exception("Invalid files root directory. Check your configuration.");
+
+            var allDirectories = GetDirectories(rootDirectory.FullName);
+            allDirectories.Insert(0, rootDirectory.FullName);
+
+            var localPath = GetFullPath(null);
+            await HttpContext.Response.WriteAsync("[");
+            for (var i = 0; i < allDirectories.Count; i++)
+            {
+                var directoryPath = (string)allDirectories[i];
+                await HttpContext.Response.WriteAsync($"{{\"p\":\"/{directoryPath.Replace(localPath, string.Empty).Replace("\\", "/").TrimStart('/')}\",\"f\":\"{GetFiles(directoryPath, type).Count}\",\"d\":\"{Directory.GetDirectories(directoryPath).Length}\"}}");
+                if (i < allDirectories.Count - 1)
+                    await HttpContext.Response.WriteAsync(",");
+            }
+            await HttpContext.Response.WriteAsync("]");
+        }
+
+        /// <summary>
+        /// Get directories in the passed parent directory
+        /// </summary>
+        /// <param name="parentDirectoryPath">Path to the parent directory</param>
+        /// <returns>Array of the paths to the directories</returns>
+        protected virtual ArrayList GetDirectories(string parentDirectoryPath)
+        {
+            var directories = new ArrayList();
+
+            var directoryNames = Directory.GetDirectories(parentDirectoryPath);
+            foreach (var directory in directoryNames)
+            {
+                directories.Add(directory);
+                directories.AddRange(GetDirectories(directory));
+            }
+
+            return directories;
+        }
+
+        /// <summary>
+        /// Get files in the passed directory
+        /// </summary>
+        /// <param name="directoryPath">Path to the files directory</param>
+        /// <param name="type">Type of the files</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task GetFilesAsync(string directoryPath, string type)
+        {
+            directoryPath = GetVirtualPath(directoryPath);
+            var files = GetFiles(GetFullPath(directoryPath), type);
+
+            await HttpContext.Response.WriteAsync("[");
+            for (var i = 0; i < files.Count; i++)
+            {
+                var width = 0;
+                var height = 0;
+                var file = new FileInfo(files[i]);
+                if (GetFileType(file.Extension) == "image")
+                {
+                    try
+                    {
+                        using (var stream = new FileStream(file.FullName, FileMode.Open))
                         {
-                           ret.Add(tmp[0], tmp[1]);
+                            using (var image = Image.FromStream(stream))
+                            {
+                                width = image.Width;
+                                height = image.Height;
+                            }
                         }
                     }
-                    catch{}
-                }
-            }
-            return ret;
-        }
-
-        protected virtual string GetFilesRoot(){
-            string ret = GetSetting("FILES_ROOT");
-            if (GetSetting("SESSION_PATH_KEY") != "" &&
-                _httpContextAccessor.HttpContext.Session.GetString(GetSetting("SESSION_PATH_KEY")) != null)
-                ret = _httpContextAccessor.HttpContext.Session.GetString(GetSetting("SESSION_PATH_KEY"));
-        
-            if(ret == "")
-                ret = CommonHelper.MapPath("../Uploads");
-            else
-                ret = FixPath(ret);
-            return ret;
-        }
-
-        protected virtual void LoadConf(){
-            if(_settings == null)
-                _settings = ParseJSON(confFile);
-        }
-
-        protected virtual string GetSetting(string name){
-            string ret = "";
-            LoadConf();
-            if(_settings.ContainsKey(name))
-                ret = _settings[name];
-        
-            return ret;
-        }
-
-        protected virtual void CheckPath(string path)
-        {
-            if (FixPath(path).IndexOf(GetFilesRoot()) != 0)
-            {
-                throw new Exception("Access to " + path + " is denied");
-            }
-        }
-
-        protected virtual void VerifyAction(string action)
-        {
-            string setting = GetSetting(action);
-            if (setting.IndexOf("?") > -1)
-                setting = setting.Substring(0, setting.IndexOf("?"));
-            if (!setting.StartsWith("/"))
-                setting = "/" + setting;
-            setting = ".." + setting;
-        
-            if (CommonHelper.MapPath(setting) != CommonHelper.MapPath(_httpContextAccessor.HttpContext.Request.Path))
-                throw new Exception(LangRes("E_ActionDisabled"));
-        }
-
-        protected virtual string GetResultStr(string type, string msg)
-        {
-            return "{\"res\":\"" + type + "\",\"msg\":\"" + msg.Replace("\"","\\\"") + "\"}";
-        }
-
-        protected virtual string GetSuccessRes(string msg)
-        {
-            return GetResultStr("ok", msg);
-        }
-
-        protected virtual string GetSuccessRes()
-        {
-            return GetSuccessRes("");
-        }
-
-        protected virtual string GetErrorRes(string msg)
-        {
-            return GetResultStr("error", msg);
-        }
-
-        private void _copyDir(string path, string dest){
-            if(!Directory.Exists(dest))
-                Directory.CreateDirectory(dest);
-            foreach(string f in  Directory.GetFiles(path)){
-                FileInfo file = new FileInfo(f);
-                if (!System.IO.File.Exists(Path.Combine(dest, file.Name)))
-                {
-                    System.IO.File.Copy(f, Path.Combine(dest, file.Name));
-                }
-            }
-            foreach (string d in Directory.GetDirectories(path))
-            {
-                DirectoryInfo dir = new DirectoryInfo(d);
-                _copyDir(d, Path.Combine(dest, dir.Name));
-            }
-        }
-
-        protected virtual void CopyDir(string path, string newPath)
-        {
-            CheckPath(path);
-            CheckPath(newPath);
-            DirectoryInfo dir = new  DirectoryInfo(FixPath(path));
-            DirectoryInfo newDir = new DirectoryInfo(FixPath(newPath + "/" + dir.Name));
-        
-            if (!dir.Exists)
-            {
-                throw new Exception(LangRes("E_CopyDirInvalidPath"));    
-            }
-            else if (newDir.Exists)
-            {
-                throw new Exception(LangRes("E_DirAlreadyExists"));
-            }
-            else{
-                _copyDir(dir.FullName, newDir.FullName);
-            }
-            _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-        }
-
-        protected virtual string MakeUniqueFilename(string dir, string filename){
-            string ret = filename;
-            int i = 0;
-            while (System.IO.File.Exists(Path.Combine(dir, ret)))
-            {
-                i++;
-                ret = Path.GetFileNameWithoutExtension(filename) + " - Copy " + i.ToString() + Path.GetExtension(filename);
-            }
-            return ret;
-        }
-
-        protected virtual void CopyFile(string path, string newPath)
-        {
-            CheckPath(path);
-            FileInfo file = new FileInfo(FixPath(path));
-            newPath = FixPath(newPath);
-            if (!file.Exists)
-                throw new Exception(LangRes("E_CopyFileInvalisPath"));
-            else{
-                string newName = MakeUniqueFilename(newPath, file.Name);
-                try{
-                    System.IO.File.Copy(file.FullName, Path.Combine(newPath, newName));
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-                }
-                catch{
-                    throw new Exception(LangRes("E_CopyFile"));
-                }
-            }
-        }
-
-        protected virtual void CreateDir(string path, string name)
-        {
-            CheckPath(path);
-            path = FixPath(path);
-            if(!Directory.Exists(path))
-                throw new Exception(LangRes("E_CreateDirInvalidPath"));
-            else{
-                try
-                {
-                    path = Path.Combine(path, name);
-                    if(!Directory.Exists(path))
-                        Directory.CreateDirectory(path);
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-                }
-                catch
-                {
-                    throw new Exception(LangRes("E_CreateDirFailed"));
-                }
-            }
-        }
-
-        protected virtual void DeleteDir(string path)
-        {
-            CheckPath(path);
-            path = FixPath(path);
-            if (!Directory.Exists(path))
-                throw new Exception(LangRes("E_DeleteDirInvalidPath"));
-            else if (path == GetFilesRoot())
-                throw new Exception(LangRes("E_CannotDeleteRoot")); 
-            else if(Directory.GetDirectories(path).Length > 0 || Directory.GetFiles(path).Length > 0)
-                throw new Exception(LangRes("E_DeleteNonEmpty"));
-            else
-            {
-                try
-                {
-                    Directory.Delete(path);
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-                }
-                catch
-                {
-                    throw new Exception(LangRes("E_CannotDeleteDir"));
-                }
-            }
-        }
-
-        protected virtual void DeleteFile(string path)
-        {
-            CheckPath(path);
-            path = FixPath(path);
-            if (!System.IO.File.Exists(path))
-                throw new Exception(LangRes("E_DeleteFileInvalidPath"));
-            else
-            {
-                try
-                {
-                    System.IO.File.Delete(path);
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-                }
-                catch
-                {
-                    throw new Exception(LangRes("E_DeletеFile"));
-                }
-            }
-        }
-
-        private List<string> GetFiles(string path, string type){
-            List<string> ret = new List<string>();
-            if(type == "#")
-                type = "";
-            string[] files = Directory.GetFiles(path);
-            foreach(string f in files){
-                if ((GetFileType(new FileInfo(f).Extension) == type) || (type == ""))
-                    ret.Add(f);
-            }
-            return ret;
-        }
-
-        private ArrayList ListDirs(string path){
-            string[] dirs = Directory.GetDirectories(path);
-            ArrayList ret = new ArrayList();
-            foreach(string dir in dirs){
-                ret.Add(dir);
-                ret.AddRange(ListDirs(dir));
-            }
-            return ret;
-        }
-
-        protected virtual void ListDirTree(string type)
-        {
-            DirectoryInfo d = new DirectoryInfo(GetFilesRoot());
-            if(!d.Exists)
-                throw new Exception("Invalid files root directory. Check your configuration.");
-            
-            ArrayList dirs = ListDirs(d.FullName);
-            dirs.Insert(0, d.FullName);
-        
-            string localPath = CommonHelper.MapPath("~/");
-            _httpContextAccessor.HttpContext.Response.WriteAsync("[");
-            for(int i = 0; i <dirs.Count; i++){
-                string dir = (string) dirs[i];
-                _httpContextAccessor.HttpContext.Response.WriteAsync(
-                    "{\"p\":\"/" + dir.Replace(localPath, "").Replace("\\", "/") + "\",\"f\":\"" +
-                    GetFiles(dir, type).Count + "\",\"d\":\"" +
-                    Directory.GetDirectories(dir).Length + "\"}");
-                if(i < dirs.Count -1)
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(",");
-            }
-            _httpContextAccessor.HttpContext.Response.WriteAsync("]");
-        }
-
-        protected virtual double LinuxTimestamp(DateTime d){
-            DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0).ToLocalTime();
-            TimeSpan timeSpan = (d.ToLocalTime() - epoch);
-        
-            return timeSpan.TotalSeconds;
-
-        }
-
-        protected virtual void ListFiles(string path, string type)
-        {
-            CheckPath(path);
-            string fullPath = FixPath(path);
-            List<string> files = GetFiles(fullPath, type);
-            _httpContextAccessor.HttpContext.Response.WriteAsync("[");
-            for(int i = 0; i < files.Count; i++){
-                FileInfo f = new FileInfo(files[i]);
-                int w = 0, h = 0;
-                if (GetFileType(f.Extension) == "image"){
-                    try{
-                        using (FileStream fs = new FileStream(f.FullName, FileMode.Open))
-                        {
-                            using (Image img = Image.FromStream(fs))
-                            {
-                                w = img.Width;
-                                h = img.Height;
-                            }
-                        }                        
-                    }
-                    catch(Exception ex){throw ex;}
-                }
-                _httpContextAccessor.HttpContext.Response.WriteAsync("{");
-                _httpContextAccessor.HttpContext.Response.WriteAsync("\"p\":\"" + path + "/" + f.Name + "\"");
-                _httpContextAccessor.HttpContext.Response.WriteAsync(",\"t\":\"" + Math.Ceiling(LinuxTimestamp(f.LastWriteTime)) + "\"");
-                _httpContextAccessor.HttpContext.Response.WriteAsync(",\"s\":\"" + f.Length + "\"");
-                _httpContextAccessor.HttpContext.Response.WriteAsync(",\"w\":\"" + w + "\"");
-                _httpContextAccessor.HttpContext.Response.WriteAsync(",\"h\":\"" + h + "\"");
-                _httpContextAccessor.HttpContext.Response.WriteAsync("}");
-                if (i < files.Count - 1)
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(",");
-            }
-            _httpContextAccessor.HttpContext.Response.WriteAsync("]");
-        }
-
-        public virtual void DownloadDir(string path)
-        {
-            path = FixPath(path);
-            if(!Directory.Exists(path))
-                throw new Exception(LangRes("E_CreateArchive"));
-            string dirName = new FileInfo(path).Name;
-            string tmpZip = CommonHelper.MapPath("../tmp/" + dirName + ".zip");
-            if (System.IO.File.Exists(tmpZip))
-                System.IO.File.Delete(tmpZip);
-            ZipFile.CreateFromDirectory(path, tmpZip,CompressionLevel.Fastest, true);
-            _httpContextAccessor.HttpContext.Response.Clear();
-            _httpContextAccessor.HttpContext.Response.Headers.Add("Content-Disposition", "attachment; filename=\"" + dirName + ".zip\"");
-            _httpContextAccessor.HttpContext.Response.ContentType = MimeTypes.ApplicationForceDownload;
-            _r.TransmitFile(tmpZip);
-            _r.Flush();
-            System.IO.File.Delete(tmpZip);
-            _r.End();
-        }
-
-        protected virtual void DownloadFile(string path)
-        {
-            CheckPath(path);
-            FileInfo file = new FileInfo(FixPath(path));
-            if(file.Exists){
-                _r.Clear();
-                _r.Headers.Add("Content-Disposition", "attachment; filename=\"" + file.Name + "\"");
-                _r.ContentType = MimeTypes.ApplicationForceDownload;
-                _r.TransmitFile(file.FullName);
-                _r.Flush();
-                _r.End();
-            }
-        }
-
-        protected virtual void MoveDir(string path, string newPath)
-        {
-            CheckPath(path);
-            CheckPath(newPath);
-            DirectoryInfo source = new DirectoryInfo(FixPath(path));
-            DirectoryInfo dest = new DirectoryInfo(FixPath(Path.Combine(newPath, source.Name)));
-            if(dest.FullName.IndexOf(source.FullName) == 0)
-                throw new Exception(LangRes("E_CannotMoveDirToChild"));
-            else if (!source.Exists)
-                throw new Exception(LangRes("E_MoveDirInvalisPath"));
-            else if (dest.Exists)
-                throw new Exception(LangRes("E_DirAlreadyExists"));
-            else{
-                try{
-                    source.MoveTo(dest.FullName);
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-                }
-                catch{
-                    throw new Exception(LangRes("E_MoveDir") + " \"" + path + "\"");
-                }
-            }
-        
-        }
-
-        protected virtual void MoveFile(string path, string newPath)
-        {
-            CheckPath(path);
-            CheckPath(newPath);
-            FileInfo source = new FileInfo(FixPath(path));
-            FileInfo dest = new FileInfo(FixPath(newPath));
-            if (!source.Exists)
-                throw new Exception(LangRes("E_MoveFileInvalisPath"));
-            else if (dest.Exists)
-                throw new Exception(LangRes("E_MoveFileAlreadyExists"));
-            else
-            {
-                try
-                {
-                    source.MoveTo(dest.FullName);
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-                }
-                catch
-                {
-                    throw new Exception(LangRes("E_MoveFile") + " \"" + path + "\"");
-                }
-            }
-        }
-
-        protected virtual void RenameDir(string path, string name)
-        {
-            CheckPath(path);
-            DirectoryInfo source = new DirectoryInfo(FixPath(path));
-            DirectoryInfo dest = new DirectoryInfo(Path.Combine(source.Parent.FullName, name));
-            if(source.FullName == GetFilesRoot())
-                throw new Exception(LangRes("E_CannotRenameRoot"));
-            else if (!source.Exists)
-                throw new Exception(LangRes("E_RenameDirInvalidPath"));
-            else if (dest.Exists)
-                throw new Exception(LangRes("E_DirAlreadyExists"));
-            else
-            {
-                try
-                {
-                    source.MoveTo(dest.FullName);
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-                }
-                catch
-                {
-                    throw new Exception(LangRes("E_RenameDir") + " \"" + path + "\"");
-                }
-            }
-        }
-
-        protected virtual void RenameFile(string path, string name)
-        {
-            CheckPath(path);
-            FileInfo source = new FileInfo(FixPath(path));
-            FileInfo dest = new FileInfo(Path.Combine(source.Directory.FullName, name));
-            if (!source.Exists)
-                throw new Exception(LangRes("E_RenameFileInvalidPath"));
-            else if (!CanHandleFile(name))
-                throw new Exception(LangRes("E_FileExtensionForbidden"));
-            else
-            {
-                try
-                {
-                    source.MoveTo(dest.FullName);
-                    _httpContextAccessor.HttpContext.Response.WriteAsync(GetSuccessRes());
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message + "; " + LangRes("E_RenameFile") + " \"" + path + "\"");
-                }
-            }
-        }
-
-        public virtual bool ThumbnailCallback()
-        {
-            return false;
-        }
-
-        protected virtual void ShowThumbnail(string path, int width, int height)
-        {
-            CheckPath(path);
-            FileStream fs = new FileStream(FixPath(path), FileMode.Open);
-            Bitmap img = new Bitmap(Bitmap.FromStream(fs));
-            fs.Close();
-            fs.Dispose();
-            int cropX = 0, cropY = 0;
-
-            double imgRatio = (double)img.Width / (double)img.Height;
-        
-            if(height == 0)
-                height = Convert.ToInt32(Math.Floor((double)width / imgRatio));
-
-            if (width > img.Width)
-                width = img.Width;
-            if (height > img.Height)
-                height = img.Height;
-
-            double cropRatio = (double)width / (double)height;
-            int cropWidth = Convert.ToInt32(Math.Floor((double)img.Height * cropRatio));
-            int cropHeight = Convert.ToInt32(Math.Floor((double)cropWidth / cropRatio));
-            if (cropWidth > img.Width)
-            {
-                cropWidth = img.Width;
-                cropHeight = Convert.ToInt32(Math.Floor((double)cropWidth / cropRatio));
-            }
-            if (cropHeight > img.Height)
-            {
-                cropHeight = img.Height;
-                cropWidth = Convert.ToInt32(Math.Floor((double)cropHeight * cropRatio));
-            }
-            if(cropWidth < img.Width){
-                cropX = Convert.ToInt32(Math.Floor((double)(img.Width - cropWidth) / 2));
-            }
-            if(cropHeight < img.Height){
-                cropY = Convert.ToInt32(Math.Floor((double)(img.Height - cropHeight) / 2));
-            }
-
-            Rectangle area = new Rectangle(cropX, cropY, cropWidth, cropHeight);
-            Bitmap cropImg = img.Clone(area, System.Drawing.Imaging.PixelFormat.DontCare);
-            img.Dispose();
-            Image.GetThumbnailImageAbort imgCallback = new Image.GetThumbnailImageAbort(ThumbnailCallback);
-
-            _httpContextAccessor.HttpContext.Response.Headers.Add("Content-Type", MimeTypes.ImagePng);
-            cropImg.GetThumbnailImage(width, height, imgCallback, IntPtr.Zero).Save(_r.OutputStream, ImageFormat.Png);
-            _r.OutputStream.Close();
-            cropImg.Dispose();
-        }
-        private ImageFormat GetImageFormat(string filename){
-            ImageFormat ret = ImageFormat.Jpeg;
-            switch(new FileInfo(filename).Extension.ToLower()){
-                case ".png": ret = ImageFormat.Png; break;
-                case ".gif": ret = ImageFormat.Gif; break;
-            }
-            return ret;
-        }
-        protected virtual void ImageResize(string path, string dest, int width, int height)
-        {
-            FileStream fs = new FileStream(path, FileMode.Open);
-            Image img = Image.FromStream(fs);
-            fs.Close();
-            fs.Dispose();
-            float ratio = (float)img.Width / (float)img.Height;
-            if ((img.Width <= width && img.Height <= height) || (width == 0 && height == 0))
-                return;
-
-            int newWidth = width;
-            int newHeight = Convert.ToInt16(Math.Floor((float)newWidth / ratio));
-            if ((height > 0 && newHeight > height) || (width == 0))
-            {
-                newHeight = height;
-                newWidth = Convert.ToInt16(Math.Floor((float)newHeight * ratio));
-            }
-            Bitmap newImg = new Bitmap(newWidth, newHeight);
-            Graphics g = Graphics.FromImage((Image)newImg);
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            g.DrawImage(img, 0, 0, newWidth, newHeight);
-            img.Dispose();
-            g.Dispose();
-            if(dest != ""){
-                newImg.Save(dest, GetImageFormat(dest));
-            }
-            newImg.Dispose();
-        }
-        protected virtual bool IsAjaxUpload()
-        {
-            return !StringValues.IsNullOrEmpty(_httpContextAccessor.HttpContext.Request.Form["method"]) &&
-                   _httpContextAccessor.HttpContext.Request.Form["method"].ToString() == "ajax";
-        }
-        protected virtual void Upload(string path)
-        {
-            CheckPath(path);
-            path = FixPath(path);
-            string res = GetSuccessRes();
-            bool hasErrors = false;
-            try{
-                for(int i = 0; i < _httpContextAccessor.HttpContext.Request.Form.Files.Count; i++){
-                    if (CanHandleFile(_httpContextAccessor.HttpContext.Request.Form.Files[i].FileName))
+                    catch (Exception ex)
                     {
-                        FileInfo f = new FileInfo(_httpContextAccessor.HttpContext.Request.Form.Files[i].FileName);
-                        string filename = MakeUniqueFilename(path, f.Name);
-                        string dest = Path.Combine(path, filename);
-                        _httpContextAccessor.HttpContext.Request.Form.Files[i].SaveAs(dest);
-                        if (GetFileType(new FileInfo(filename).Extension) == "image")
+                        throw ex;
+                    }
+                }
+                await HttpContext.Response.WriteAsync($"{{\"p\":\"{directoryPath.TrimEnd('/')}/{file.Name}\",\"t\":\"{Math.Ceiling(GetTimestamp(file.LastWriteTime))}\",\"s\":\"{file.Length}\",\"w\":\"{width}\",\"h\":\"{height}\"}}");
+
+                if (i < files.Count - 1)
+                    await HttpContext.Response.WriteAsync(",");
+            }
+            await HttpContext.Response.WriteAsync("]");
+        }
+
+        /// <summary>
+        /// Get files in the passed directory
+        /// </summary>
+        /// <param name="directoryPath">Path to the files directory</param>
+        /// <param name="type">Type of the files</param>
+        /// <returns>List of paths to the files</returns>
+        protected virtual List<string> GetFiles(string directoryPath, string type)
+        {
+            if (type == "#")
+                type = string.Empty;
+
+            var files = new List<string>();
+            foreach (var fileName in Directory.GetFiles(directoryPath))
+            {
+                if (string.IsNullOrEmpty(type) || GetFileType(new FileInfo(fileName).Extension) == type)
+                    files.Add(fileName);
+            }
+
+            return files;
+        }
+
+        /// <summary>
+        /// Get the Unix timestamp by passed date
+        /// </summary>
+        /// <param name="date">Date and time</param>
+        /// <returns>Unix timestamp</returns>
+        protected virtual double GetTimestamp(DateTime date)
+        {
+            return (date.ToLocalTime() - new DateTime(1970, 1, 1, 0, 0, 0).ToLocalTime()).TotalSeconds;
+        }
+
+        /// <summary>
+        /// Copy the directory
+        /// </summary>
+        /// <param name="sourcePath">Path to the source directory</param>
+        /// <param name="destinationPath">Path to the destination directory</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task CopyDirectoryAsync(string sourcePath, string destinationPath)
+        {
+            var directoryPath = GetFullPath(GetVirtualPath(sourcePath));
+            var directory = new DirectoryInfo(directoryPath);
+            if (!directory.Exists)
+                throw new Exception(GetLanguageResource("E_CopyDirInvalidPath"));
+
+            var newDirectoryPath = GetFullPath(GetVirtualPath($"{destinationPath.TrimEnd('/')}/{directory.Name}"));
+            var newDirectory = new DirectoryInfo(newDirectoryPath);
+            if (newDirectory.Exists)
+                throw new Exception(GetLanguageResource("E_DirAlreadyExists"));
+
+            CopyDirectory(directory.FullName, newDirectory.FullName);
+
+            await HttpContext.Response.WriteAsync(GetSuccessResponse());
+        }
+
+        /// <summary>
+        /// Сopy the directory with the embedded files and directories
+        /// </summary>
+        /// <param name="sourcePath">Path to the source directory</param>
+        /// <param name="destinationPath">Path to the destination directory</param>
+        protected virtual void CopyDirectory(string sourcePath, string destinationPath)
+        {
+            var existingFiles = Directory.GetFiles(sourcePath);
+            var existingDirectories = Directory.GetDirectories(sourcePath);
+
+            if (!Directory.Exists(destinationPath))
+                Directory.CreateDirectory(destinationPath);
+
+            foreach (var file in existingFiles)
+            {
+                var filePath = Path.Combine(destinationPath, new FileInfo(file).Name);
+                if (!System.IO.File.Exists(filePath))
+                    System.IO.File.Copy(file, filePath);
+            }
+
+            foreach (var directory in existingDirectories)
+            {
+                var directoryPath = Path.Combine(destinationPath, new DirectoryInfo(directory).Name);
+                CopyDirectory(directory, directoryPath);
+            }
+        }
+
+        /// <summary>
+        /// Copy the file
+        /// </summary>
+        /// <param name="sourcePath">Path to the source file</param>
+        /// <param name="destinationPath">Path to the destination file</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task CopyFileAsync(string sourcePath, string destinationPath)
+        {
+            var filePath = GetFullPath(GetVirtualPath(sourcePath));
+            var file = new FileInfo(filePath);
+            if (!file.Exists)
+                throw new Exception(GetLanguageResource("E_CopyFileInvalisPath"));
+
+            destinationPath = GetFullPath(GetVirtualPath(destinationPath));
+            var newFileName = GetUniqueFileName(destinationPath, file.Name);
+            try
+            {
+                System.IO.File.Copy(file.FullName, Path.Combine(destinationPath, newFileName));
+                await HttpContext.Response.WriteAsync(GetSuccessResponse());
+            }
+            catch
+            {
+                throw new Exception(GetLanguageResource("E_CopyFile"));
+            }
+        }
+
+        /// <summary>
+        /// Get the unique name of the file (add -copy-(N) to the file name if there is already a file with that name in the directory)
+        /// </summary>
+        /// <param name="directoryPath">Path to the file directory</param>
+        /// <param name="fileName">Original file name</param>
+        /// <returns>Unique name of the file</returns>
+        protected virtual string GetUniqueFileName(string directoryPath, string fileName)
+        {
+            var uniqueFileName = fileName;
+
+            var i = 0;
+            while (System.IO.File.Exists(Path.Combine(directoryPath, uniqueFileName)))
+            {
+                uniqueFileName = $"{Path.GetFileNameWithoutExtension(fileName)}-Copy-{++i}{Path.GetExtension(fileName)}";
+            }
+
+            return uniqueFileName;
+        }
+
+        /// <summary>
+        /// Create the new directory
+        /// </summary>
+        /// <param name="parentDirectoryPath">Path to the parent directory</param>
+        /// <param name="name">Name of the new directory</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task CreateDirectoryAsync(string parentDirectoryPath, string name)
+        {
+            parentDirectoryPath = GetFullPath(GetVirtualPath(parentDirectoryPath));
+            if (!Directory.Exists(parentDirectoryPath))
+                throw new Exception(GetLanguageResource("E_CreateDirInvalidPath"));
+
+            try
+            {
+                var path = Path.Combine(parentDirectoryPath, name);
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+
+                await HttpContext.Response.WriteAsync(GetSuccessResponse());
+            }
+            catch
+            {
+                throw new Exception(GetLanguageResource("E_CreateDirFailed"));
+            }
+        }
+
+        /// <summary>
+        /// Delete the directory
+        /// </summary>
+        /// <param name="path">Path to the directory</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task DeleteDirectoryAsync(string path)
+        {
+            path = GetVirtualPath(path);
+            if (path == GetRootDirectory())
+                throw new Exception(GetLanguageResource("E_CannotDeleteRoot"));
+
+            path = GetFullPath(path);
+            if (!Directory.Exists(path))
+                throw new Exception(GetLanguageResource("E_DeleteDirInvalidPath"));
+
+            if (Directory.GetDirectories(path).Length > 0 || Directory.GetFiles(path).Length > 0)
+                throw new Exception(GetLanguageResource("E_DeleteNonEmpty"));
+
+            try
+            {
+                Directory.Delete(path);
+                await HttpContext.Response.WriteAsync(GetSuccessResponse());
+            }
+            catch
+            {
+                throw new Exception(GetLanguageResource("E_CannotDeleteDir"));
+            }
+        }
+
+        /// <summary>
+        /// Delete the file
+        /// </summary>
+        /// <param name="path">Path to the file</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task DeleteFileAsync(string path)
+        {
+            path = GetFullPath(GetVirtualPath(path));
+            if (!System.IO.File.Exists(path))
+                throw new Exception(GetLanguageResource("E_DeleteFileInvalidPath"));
+
+            try
+            {
+                System.IO.File.Delete(path);
+                await HttpContext.Response.WriteAsync(GetSuccessResponse());
+            }
+            catch
+            {
+                throw new Exception(GetLanguageResource("E_DeletеFile"));
+            }
+        }
+
+        /// <summary>
+        /// Download the directory from the server as a zip archive
+        /// </summary>
+        /// <param name="path">Path to the directory</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        public async Task DownloadDirectoryAsync(string path)
+        {
+            path = GetVirtualPath(path).TrimEnd('/');
+            var fullPath = GetFullPath(path);
+            if (!Directory.Exists(fullPath))
+                throw new Exception(GetLanguageResource("E_CreateArchive"));
+
+            var zipName = new FileInfo(fullPath).Name + ".zip";
+            var zipPath = $"/{zipName}";
+            if (path != GetRootDirectory())
+                zipPath = GetVirtualPath(zipPath);
+            zipPath = GetFullPath(zipPath);
+
+            if (System.IO.File.Exists(zipPath))
+                System.IO.File.Delete(zipPath);
+
+            ZipFile.CreateFromDirectory(fullPath, zipPath, CompressionLevel.Fastest, true);
+
+            HttpContext.Response.Clear();
+            HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{zipName}\"");
+            HttpContext.Response.ContentType = MimeTypes.ApplicationForceDownload;
+            await HttpContext.Response.SendFileAsync(zipPath);
+
+            System.IO.File.Delete(zipPath);
+        }
+
+        /// <summary>
+        /// Download the file from the server
+        /// </summary>
+        /// <param name="path">Path to the file</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task DownloadFileAsync(string path)
+        {
+            var filePath = GetFullPath(GetVirtualPath(path));
+            var file = new FileInfo(filePath);
+            if (file.Exists)
+            {
+                HttpContext.Response.Clear();
+                HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{file.Name}\"");
+                HttpContext.Response.ContentType = MimeTypes.ApplicationForceDownload;
+                await HttpContext.Response.SendFileAsync(file.FullName);
+            }
+        }
+
+        /// <summary>
+        /// Move the directory
+        /// </summary>
+        /// <param name="sourcePath">Path to the source directory</param>
+        /// <param name="destinationPath">Path to the destination directory</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task MoveDirectoryAsync(string sourcePath, string destinationPath)
+        {
+            var fullSourcePath = GetFullPath(GetVirtualPath(sourcePath));
+            var sourceDirectory = new DirectoryInfo(fullSourcePath);
+            destinationPath = GetFullPath(GetVirtualPath(Path.Combine(destinationPath, sourceDirectory.Name)));
+            var destinationDirectory = new DirectoryInfo(destinationPath);
+            if (destinationDirectory.FullName.IndexOf(sourceDirectory.FullName) == 0)
+                throw new Exception(GetLanguageResource("E_CannotMoveDirToChild"));
+
+            if (!sourceDirectory.Exists)
+                throw new Exception(GetLanguageResource("E_MoveDirInvalisPath"));
+
+            if (destinationDirectory.Exists)
+                throw new Exception(GetLanguageResource("E_DirAlreadyExists"));
+
+            try
+            {
+                sourceDirectory.MoveTo(destinationDirectory.FullName);
+                await HttpContext.Response.WriteAsync(GetSuccessResponse());
+            }
+            catch
+            {
+                throw new Exception($"{GetLanguageResource("E_MoveDir")} \"{sourcePath}\"");
+            }
+        }
+
+        /// <summary>
+        /// Move the file
+        /// </summary>
+        /// <param name="sourcePath">Path to the source file</param>
+        /// <param name="destinationPath">Path to the destination file</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task MoveFileAsync(string sourcePath, string destinationPath)
+        {
+            var fullSourcePath = GetFullPath(GetVirtualPath(sourcePath));
+            var sourceFile = new FileInfo(fullSourcePath);
+            if (!sourceFile.Exists)
+                throw new Exception(GetLanguageResource("E_MoveFileInvalisPath"));
+
+            destinationPath = GetFullPath(GetVirtualPath(destinationPath));
+            var destinationFile = new FileInfo(destinationPath);
+            if (destinationFile.Exists)
+                throw new Exception(GetLanguageResource("E_MoveFileAlreadyExists"));
+
+            if (!CanHandleFile(destinationFile.Name))
+                throw new Exception(GetLanguageResource("E_FileExtensionForbidden"));
+
+            try
+            {
+                sourceFile.MoveTo(destinationFile.FullName);
+                await HttpContext.Response.WriteAsync(GetSuccessResponse());
+            }
+            catch
+            {
+                throw new Exception($"{GetLanguageResource("E_MoveFile")} \"{sourcePath}\"");
+            }
+        }
+
+        /// <summary>
+        /// Rename the directory
+        /// </summary>
+        /// <param name="sourcePath">Path to the source directory</param>
+        /// <param name="newName">New name of the directory</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task RenameDirectoryAsync(string sourcePath, string newName)
+        {
+            var fullSourcePath = GetFullPath(GetVirtualPath(sourcePath));
+            var sourceDirectory = new DirectoryInfo(fullSourcePath);
+            var destinationDirectory = new DirectoryInfo(Path.Combine(sourceDirectory.Parent.FullName, newName));
+            if (GetVirtualPath(sourcePath) == GetRootDirectory())
+                throw new Exception(GetLanguageResource("E_CannotRenameRoot"));
+
+            if (!sourceDirectory.Exists)
+                throw new Exception(GetLanguageResource("E_RenameDirInvalidPath"));
+
+            if (destinationDirectory.Exists)
+                throw new Exception(GetLanguageResource("E_DirAlreadyExists"));
+
+            try
+            {
+                sourceDirectory.MoveTo(destinationDirectory.FullName);
+                await HttpContext.Response.WriteAsync(GetSuccessResponse());
+            }
+            catch
+            {
+                throw new Exception($"{GetLanguageResource("E_RenameDir")} \"{sourcePath}\"");
+            }
+        }
+
+        /// <summary>
+        /// Rename the file
+        /// </summary>
+        /// <param name="sourcePath">Path to the source file</param>
+        /// <param name="newName">New name of the file</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task RenameFileAsync(string sourcePath, string newName)
+        {
+            var fullSourcePath = GetFullPath(GetVirtualPath(sourcePath));
+            var sourceFile = new FileInfo(fullSourcePath);
+            if (!sourceFile.Exists)
+                throw new Exception(GetLanguageResource("E_RenameFileInvalidPath"));
+
+            if (!CanHandleFile(newName))
+                throw new Exception(GetLanguageResource("E_FileExtensionForbidden"));
+
+            try
+            {
+                var destinationPath = Path.Combine(sourceFile.Directory.FullName, newName);
+                var destinationFile = new FileInfo(destinationPath);
+                sourceFile.MoveTo(destinationFile.FullName);
+                await HttpContext.Response.WriteAsync(GetSuccessResponse());
+            }
+            catch
+            {
+                throw new Exception($"{GetLanguageResource("E_RenameFile")} \"{sourcePath}\"");
+            }
+        }
+
+        /// <summary>
+        /// Create the thumbnail of the image and write it to the response
+        /// </summary>
+        /// <param name="path">Path to the image</param>
+        /// <param name="width">Width</param>
+        /// <param name="height">Height</param>
+        protected virtual void CreateThumbnail(string path, int width, int height)
+        {
+            path = GetFullPath(GetVirtualPath(path));
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                using (var image = new Bitmap(Image.FromStream(stream)))
+                {
+                    var cropX = 0;
+                    var cropY = 0;
+
+                    var imgRatio = (double)image.Width / (double)image.Height;
+
+                    if (height == 0)
+                        height = Convert.ToInt32(Math.Floor((double)width / imgRatio));
+
+                    if (width > image.Width)
+                        width = image.Width;
+                    if (height > image.Height)
+                        height = image.Height;
+
+                    var cropRatio = (double)width / (double)height;
+                    var cropWidth = Convert.ToInt32(Math.Floor((double)image.Height * cropRatio));
+                    var cropHeight = Convert.ToInt32(Math.Floor((double)cropWidth / cropRatio));
+
+                    if (cropWidth > image.Width)
+                    {
+                        cropWidth = image.Width;
+                        cropHeight = Convert.ToInt32(Math.Floor((double)cropWidth / cropRatio));
+                    }
+
+                    if (cropHeight > image.Height)
+                    {
+                        cropHeight = image.Height;
+                        cropWidth = Convert.ToInt32(Math.Floor((double)cropHeight * cropRatio));
+                    }
+
+                    if (cropWidth < image.Width)
+                        cropX = Convert.ToInt32(Math.Floor((double)(image.Width - cropWidth) / 2));
+                    if (cropHeight < image.Height)
+                        cropY = Convert.ToInt32(Math.Floor((double)(image.Height - cropHeight) / 2));
+
+                    using (var cropImg = image.Clone(new Rectangle(cropX, cropY, cropWidth, cropHeight), PixelFormat.DontCare))
+                    {
+                        HttpContext.Response.Headers.Add("Content-Type", MimeTypes.ImagePng);
+                        cropImg.GetThumbnailImage(width, height, () => { return false; }, IntPtr.Zero).Save(HttpContext.Response.Body, ImageFormat.Png);
+                        HttpContext.Response.Body.Close();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get the file format of the image
+        /// </summary>
+        /// <param name="path">Path to the image</param>
+        /// <returns>Image format</returns>
+        protected virtual ImageFormat GetImageFormat(string path)
+        {
+            var fileExtension = new FileInfo(path).Extension.ToLower();
+            switch (fileExtension)
+            {
+                case ".png":
+                    return ImageFormat.Png;
+                case ".gif":
+                    return ImageFormat.Gif;
+                default:
+                    return ImageFormat.Jpeg;
+            }
+        }
+
+        /// <summary>
+        /// Resize the image
+        /// </summary>
+        /// <param name="sourcePath">Path to the source image</param>
+        /// <param name="destinstionPath">Path to the destination image</param>
+        /// <param name="width">Width</param>
+        /// <param name="height">Height</param>
+        protected virtual void ImageResize(string sourcePath, string destinstionPath, int width, int height)
+        {
+            using (var stream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read))
+            {
+                using (var image = Image.FromStream(stream))
+                {
+                    var ratio = (float)image.Width / (float)image.Height;
+                    if ((image.Width <= width && image.Height <= height) || (width == 0 && height == 0))
+                        return;
+
+                    var newWidth = width;
+                    int newHeight = Convert.ToInt16(Math.Floor((float)newWidth / ratio));
+                    if ((height > 0 && newHeight > height) || (width == 0))
+                    {
+                        newHeight = height;
+                        newWidth = Convert.ToInt16(Math.Floor((float)newHeight * ratio));
+                    }
+
+                    using (var newImage = new Bitmap(newWidth, newHeight))
+                    {
+                        using (var graphics = Graphics.FromImage(newImage))
                         {
-                            int w = 0;
-                            int h = 0;
-                            int.TryParse(GetSetting("MAX_IMAGE_WIDTH"), out w);
-                            int.TryParse(GetSetting("MAX_IMAGE_HEIGHT"), out h);
-                            ImageResize(dest, dest, w, h);
+                            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            graphics.DrawImage(image, 0, 0, newWidth, newHeight);
+                            if (!string.IsNullOrEmpty(destinstionPath))
+                                newImage.Save(destinstionPath, GetImageFormat(destinstionPath));
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Whether the request is made with ajax 
+        /// </summary>
+        /// <returns>True or false</returns>
+        protected virtual bool IsAjaxRequest()
+        {
+            return HttpContext.Request.Form != null &&
+                !StringValues.IsNullOrEmpty(HttpContext.Request.Form["method"]) &&
+                HttpContext.Request.Form["method"] == "ajax";
+        }
+
+        /// <summary>
+        /// Upload files to a directory on passed path
+        /// </summary>
+        /// <param name="directoryPath">Path to directory to upload files</param>
+        /// <returns>A task that represents the completion of the operation</returns>
+        protected virtual async Task UploadFilesAsync(string directoryPath)
+        {
+            var result = GetSuccessResponse();
+            var hasErrors = false;
+            try
+            {
+                directoryPath = GetFullPath(GetVirtualPath(directoryPath));
+                for (var i = 0; i < HttpContext.Request.Form.Files.Count; i++)
+                {
+                    var fileName = HttpContext.Request.Form.Files[i].FileName;
+                    if (CanHandleFile(fileName))
+                    {
+                        var file = new FileInfo(fileName);
+                        var uniqueFileName = GetUniqueFileName(directoryPath, file.Name);
+                        var destinationFile = Path.Combine(directoryPath, uniqueFileName);
+                        using (var stream = new FileStream(destinationFile, FileMode.OpenOrCreate))
+                        {
+                            HttpContext.Request.Form.Files[i].CopyTo(stream);
+                        }
+                        if (GetFileType(new FileInfo(uniqueFileName).Extension) == "image")
+                        {
+                            int.TryParse(GetSetting("MAX_IMAGE_WIDTH"), out int w);
+                            int.TryParse(GetSetting("MAX_IMAGE_HEIGHT"), out int h);
+                            ImageResize(destinationFile, destinationFile, w, h);
                         }
                     }
                     else
                     {
                         hasErrors = true;
-                        res = GetSuccessRes(LangRes("E_UploadNotAll"));
+                        result = GetErrorResponse(GetLanguageResource("E_UploadNotAll"));
                     }
                 }
             }
-            catch(Exception ex){
-                res = GetErrorRes(ex.Message);
-            }
-            if (IsAjaxUpload())
+            catch (Exception ex)
             {
-                if(hasErrors)
-                    res = GetErrorRes(LangRes("E_UploadNotAll"));
-                _httpContextAccessor.HttpContext.Response.WriteAsync(res);
+                result = GetErrorResponse(ex.Message);
+            }
+            if (IsAjaxRequest())
+            {
+                if (hasErrors)
+                    result = GetErrorResponse(GetLanguageResource("E_UploadNotAll"));
+
+                await HttpContext.Response.WriteAsync(result);
             }
             else
-            {
-                _httpContextAccessor.HttpContext.Response.WriteAsync("<script>");
-                _httpContextAccessor.HttpContext.Response.WriteAsync("parent.fileUploaded(" + res + ");");
-                _httpContextAccessor.HttpContext.Response.WriteAsync("</script>");
-            }
+                await HttpContext.Response.WriteAsync($"<script>parent.fileUploaded({result});</script>");
         }
-        
+
         #endregion
     }
 }
-#endif

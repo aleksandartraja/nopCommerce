@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.News;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.News;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.News;
 using Nop.Services.Events;
@@ -20,7 +20,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class NewsController : BaseAdminController
 	{
@@ -71,7 +71,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareLanguagesModel(NewsItemModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             var languages = _languageService.GetAllLanguages(true);
             foreach (var language in languages)
@@ -87,7 +87,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareStoresMappingModel(NewsItemModel model, NewsItem newsItem, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && newsItem != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(newsItem).ToList();
@@ -170,7 +170,7 @@ namespace Nop.Admin.Controllers
                     if (x.EndDateUtc.HasValue)
                         m.EndDate = _dateTimeHelper.ConvertToUserTime(x.EndDateUtc.Value, DateTimeKind.Utc);
                     m.CreatedOn = _dateTimeHelper.ConvertToUserTime(x.CreatedOnUtc, DateTimeKind.Utc);
-                    m.LanguageName = x.Language.Name;
+                    m.LanguageName = _languageService.GetLanguageById(x.LanguageId)?.Name;
                     m.ApprovedComments = _newsService.GetNewsCommentsCount(x, isApproved: true);
                     m.NotApprovedComments = _newsService.GetNewsCommentsCount(x, isApproved: false);
 
@@ -232,7 +232,6 @@ namespace Nop.Admin.Controllers
                     return RedirectToAction("Edit", new { id = newsItem.Id });
                 }
                 return RedirectToAction("List");
-
             }
 
             //If we got this far, something failed, redisplay form
@@ -374,11 +373,13 @@ namespace Nop.Admin.Controllers
             {
                 Data = comments.PagedForCommand(command).Select(newsComment =>
                 {
-                    var commentModel = new NewsCommentModel();
-                    commentModel.Id = newsComment.Id;
-                    commentModel.NewsItemId = newsComment.NewsItemId;
-                    commentModel.NewsItemTitle = newsComment.NewsItem.Title;
-                    commentModel.CustomerId = newsComment.CustomerId;
+                    var commentModel = new NewsCommentModel
+                    {
+                        Id = newsComment.Id,
+                        NewsItemId = newsComment.NewsItemId,
+                        NewsItemTitle = newsComment.NewsItem.Title,
+                        CustomerId = newsComment.CustomerId
+                    };
                     var customer = newsComment.Customer;
                     commentModel.CustomerInfo = customer.IsRegistered() ? customer.Email : _localizationService.GetResource("Admin.Customers.Guest");
                     commentModel.CreatedOn = _dateTimeHelper.ConvertToUserTime(newsComment.CreatedOnUtc, DateTimeKind.Utc);

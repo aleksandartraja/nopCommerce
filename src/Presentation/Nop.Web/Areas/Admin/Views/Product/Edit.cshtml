@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Products");
 }
 
-@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "product-form" }))
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Product" asp-action="Edit" method="post" id="product-form">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Catalog.Products.EditProductDetails") - @Model.Name
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.Catalog.Products.BackToList").Text, "List")</small>
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.Catalog.Products.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="button" onclick="javascript:OpenWindow('@Url.RouteUrl("Product", new {SeName = Model.SeName})', 800, 600, true); return false;" class="btn bg-purple">
@@ -36,11 +37,12 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Common.Delete")
             </span>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_product_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
-@Html.DeleteConfirmation("product-delete")
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="product-delete" />
 
 @if (!Model.IsLoggedInAsVendor)
 {
@@ -56,34 +58,32 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="copyproduct-window-title">@T("Admin.Catalog.Products.Copy")</h4>
             </div>
-            @using (Html.BeginForm("CopyProduct", "Product"))
-            {
+            <form asp-controller="Product" asp-action="CopyProduct" method="post">
                 <div class="form-horizontal">
                     <div class="modal-body">
-                        @Html.AntiForgeryToken()
-                        @Html.HiddenFor(model => model.CopyProductModel.Id)
+                        <input asp-for="CopyProductModel.Id" type="hidden" />
                         <div class="form-group">
                             <div class="col-md-4">
-                                @Html.NopLabelFor(model => model.CopyProductModel.Name)
+                                <nop-label asp-for="CopyProductModel.Name" />
                             </div>
                             <div class="col-md-8">
-                                @Html.NopEditorFor(model => model.CopyProductModel.Name)
+                                <nop-editor asp-for="CopyProductModel.Name" />
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="col-md-4">
-                                @Html.NopLabelFor(model => model.CopyProductModel.Published)
+                                <nop-label asp-for="CopyProductModel.Published" />
                             </div>
                             <div class="col-md-8">
-                                @Html.NopEditorFor(model => model.CopyProductModel.Published)
+                                <nop-editor asp-for="CopyProductModel.Published" />
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="col-md-4">
-                                @Html.NopLabelFor(model => model.CopyProductModel.CopyImages)
+                                <nop-label asp-for="CopyProductModel.CopyImages" />
                             </div>
                             <div class="col-md-8">
-                                @Html.NopEditorFor(model => model.CopyProductModel.CopyImages)
+                                <nop-editor asp-for="CopyProductModel.CopyImages" />
                             </div>
                         </div>
                     </div>
@@ -93,7 +93,7 @@
                         </button>
                     </div>
                 </div>
-            }
+            </form>
         </div>
     </div>
 </div>

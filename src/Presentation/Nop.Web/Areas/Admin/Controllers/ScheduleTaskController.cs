@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Admin.Models.Tasks;
+using Nop.Web.Areas.Admin.Models.Tasks;
 using Nop.Core.Domain.Tasks;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
@@ -11,7 +11,7 @@ using Nop.Services.Tasks;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class ScheduleTaskController : BaseAdminController
 	{
@@ -25,7 +25,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public ScheduleTaskController(IScheduleTaskService scheduleTaskService, 
             IPermissionService permissionService,
@@ -41,21 +41,21 @@ namespace Nop.Admin.Controllers
 
 		#endregion 
 
-        #region Utility
+        #region Utilities
 
         protected virtual ScheduleTaskModel PrepareScheduleTaskModel(ScheduleTask task)
         {
             var model = new ScheduleTaskModel
-                            {
-                                Id = task.Id,
-                                Name = task.Name,
-                                Seconds = task.Seconds,
-                                Enabled = task.Enabled,
-                                StopOnError = task.StopOnError,
-                                LastStartUtc = task.LastStartUtc.HasValue ? _dateTimeHelper.ConvertToUserTime(task.LastStartUtc.Value, DateTimeKind.Utc).ToString("G") : "",
-                                LastEndUtc = task.LastEndUtc.HasValue ? _dateTimeHelper.ConvertToUserTime(task.LastEndUtc.Value, DateTimeKind.Utc).ToString("G") : "",
-                                LastSuccessUtc = task.LastSuccessUtc.HasValue ? _dateTimeHelper.ConvertToUserTime(task.LastSuccessUtc.Value, DateTimeKind.Utc).ToString("G") : "",
-                            };
+            {
+                Id = task.Id,
+                Name = task.Name,
+                Seconds = task.Seconds,
+                Enabled = task.Enabled,
+                StopOnError = task.StopOnError,
+                LastStartUtc = task.LastStartUtc.HasValue ? _dateTimeHelper.ConvertToUserTime(task.LastStartUtc.Value, DateTimeKind.Utc).ToString("G") : "",
+                LastEndUtc = task.LastEndUtc.HasValue ? _dateTimeHelper.ConvertToUserTime(task.LastEndUtc.Value, DateTimeKind.Utc).ToString("G") : "",
+                LastSuccessUtc = task.LastSuccessUtc.HasValue ? _dateTimeHelper.ConvertToUserTime(task.LastSuccessUtc.Value, DateTimeKind.Utc).ToString("G") : ""
+            };
             return model;
         }
 
@@ -131,10 +131,9 @@ namespace Nop.Admin.Controllers
                 var scheduleTask = _scheduleTaskService.GetTaskById(id);
                 if (scheduleTask == null)
                     throw new Exception("Schedule task cannot be loaded");
-
-                var task = new Task(scheduleTask);
+                
+                var task = new Task(scheduleTask) {Enabled = true};
                 //ensure that the task is enabled
-                task.Enabled = true;
                 task.Execute(true, false);
                 SuccessNotification(_localizationService.GetResource("Admin.System.ScheduleTasks.RunNow.Done"));
             }
@@ -145,6 +144,7 @@ namespace Nop.Admin.Controllers
 
             return RedirectToAction("List");
         }
+
         #endregion
     }
 }

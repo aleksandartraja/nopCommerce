@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Discounts;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Validators.Discounts;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Discounts
+namespace Nop.Web.Areas.Admin.Models.Discounts
 {
     [Validator(typeof(DiscountValidator))]
     public partial class DiscountModel : BaseNopEntityModel
@@ -132,6 +130,7 @@ namespace Nop.Admin.Models.Discounts
 
             public string CategoryName { get; set; }
         }
+
         public partial class AddCategoryToDiscountModel : BaseNopModel
         {
             [NopResourceDisplayName("Admin.Catalog.Categories.List.SearchCategoryName")]
@@ -142,13 +141,13 @@ namespace Nop.Admin.Models.Discounts
             public int[] SelectedCategoryIds { get; set; }
         }
 
-
         public partial class AppliedToManufacturerModel : BaseNopModel
         {
             public int ManufacturerId { get; set; }
 
             public string ManufacturerName { get; set; }
         }
+
         public partial class AddManufacturerToDiscountModel : BaseNopModel
         {
             [NopResourceDisplayName("Admin.Catalog.Manufacturers.List.SearchManufacturerName")]
@@ -159,13 +158,13 @@ namespace Nop.Admin.Models.Discounts
             public int[] SelectedManufacturerIds { get; set; }
         }
 
-
         public partial class AppliedToProductModel : BaseNopModel
         {
             public int ProductId { get; set; }
 
             public string ProductName { get; set; }
         }
+
         public partial class AddProductToDiscountModel : BaseNopModel
         {
             public AddProductToDiscountModel()

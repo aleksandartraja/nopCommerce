@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Primitives;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Logging;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Logging;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -14,7 +14,7 @@ using Nop.Services.Security;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class ActivityLogController : BaseAdminController
     {
@@ -27,7 +27,7 @@ namespace Nop.Admin.Controllers
 
         #endregion Fields
 
-        #region Constructors
+        #region Ctor
 
         public ActivityLogController(ICustomerActivityService customerActivityService,
             IDateTimeHelper dateTimeHelper, ILocalizationService localizationService,
@@ -64,7 +64,7 @@ namespace Nop.Admin.Controllers
             //activity log
             _customerActivityService.InsertActivity("EditActivityLogTypes", _localizationService.GetResource("ActivityLog.EditActivityLogTypes"));
 
-            string formKey = "checkbox_activity_types";
+            var formKey = "checkbox_activity_types";
             var checkedActivityTypes = !StringValues.IsNullOrEmpty(form[formKey]) ?
                 form[formKey].ToString().Split(new [] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => Convert.ToInt32(x)).ToList() : 
                 new List<int>();
@@ -96,7 +96,6 @@ namespace Nop.Admin.Controllers
                 Text = "All"
             });
 
-
             foreach (var at in _customerActivityService.GetAllActivityTypes())
             {
                 activityLogSearchModel.ActivityLogType.Add(new SelectListItem
@@ -114,10 +113,10 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageActivityLog))
                 return AccessDeniedKendoGridJson();
 
-            DateTime? startDateValue = (model.CreatedOnFrom == null) ? null
+            var startDateValue = (model.CreatedOnFrom == null) ? null
                 : (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.CreatedOnFrom.Value, _dateTimeHelper.CurrentTimeZone);
 
-            DateTime? endDateValue = (model.CreatedOnTo == null) ? null
+            var endDateValue = (model.CreatedOnTo == null) ? null
                             : (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.CreatedOnTo.Value, _dateTimeHelper.CurrentTimeZone).AddDays(1);
 
             var activityLog = _customerActivityService.GetAllActivities(startDateValue, endDateValue,null, model.ActivityLogTypeId, command.Page - 1, command.PageSize, model.IpAddress);

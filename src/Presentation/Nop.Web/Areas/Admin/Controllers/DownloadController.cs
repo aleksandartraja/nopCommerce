@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Media;
 using Nop.Services.Media;
-using Nop.Web.Framework.Security;
+using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class DownloadController : BaseAdminController
     {
@@ -39,10 +39,10 @@ namespace Nop.Admin.Controllers
 
             //use stored data
             if (download.DownloadBinary == null)
-                return Content(string.Format("Download data is not available any more. Download GD={0}", download.Id));
+                return Content($"Download data is not available any more. Download GD={download.Id}");
 
-            string fileName = !String.IsNullOrWhiteSpace(download.Filename) ? download.Filename : download.Id.ToString();
-            string contentType = !String.IsNullOrWhiteSpace(download.ContentType)
+            var fileName = !string.IsNullOrWhiteSpace(download.Filename) ? download.Filename : download.Id.ToString();
+            var contentType = !string.IsNullOrWhiteSpace(download.ContentType)
                 ? download.ContentType
                 : MimeTypes.ApplicationOctetStream;
             return new FileContentResult(download.DownloadBinary, contentType)
@@ -74,7 +74,6 @@ namespace Nop.Admin.Controllers
         [AdminAntiForgery(true)]
         public virtual IActionResult AsyncUpload()
         {
-
             var httpPostedFile = Request.Form.Files.FirstOrDefault();
             if (httpPostedFile == null)
             {
@@ -90,7 +89,7 @@ namespace Nop.Admin.Controllers
 
             var qqFileNameParameter = "qqfilename";
             var fileName = httpPostedFile.FileName;
-            if (String.IsNullOrEmpty(fileName) && Request.Form.ContainsKey(qqFileNameParameter))
+            if (string.IsNullOrEmpty(fileName) && Request.Form.ContainsKey(qqFileNameParameter))
                 fileName = Request.Form[qqFileNameParameter].ToString();
             //remove path (passed in IE)
             fileName = Path.GetFileName(fileName);
@@ -98,9 +97,8 @@ namespace Nop.Admin.Controllers
             var contentType = httpPostedFile.ContentType;
 
             var fileExtension = Path.GetExtension(fileName);
-            if (!String.IsNullOrEmpty(fileExtension))
+            if (!string.IsNullOrEmpty(fileExtension))
                 fileExtension = fileExtension.ToLowerInvariant();
-
 
             var download = new Download
             {

@@ -1,21 +1,17 @@
-﻿
-using System.Text;
+﻿using System;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Newtonsoft.Json.Converters;
-using Nop.Core;
+using Newtonsoft.Json;
 using Nop.Core.Domain.Common;
 using Nop.Core.Infrastructure;
-using Nop.Services.Localization;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Security;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
-
-    [Area("Admin")]
+    [Area(AreaNames.Admin)]
     [HttpsRequirement(SslRequirement.Yes)]
     [AdminAntiForgery]
     [ValidateIpAddress]
@@ -23,71 +19,45 @@ namespace Nop.Admin.Controllers
     [ValidateVendor]
     public abstract partial class BaseAdminController : BaseController
     {
-
-#if NET451
         /// <summary>
-        /// Initialize controller
-        /// </summary>
-        /// <param name="requestContext">Request context</param>
-        protected override void Initialize(System.Web.Routing.RequestContext requestContext)
-        {
-            //set work context to admin mode
-            EngineContext.Current.Resolve<IWorkContext>().IsAdmin = true;
-
-            base.Initialize(requestContext);
-        }
-
-        /// <summary>
-        /// On exception
-        /// </summary>
-        /// <param name="filterContext">Filter context</param>
-        protected override void OnException(ExceptionContext filterContext)
-        {
-            if (filterContext.Exception != null)
-                LogException(filterContext.Exception);
-            base.OnException(filterContext);
-        }
-#endif
-        /// <summary>
-        /// Access denied view
-        /// </summary>
-        /// <returns>Access denied view</returns>
-        protected virtual IActionResult AccessDeniedView()
-        {
-            var webHelper = EngineContext.Current.Resolve<IWebHelper>();
-
-            //return new UnauthorizedResult();
-            return RedirectToAction("AccessDenied", "Security", new { pageUrl = webHelper.GetRawUrl(this.Request) });
-        }
-        
-        /// <summary>
-        /// Access denied json data for kendo grid
-        /// </summary>
-        /// <returns>Access denied json data</returns>
-        protected JsonResult AccessDeniedKendoGridJson()
-        {
-            var localizationService = EngineContext.Current.Resolve<ILocalizationService>();
-            
-            return ErrorForKendoGridJson(localizationService.GetResource("Admin.AccessDenied.Description"));
-        }
-
-        /// <summary>
-        /// Save selected TAB name
+        /// Save selected tab name
         /// </summary>
         /// <param name="tabName">Tab name to save; empty to automatically detect it</param>
-        /// <param name="persistForTheNextRequest">A value indicating whether a message should be persisted for the next request</param>
+        /// <param name="persistForTheNextRequest">A value indicating whether a message should be persisted for the next request. Pass null to ignore</param>
         protected virtual void SaveSelectedTabName(string tabName = "", bool persistForTheNextRequest = true)
         {
+            //default root tab
+            SaveSelectedTabName(tabName, "selected-tab-name", null, persistForTheNextRequest);
+            //child tabs (usually used for localization)
+            //Form is available for POST only
+            if (Request.Method.Equals(WebRequestMethods.Http.Post, StringComparison.InvariantCultureIgnoreCase))
+                foreach (var key in this.Request.Form.Keys)
+                    if (key.StartsWith("selected-tab-name-", StringComparison.InvariantCultureIgnoreCase))
+                        SaveSelectedTabName(null, key, key.Substring("selected-tab-name-".Length), persistForTheNextRequest);
+        }
+
+        /// <summary>
+        /// Save selected tab name
+        /// </summary>
+        /// <param name="tabName">Tab name to save; empty to automatically detect it</param>
+        /// <param name="persistForTheNextRequest">A value indicating whether a message should be persisted for the next request. Pass null to ignore</param>
+        /// <param name="formKey">Form key where selected tab name is stored</param>
+        /// <param name="dataKeyPrefix">A prefix for child tab to process</param>
+        protected virtual void SaveSelectedTabName(string tabName, string formKey, string dataKeyPrefix, bool persistForTheNextRequest)
+        {
             //keep this method synchronized with
-            //"GetSelectedTabName" method of \Nop.Web.Framework\HtmlExtensions.cs
+            //"GetSelectedTabName" method of \Nop.Web.Framework\Extensions\HtmlExtensions.cs
             if (string.IsNullOrEmpty(tabName))
             {
-                tabName = this.Request.Form["selected-tab-name"];
+                tabName = Request.Form[formKey];
             }
             
             if (!string.IsNullOrEmpty(tabName))
             {
-                const string dataKey = "nop.selected-tab-name";
+                var dataKey = "nop.selected-tab-name";
+                if (!string.IsNullOrEmpty(dataKeyPrefix))
+                    dataKey += $"-{dataKeyPrefix}";
+
                 if (persistForTheNextRequest)
                 {
                     TempData[dataKey] = tabName;
@@ -99,40 +69,22 @@ namespace Nop.Admin.Controllers
             }
         }
 
-#if NET451
         /// <summary>
-        /// Creates a <see cref="T:System.Web.Mvc.JsonResult"/> object that serializes the specified object to JavaScript Object Notation (JSON) format using the content type, content encoding, and the JSON request behavior.
+        /// Creates an object that serializes the specified object to JSON.
         /// </summary>
-        /// 
-        /// <returns>
-        /// The result object that serializes the specified object to JSON format.
-        /// </returns>
-        /// <param name="data">The JavaScript object graph to serialize.</param>
-        /// <param name="contentType">The content type (MIME type).</param>
-        /// <param name="contentEncoding">The content encoding.</param>
-        /// <param name="behavior">The JSON request behavior</param>
-        protected override JsonResult Json(object data, string contentType, Encoding contentEncoding, JsonRequestBehavior behavior)
+        /// <param name="data">The object to serialize.</param>
+        /// <returns>The created object that serializes the specified data to JSON format for the response.</returns>
+        public override JsonResult Json(object data)
         {
-            //Json fix issue with dates in KendoUI grid
-            //use json with IsoDateTimeConverter
-            var result = EngineContext.Current.Resolve<AdminAreaSettings>().UseIsoDateTimeConverterInJson
-                ? new ConverterJsonResult(new IsoDateTimeConverter()) : new JsonResult();
+            //use IsoDateFormat on writing JSON text to fix issue with dates in KendoUI grid
+            //TODO rename setting
+            var useIsoDateTime = EngineContext.Current.Resolve<AdminAreaSettings>().UseIsoDateTimeConverterInJson;
+            var serializerSettings = new JsonSerializerSettings
+            {
+                DateFormatHandling = useIsoDateTime ? DateFormatHandling.IsoDateFormat : DateFormatHandling.MicrosoftDateFormat                
+            };
 
-            result.Data = data;
-            result.ContentType = contentType;
-            result.ContentEncoding = contentEncoding;
-            result.JsonRequestBehavior = behavior;
-
-            //Json fix for admin area
-            //sometime our entities have big text values returned (e.g. product desriptions)
-            //of course, we can set and return them as "empty" (we already do it so). Furthermore, it's a perfoemance optimization
-            //but it's better to avoid exceptions for other entities and allow maximum JSON length
-            result.MaxJsonLength = int.MaxValue;
-
-            return result;
-            //return base.Json(data, contentType, contentEncoding, behavior);
+            return base.Json(data, serializerSettings);
         }
-
-#endif
     }
 }

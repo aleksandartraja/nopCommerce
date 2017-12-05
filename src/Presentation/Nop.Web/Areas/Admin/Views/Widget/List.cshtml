@@ -5,13 +5,14 @@
     Html.SetActiveMenuItemSystemName("Widgets");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.ContentManagement.Widgets")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_widget_list_buttons" })
     </div>
 </div>
 
@@ -22,7 +23,7 @@
                 <div class="panel-body">
                     <div id="widgets-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#widgets-grid").kendoGrid({
                                 dataSource: {
@@ -107,7 +108,7 @@
                                     field: "SystemName",
                                     title: "@T("Admin.ContentManagement.Widgets.Configure")",
                                     width: 150,
-                                    template: '<a href="ConfigureWidget?systemName=#=SystemName#">@T("Admin.ContentManagement.Widgets.Configure")</a>'
+                                    template: '# if(ConfigurationUrl && ConfigurationUrl.length > 0) {# <a class="btn btn-default" href="#=ConfigurationUrl#"><i class="fa fa-cog"></i>@T("Admin.ContentManagement.Widgets.Configure")</a>#} #'
                                 }, {
                                     command: {
                                         name: "edit",

@@ -2,8 +2,8 @@
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Orders;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Directory;
@@ -15,12 +15,11 @@ using Nop.Services.Orders;
 using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Services.Tax;
-using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class CheckoutAttributeController : BaseAdminController
     {
@@ -44,7 +43,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public CheckoutAttributeController(ICheckoutAttributeService checkoutAttributeService,
             ICheckoutAttributeParser checkoutAttributeParser,
@@ -88,14 +87,14 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(checkoutAttribute,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(checkoutAttribute,
-                                                               x => x.TextPrompt,
-                                                               localized.TextPrompt,
-                                                               localized.LanguageId);
+                    x => x.TextPrompt,
+                    localized.TextPrompt,
+                    localized.LanguageId);
             }
         }
         
@@ -104,16 +103,16 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(checkoutAttributeValue,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
             }
         }
         
         protected virtual void PrepareTaxCategories(CheckoutAttributeModel model, CheckoutAttribute checkoutAttribute, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             //tax categories
             var taxCategories = _taxCategoryService.GetAllTaxCategories();
@@ -125,7 +124,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareStoresMappingModel(CheckoutAttributeModel model, CheckoutAttribute checkoutAttribute, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && checkoutAttribute != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(checkoutAttribute).ToList();
@@ -169,7 +168,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareConditionAttributes(CheckoutAttributeModel model, CheckoutAttribute checkoutAttribute)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             //currently any checkout attribute can have condition.
             model.ConditionAllowed = true;
@@ -194,8 +193,11 @@ namespace Nop.Admin.Controllers
                             Name = x.Name,
                             AttributeControlType = x.AttributeControlType,
                             Values = _checkoutAttributeService.GetCheckoutAttributeValues(x.Id)
-                                .Select(v => new SelectListItem() { Text = v.Name, Value = v.Id.ToString(),
-                                    Selected = selectedAttribute != null && selectedAttribute.Id == x.Id && selectedValues.Any(sv => sv.Id == v.Id) }).ToList()
+                            .Select(v => new SelectListItem {
+                                Text = v.Name,
+                                Value = v.Id.ToString(),
+                                Selected = selectedAttribute != null && selectedAttribute.Id == x.Id && selectedValues.Any(sv => sv.Id == v.Id) })
+                            .ToList()
                         }).ToList()
             };
         }
@@ -218,7 +220,7 @@ namespace Nop.Admin.Controllers
                                 var selectedAttribute = model.ConditionModel.ConditionAttributes
                                     .FirstOrDefault(x => x.Id == model.ConditionModel.SelectedAttributeId);
                                 var selectedValue = selectedAttribute != null ? selectedAttribute.SelectedValueId : null;
-                                if (!String.IsNullOrEmpty(selectedValue))
+                                if (!string.IsNullOrEmpty(selectedValue))
                                     attributesXml = _checkoutAttributeParser.AddCheckoutAttribute(attributesXml, attribute, selectedValue);
                                 else
                                     //for conditions we should empty values save even when nothing is selected
@@ -456,7 +458,7 @@ namespace Nop.Admin.Controllers
                 {
                     Id = x.Id,
                     CheckoutAttributeId = x.CheckoutAttributeId,
-                    Name = x.CheckoutAttribute.AttributeControlType != AttributeControlType.ColorSquares ? x.Name : string.Format("{0} - {1}", x.Name, x.ColorSquaresRgb),
+                    Name = x.CheckoutAttribute.AttributeControlType != AttributeControlType.ColorSquares ? x.Name : $"{x.Name} - {x.ColorSquaresRgb}",
                     ColorSquaresRgb = x.ColorSquaresRgb,
                     PriceAdjustment = x.PriceAdjustment,
                     WeightAdjustment = x.WeightAdjustment,
@@ -475,14 +477,15 @@ namespace Nop.Admin.Controllers
                 return AccessDeniedView();
 
             var checkoutAttribute = _checkoutAttributeService.GetCheckoutAttributeById(checkoutAttributeId);
-            var model = new CheckoutAttributeValueModel();
-            model.CheckoutAttributeId = checkoutAttributeId;
-            model.PrimaryStoreCurrencyCode = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId).CurrencyCode;
-            model.BaseWeightIn = _measureService.GetMeasureWeightById(_measureSettings.BaseWeightId).Name;
+            var model = new CheckoutAttributeValueModel
+            {
+                CheckoutAttributeId = checkoutAttributeId,
+                PrimaryStoreCurrencyCode = _currencyService.GetCurrencyById(_currencySettings.PrimaryStoreCurrencyId).CurrencyCode,
+                BaseWeightIn = _measureService.GetMeasureWeightById(_measureSettings.BaseWeightId).Name,
 
-            //color squares
-            model.DisplayColorSquaresRgb = checkoutAttribute.AttributeControlType == AttributeControlType.ColorSquares;
-            model.ColorSquaresRgb = "#000000";
+                //color squares
+                DisplayColorSquaresRgb = checkoutAttribute.AttributeControlType == AttributeControlType.ColorSquares
+            };
 
             //locales
             AddLocales(_languageService, model.Locales);
@@ -490,7 +493,7 @@ namespace Nop.Admin.Controllers
         }
 
         [HttpPost]
-        public virtual IActionResult ValueCreatePopup(string btnId, string formId, CheckoutAttributeValueModel model)
+        public virtual IActionResult ValueCreatePopup(CheckoutAttributeValueModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageAttributes))
                 return AccessDeniedView();
@@ -506,7 +509,7 @@ namespace Nop.Admin.Controllers
             if (checkoutAttribute.AttributeControlType == AttributeControlType.ColorSquares)
             {
                 //ensure valid color is chosen/entered
-                if (String.IsNullOrEmpty(model.ColorSquaresRgb))
+                if (string.IsNullOrEmpty(model.ColorSquaresRgb))
                     ModelState.AddModelError("", "Color is required");
                 try
                 {
@@ -536,8 +539,6 @@ namespace Nop.Admin.Controllers
                 UpdateValueLocales(cav, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -580,7 +581,7 @@ namespace Nop.Admin.Controllers
         }
 
         [HttpPost]
-        public virtual IActionResult ValueEditPopup(string btnId, string formId, CheckoutAttributeValueModel model)
+        public virtual IActionResult ValueEditPopup(CheckoutAttributeValueModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageAttributes))
                 return AccessDeniedView();
@@ -596,7 +597,7 @@ namespace Nop.Admin.Controllers
             if (cav.CheckoutAttribute.AttributeControlType == AttributeControlType.ColorSquares)
             {
                 //ensure valid color is chosen/entered
-                if (String.IsNullOrEmpty(model.ColorSquaresRgb))
+                if (string.IsNullOrEmpty(model.ColorSquaresRgb))
                     ModelState.AddModelError("", "Color is required");
                 try
                 {
@@ -622,8 +623,6 @@ namespace Nop.Admin.Controllers
                 UpdateValueLocales(cav, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -645,7 +644,6 @@ namespace Nop.Admin.Controllers
 
             return new NullJsonResult();
         }
-
 
         #endregion
     }

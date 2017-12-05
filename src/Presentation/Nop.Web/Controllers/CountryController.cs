@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using Nop.Web.Framework;
 using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Web.Controllers
@@ -13,7 +12,7 @@ namespace Nop.Web.Controllers
         
         #endregion
         
-        #region Constructors
+        #region Ctor
 
         public CountryController(ICountryModelFactory countryModelFactory)
 		{

@@ -2,8 +2,8 @@
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Topics;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Topics;
 using Nop.Core.Domain.Topics;
 using Nop.Services.Customers;
 using Nop.Services.Localization;
@@ -15,7 +15,7 @@ using Nop.Services.Topics;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class TopicController : BaseAdminController
     {
@@ -36,7 +36,7 @@ namespace Nop.Admin.Controllers
 
         #endregion Fields
 
-        #region Constructors
+        #region Ctor
 
         public TopicController(ITopicService topicService,
             ILanguageService languageService,
@@ -72,7 +72,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareTemplatesModel(TopicModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             var templates = _topicTemplateService.GetAllTopicTemplates();
             foreach (var template in templates)
@@ -90,29 +90,29 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(topic,
-                                                               x => x.Title,
-                                                               localized.Title,
-                                                               localized.LanguageId);
+                    x => x.Title,
+                    localized.Title,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(topic,
-                                                           x => x.Body,
-                                                           localized.Body,
-                                                           localized.LanguageId);
+                    x => x.Body,
+                    localized.Body,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(topic,
-                                                           x => x.MetaKeywords,
-                                                           localized.MetaKeywords,
-                                                           localized.LanguageId);
+                    x => x.MetaKeywords,
+                    localized.MetaKeywords,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(topic,
-                                                           x => x.MetaDescription,
-                                                           localized.MetaDescription,
-                                                           localized.LanguageId);
+                    x => x.MetaDescription,
+                    localized.MetaDescription,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(topic,
-                                                           x => x.MetaTitle,
-                                                           localized.MetaTitle,
-                                                           localized.LanguageId);
+                    x => x.MetaTitle,
+                    localized.MetaTitle,
+                    localized.LanguageId);
 
                 //search engine name
                 var seName = topic.ValidateSeName(localized.SeName, localized.Title, false);
@@ -123,7 +123,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareAclModel(TopicModel model, Topic topic, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && topic != null)
                 model.SelectedCustomerRoleIds = _aclService.GetCustomerRoleIdsWithAccess(topic).ToList();
@@ -167,7 +167,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareStoresMappingModel(TopicModel model, Topic topic, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && topic != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(topic).ToList();
@@ -408,7 +408,6 @@ namespace Nop.Admin.Controllers
                 }
                 return RedirectToAction("List");
             }
-
 
             //If we got this far, something failed, redisplay form
 

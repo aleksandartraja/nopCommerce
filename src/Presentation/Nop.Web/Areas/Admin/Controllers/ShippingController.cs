@@ -4,11 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Primitives;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Directory;
-using Nop.Admin.Models.Shipping;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Shipping;
@@ -21,11 +17,14 @@ using Nop.Services.Logging;
 using Nop.Services.Security;
 using Nop.Services.Shipping;
 using Nop.Services.Shipping.Date;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Directory;
+using Nop.Web.Areas.Admin.Models.Shipping;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class ShippingController : BaseAdminController
 	{
@@ -135,6 +134,7 @@ namespace Nop.Admin.Controllers
                 var tmp1 = shippingProvider.ToModel();
                 tmp1.IsActive = shippingProvider.IsShippingRateComputationMethodActive(_shippingSettings);
                 tmp1.LogoUrl = shippingProvider.PluginDescriptor.GetLogoUrl(_webHelper);
+                tmp1.ConfigurationUrl = shippingProvider.GetConfigurationPageUrl();
                 shippingProvidersModel.Add(tmp1);
             }
             shippingProvidersModel = shippingProvidersModel.ToList();
@@ -175,33 +175,19 @@ namespace Nop.Admin.Controllers
             var pluginDescriptor = srcm.PluginDescriptor;
             //display order
             pluginDescriptor.DisplayOrder = model.DisplayOrder;
-            PluginFileParser.SavePluginDescriptionFile(pluginDescriptor);
+
+            //update the description file
+            PluginManager.SavePluginDescriptor(pluginDescriptor);
+
             //reset plugin cache
             _pluginFinder.ReloadPlugins();
 
             return new NullJsonResult();
         }
 
-
-        public virtual IActionResult ConfigureProvider(string systemName)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return AccessDeniedView();
-
-            var srcm = _shippingService.LoadShippingRateComputationMethodBySystemName(systemName);
-            if (srcm == null)
-                //No shipping rate computation method found with the specified id
-                return RedirectToAction("Providers");
-
-            var url = srcm.GetConfigurationPageUrl();
-            //TODO implement logic when configuration page is not required
-            return Redirect(url);
-        }
-
-
-#endregion
-
-#region Pickup point providers
+        #endregion
+        
+        #region Pickup point providers
 
         public virtual IActionResult PickupPointProviders()
         {
@@ -224,6 +210,7 @@ namespace Nop.Admin.Controllers
                 var model = provider.ToModel();
                 model.IsActive = provider.IsPickupPointProviderActive(_shippingSettings);
                 model.LogoUrl = provider.PluginDescriptor.GetLogoUrl(_webHelper);
+                model.ConfigurationUrl = provider.GetConfigurationPageUrl();
                 pickupPointProviderModel.Add(model);
             }
 
@@ -263,32 +250,19 @@ namespace Nop.Admin.Controllers
             }
             var pluginDescriptor = pickupPointProvider.PluginDescriptor;
             pluginDescriptor.DisplayOrder = model.DisplayOrder;
-            PluginFileParser.SavePluginDescriptionFile(pluginDescriptor);
+
+            //update the description file
+            PluginManager.SavePluginDescriptor(pluginDescriptor);
+
             //reset plugin cache
             _pluginFinder.ReloadPlugins();
 
             return new NullJsonResult();
         }
 
-
-        public virtual IActionResult ConfigurePickupPointProvider(string systemName)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return AccessDeniedView();
-
-            var pickupPointProvider = _shippingService.LoadPickupPointProviderBySystemName(systemName);
-            if (pickupPointProvider == null)
-                //No shipping rate computation method found with the specified id
-                return RedirectToAction("PickupPointProviders");
-
-            var url = pickupPointProvider.GetConfigurationPageUrl();
-            //TODO implement logic when configuration page is not required
-            return Redirect(url);
-        }
-
-#endregion
-
-#region Shipping methods
+        #endregion
+        
+        #region Shipping methods
 
         public virtual IActionResult Methods()
         {
@@ -315,7 +289,6 @@ namespace Nop.Admin.Controllers
 
             return Json(gridModel);
         }
-
 
         public virtual IActionResult CreateMethod()
         {
@@ -412,10 +385,10 @@ namespace Nop.Admin.Controllers
             SuccessNotification(_localizationService.GetResource("Admin.Configuration.Shipping.Methods.Deleted"));
             return RedirectToAction("Methods");
         }
-
-#endregion
-
-#region Dates and ranges
+        
+        #endregion
+        
+        #region Dates and ranges
 
         public virtual IActionResult DatesAndRanges()
         {
@@ -425,7 +398,9 @@ namespace Nop.Admin.Controllers
             return View();
         }
 
-#region Delivery dates
+	    #endregion
+
+        #region Delivery dates
 
         [HttpPost]
         public virtual IActionResult DeliveryDates(DataSourceRequest command)
@@ -442,7 +417,6 @@ namespace Nop.Admin.Controllers
 
             return Json(gridModel);
         }
-
 
         public virtual IActionResult CreateDeliveryDate()
         {
@@ -547,9 +521,9 @@ namespace Nop.Admin.Controllers
             return RedirectToAction("DatesAndRanges");
         }
 
-#endregion
-
-#region Product availability ranges
+        #endregion
+        
+        #region Product availability ranges
 
         [HttpPost]
         public virtual IActionResult ProductAvailabilityRanges(DataSourceRequest command)
@@ -670,11 +644,9 @@ namespace Nop.Admin.Controllers
             return RedirectToAction("DatesAndRanges");
         }
 
-#endregion
-
-#endregion
-
-#region Warehouses
+        #endregion
+        
+        #region Warehouses
 
         public virtual IActionResult Warehouses()
         {
@@ -692,15 +664,15 @@ namespace Nop.Admin.Controllers
 
             var warehousesModel = _shippingService.GetAllWarehouses()
                 .Select(x =>
-                            {
-                                var warehouseModel = new WarehouseModel
-                                {
-                                    Id = x.Id,
-                                    Name = x.Name
-                                    //ignore address for list view (performance optimization)
-                                };
-                                return warehouseModel;
-                            })
+                {
+                    var warehouseModel = new WarehouseModel
+                    {
+                        Id = x.Id,
+                        Name = x.Name
+                        //ignore address for list view (performance optimization)
+                    };
+                    return warehouseModel;
+                })
                 .ToList();
             var gridModel = new DataSourceResult
             {
@@ -848,7 +820,6 @@ namespace Nop.Admin.Controllers
                 else
                     _addressService.InsertAddress(address);
 
-
                 warehouse.Name = model.Name;
                 warehouse.AdminComment = model.AdminComment;
                 warehouse.AddressId = address.Id;
@@ -861,7 +832,6 @@ namespace Nop.Admin.Controllers
                 SuccessNotification(_localizationService.GetResource("Admin.Configuration.Shipping.Warehouses.Updated"));
                 return continueEditing ? RedirectToAction("EditWarehouse", warehouse.Id) : RedirectToAction("Warehouses");
             }
-
 
             //If we got this far, something failed, redisplay form
 
@@ -902,9 +872,9 @@ namespace Nop.Admin.Controllers
             return RedirectToAction("Warehouses");
         }
 
-#endregion
+        #endregion
         
-#region Restrictions
+        #region Restrictions
 
         public virtual IActionResult Restrictions()
         {
@@ -934,7 +904,7 @@ namespace Nop.Admin.Controllers
             foreach (var country in countries)
                 foreach (var shippingMethod in shippingMethods)
                 {
-                    bool restricted = shippingMethod.CountryRestrictionExists(country.Id);
+                    var restricted = shippingMethod.CountryRestrictionExists(country.Id);
                     if (!model.Restricted.ContainsKey(country.Id))
                         model.Restricted[country.Id] = new Dictionary<int, bool>();
                     model.Restricted[country.Id][shippingMethod.Id] = restricted;
@@ -955,7 +925,7 @@ namespace Nop.Admin.Controllers
 
             foreach (var shippingMethod in shippingMethods)
             {
-                string formKey = "restrict_" + shippingMethod.Id;
+                var formKey = "restrict_" + shippingMethod.Id;
                 var countryIdsToRestrict = !StringValues.IsNullOrEmpty(form[formKey])
                     ? form[formKey].ToString().Split(new [] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(int.Parse)
@@ -965,7 +935,7 @@ namespace Nop.Admin.Controllers
                 foreach (var country in countries)
                 {
 
-                    bool restrict = countryIdsToRestrict.Contains(country.Id);
+                    var restrict = countryIdsToRestrict.Contains(country.Id);
                     if (restrict)
                     {
                         if (shippingMethod.RestrictedCountries.FirstOrDefault(c => c.Id == country.Id) == null)
@@ -988,7 +958,7 @@ namespace Nop.Admin.Controllers
             SuccessNotification(_localizationService.GetResource("Admin.Configuration.Shipping.Restrictions.Updated"));
             return RedirectToAction("Restrictions");
         }
-
-#endregion
+        
+        #endregion
     }
 }

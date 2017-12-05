@@ -1,4 +1,3 @@
-using System;
 using System.Net;
 using System.Text;
 using Nop.Core;
@@ -23,6 +22,12 @@ namespace Nop.Services.Customers
 
         #region Ctor
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="customerAttributeParser">Customer attribute parser</param>
+        /// <param name="customerAttributeService">Customer attribute service</param>
+        /// <param name="workContext">Work context</param>
         public CustomerAttributeFormatter(ICustomerAttributeParser customerAttributeParser,
             ICustomerAttributeService customerAttributeService,
             IWorkContext workContext)
@@ -40,22 +45,22 @@ namespace Nop.Services.Customers
         /// Formats attributes
         /// </summary>
         /// <param name="attributesXml">Attributes in XML format</param>
-        /// <param name="serapator">Serapator</param>
+        /// <param name="separator">Separator</param>
         /// <param name="htmlEncode">A value indicating whether to encode (HTML) values</param>
         /// <returns>Attributes</returns>
-        public virtual string FormatAttributes(string attributesXml, string serapator = "<br />", bool htmlEncode = true)
+        public virtual string FormatAttributes(string attributesXml, string separator = "<br />", bool htmlEncode = true)
         {
             var result = new StringBuilder();
 
             var attributes = _customerAttributeParser.ParseCustomerAttributes(attributesXml);
-            for (int i = 0; i < attributes.Count; i++)
+            for (var i = 0; i < attributes.Count; i++)
             {
                 var attribute = attributes[i];
                 var valuesStr = _customerAttributeParser.ParseValues(attributesXml, attribute.Id);
-                for (int j = 0; j < valuesStr.Count; j++)
+                for (var j = 0; j < valuesStr.Count; j++)
                 {
-                    string valueStr = valuesStr[j];
-                    string formattedAttribute = "";
+                    var valueStr = valuesStr[j];
+                    var formattedAttribute = "";
                     if (!attribute.ShouldHaveValues())
                     {
                         //no values
@@ -66,7 +71,7 @@ namespace Nop.Services.Customers
                             //encode (if required)
                             if (htmlEncode)
                                 attributeName = WebUtility.HtmlEncode(attributeName);
-                            formattedAttribute = string.Format("{0}: {1}", attributeName, HtmlHelper.FormatText(valueStr, false, true, false, false, false, false));
+                            formattedAttribute = $"{attributeName}: {HtmlHelper.FormatText(valueStr, false, true, false, false, false, false)}";
                             //we never encode multiline textbox input
                         }
                         else if (attribute.AttributeControlType == AttributeControlType.FileUpload)
@@ -77,7 +82,7 @@ namespace Nop.Services.Customers
                         else
                         {
                             //other attributes (textbox, datepicker)
-                            formattedAttribute = string.Format("{0}: {1}", attribute.GetLocalized(a => a.Name, _workContext.WorkingLanguage.Id), valueStr);
+                            formattedAttribute = $"{attribute.GetLocalized(a => a.Name, _workContext.WorkingLanguage.Id)}: {valueStr}";
                             //encode (if required)
                             if (htmlEncode)
                                 formattedAttribute = WebUtility.HtmlEncode(formattedAttribute);
@@ -85,13 +90,12 @@ namespace Nop.Services.Customers
                     }
                     else
                     {
-                        int attributeValueId;
-                        if (int.TryParse(valueStr, out attributeValueId))
+                        if (int.TryParse(valueStr, out int attributeValueId))
                         {
                             var attributeValue = _customerAttributeService.GetCustomerAttributeValueById(attributeValueId);
                             if (attributeValue != null)
                             {
-                                formattedAttribute = string.Format("{0}: {1}", attribute.GetLocalized(a => a.Name, _workContext.WorkingLanguage.Id), attributeValue.GetLocalized(a => a.Name, _workContext.WorkingLanguage.Id));
+                                formattedAttribute = $"{attribute.GetLocalized(a => a.Name, _workContext.WorkingLanguage.Id)}: {attributeValue.GetLocalized(a => a.Name, _workContext.WorkingLanguage.Id)}";
                             }
                             //encode (if required)
                             if (htmlEncode)
@@ -99,10 +103,10 @@ namespace Nop.Services.Customers
                         }
                     }
 
-                    if (!String.IsNullOrEmpty(formattedAttribute))
+                    if (!string.IsNullOrEmpty(formattedAttribute))
                     {
                         if (i != 0 || j != 0)
-                            result.Append(serapator);
+                            result.Append(separator);
                         result.Append(formattedAttribute);
                     }
                 }
@@ -111,6 +115,6 @@ namespace Nop.Services.Customers
             return result.ToString();
         }
 
-#endregion
+        #endregion
     }
 }

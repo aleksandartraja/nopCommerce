@@ -1,26 +1,15 @@
 ﻿@model AddressAttributeModel
 @inject IEventPublisher eventPublisher
 
-<script>
-    $(document).ready(function () {
-        bindBootstrapTabSelectEvent('addressattribute-edit');
-    });
-</script>
-
 <div class="content">
-    @Html.ValidationSummary(false)
-    @Html.HiddenFor(model => model.Id)
+    <div asp-validation-summary="All"></div>
+    <input asp-for="Id" type="hidden"/>
+
     <div class="form-horizontal">
-        <div id="addressattribute-edit" class="nav-tabs-custom">
-            <ul class="nav nav-tabs">
-                @Html.RenderBootstrapTabHeader("tab-info", @T("Admin.Address.AddressAttributes.Info"), true)
-                @Html.RenderBootstrapTabHeader("tab-values", @T("Admin.Address.AddressAttributes.Values"))
-            </ul>
-            <div class="tab-content">
-                @Html.RenderBootstrapTabContent("tab-info", await Html.PartialAsync("_CreateOrUpdate.Info"), true)
-                @Html.RenderBootstrapTabContent("tab-values", await Html.PartialAsync("_CreateOrUpdate.Values"))
-            </div>
-        </div>
+        <nop-tabs id="addressattribute-edit">
+            <nop-tab asp-name="tab-info" asp-title="@T("Admin.Address.AddressAttributes.Info")" asp-default="true">@await Html.PartialAsync("_CreateOrUpdate.Info", Model)</nop-tab>
+            <nop-tab asp-name="tab-values" asp-title="@T("Admin.Address.AddressAttributes.Values")">@await Html.PartialAsync("_CreateOrUpdate.Values", Model)</nop-tab>
+        </nop-tabs>
     </div>
 </div>
 
@@ -33,6 +22,3 @@
         @eventBlock
     }
 }
-
-@*save selected tab name*@
-<input type="hidden" id="selected-tab-name" name="selected-tab-name" value="@(Html.GetSelectedTabName())">

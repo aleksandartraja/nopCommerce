@@ -1,35 +1,19 @@
 ﻿@model ProductAttributeModel
 @inject IEventPublisher eventPublisher
 
-@Html.ValidationSummary(false)
-@Html.HiddenFor(model => model.Id)
-
-<script>
-    $(document).ready(function() {
-        bindBootstrapTabSelectEvent('product-attribute-edit');
-    });
-</script>
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
 
 <div class="content">
     <div class="form-horizontal">
-        <div id="product-attribute-edit" class="nav-tabs-custom">
-            <ul class="nav nav-tabs">
-                @Html.RenderBootstrapTabHeader("tab-info", @T("Admin.Catalog.Attributes.ProductAttributes.Info"), true)
-                @if (Model.Id > 0)
-                {
-                    @Html.RenderBootstrapTabHeader("tab-used-by-products", @T("Admin.Catalog.Attributes.ProductAttributes.UsedByProducts"))
-                }
-                @Html.RenderBootstrapTabHeader("tab-predefined-values", @T("Admin.Catalog.Attributes.ProductAttributes.PredefinedValues"))
-            </ul>
-            <div class="tab-content">
-                @Html.RenderBootstrapTabContent("tab-info", await Html.PartialAsync("_CreateOrUpdate.Info"), true)
-                @if (Model.Id > 0)
-                {
-                    @Html.RenderBootstrapTabContent("tab-used-by-products", await Html.PartialAsync("_CreateOrUpdate.UsedByProducts"))
-                }
-                @Html.RenderBootstrapTabContent("tab-predefined-values", await Html.PartialAsync("_CreateOrUpdate.PredefinedValues"))
-            </div>
-        </div>
+        <nop-tabs id="product-attribute-edit">
+            <nop-tab asp-name="tab-info" asp-title="@T("Admin.Catalog.Attributes.ProductAttributes.Info")" asp-default="true">@await Html.PartialAsync("_CreateOrUpdate.Info", Model)</nop-tab>
+            @if (Model.Id > 0)
+            {
+                <nop-tab asp-title="@T("Admin.Catalog.Attributes.ProductAttributes.UsedByProducts")" asp-name="tab-used-by-products">@await Html.PartialAsync("_CreateOrUpdate.UsedByProducts", Model)</nop-tab>
+            }
+            <nop-tab asp-name="tab-predefined-values" asp-title="@T("Admin.Catalog.Attributes.ProductAttributes.PredefinedValues")">@await Html.PartialAsync("_CreateOrUpdate.PredefinedValues", Model)</nop-tab>
+        </nop-tabs>
     </div>
 </div>
 
@@ -42,6 +26,3 @@
         @eventBlock
     }
 }
-
-@*save selected tab name*@
-<input type="hidden" id="selected-tab-name" name="selected-tab-name" value="@(Html.GetSelectedTabName())">

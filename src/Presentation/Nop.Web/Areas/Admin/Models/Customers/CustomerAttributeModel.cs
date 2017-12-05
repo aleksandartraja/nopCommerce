@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
 using FluentValidation.Attributes;
-using Nop.Admin.Validators.Customers;
-using Nop.Web.Framework;
+using Nop.Web.Areas.Admin.Validators.Customers;
 using Nop.Web.Framework.Localization;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Customers
+namespace Nop.Web.Areas.Admin.Models.Customers
 {
     [Validator(typeof(CustomerAttributeValidator))]
     public partial class CustomerAttributeModel : BaseNopEntityModel, ILocalizedModel<CustomerAttributeLocalizedModel>
@@ -31,9 +29,7 @@ namespace Nop.Admin.Models.Customers
         [NopResourceDisplayName("Admin.Customers.CustomerAttributes.Fields.DisplayOrder")]
         public int DisplayOrder { get; set; }
 
-
         public IList<CustomerAttributeLocalizedModel> Locales { get; set; }
-
     }
 
     public partial class CustomerAttributeLocalizedModel : ILocalizedModelLocal
@@ -42,6 +38,5 @@ namespace Nop.Admin.Models.Customers
 
         [NopResourceDisplayName("Admin.Customers.CustomerAttributes.Fields.Name")]
         public string Name { get; set; }
-
     }
 }

@@ -1,8 +1,5 @@
-﻿
-using System;
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
@@ -16,6 +13,7 @@ using Nop.Services.Security;
 using Nop.Services.Stores;
 using Nop.Services.Vendors;
 using Nop.Web.Factories;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Security;
 using Nop.Web.Models.Catalog;
@@ -48,7 +46,7 @@ namespace Nop.Web.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public CatalogController(ICatalogModelFactory catalogModelFactory,
             IProductModelFactory productModelFactory,
@@ -122,7 +120,7 @@ namespace Nop.Web.Controllers
 
             //display "edit" (manage) link
             if (_permissionService.Authorize(StandardPermissionProvider.AccessAdminPanel) && _permissionService.Authorize(StandardPermissionProvider.ManageCategories))
-                DisplayEditLink(Url.Action("Edit", "Category", new { id = category.Id, area = "Admin" }));
+                DisplayEditLink(Url.Action("Edit", "Category", new { id = category.Id, area = AreaNames.Admin }));
 
             //activity log
             _customerActivityService.InsertActivity("PublicStore.ViewCategory", _localizationService.GetResource("ActivityLog.PublicStore.ViewCategory"), category.Name);
@@ -166,7 +164,7 @@ namespace Nop.Web.Controllers
             
             //display "edit" (manage) link
             if (_permissionService.Authorize(StandardPermissionProvider.AccessAdminPanel) && _permissionService.Authorize(StandardPermissionProvider.ManageManufacturers))
-                DisplayEditLink(Url.Action("Edit", "Manufacturer", new { id = manufacturer.Id, area = "Admin" }));
+                DisplayEditLink(Url.Action("Edit", "Manufacturer", new { id = manufacturer.Id, area = AreaNames.Admin }));
 
             //activity log
             _customerActivityService.InsertActivity("PublicStore.ViewManufacturer", _localizationService.GetResource("ActivityLog.PublicStore.ViewManufacturer"), manufacturer.Name);
@@ -205,7 +203,7 @@ namespace Nop.Web.Controllers
             
             //display "edit" (manage) link
             if (_permissionService.Authorize(StandardPermissionProvider.AccessAdminPanel) && _permissionService.Authorize(StandardPermissionProvider.ManageVendors))
-                DisplayEditLink(Url.Action("Edit", "Vendor", new { id = vendor.Id, area = "Admin" }));
+                DisplayEditLink(Url.Action("Edit", "Vendor", new { id = vendor.Id, area = AreaNames.Admin }));
 
             //model
             var model = _catalogModelFactory.PrepareVendorModel(vendor, command);
@@ -223,7 +221,6 @@ namespace Nop.Web.Controllers
             var model = _catalogModelFactory.PrepareVendorAllModels();
             return View(model);
         }
-
 
         #endregion
 
@@ -269,7 +266,7 @@ namespace Nop.Web.Controllers
 
         public virtual IActionResult SearchTermAutoComplete(string term)
         {
-            if (String.IsNullOrWhiteSpace(term) || term.Length < _catalogSettings.ProductSearchTermMinimumLength)
+            if (string.IsNullOrWhiteSpace(term) || term.Length < _catalogSettings.ProductSearchTermMinimumLength)
                 return Content("");
 
             //products
@@ -285,13 +282,13 @@ namespace Nop.Web.Controllers
 
             var models =  _productModelFactory.PrepareProductOverviewModels(products, false, _catalogSettings.ShowProductImagesInSearchAutoComplete, _mediaSettings.AutoCompleteSearchThumbPictureSize).ToList();
             var result = (from p in models
-                          select new
-                          {
-                              label = p.Name,
-                              producturl = Url.RouteUrl("Product", new { SeName = p.SeName }),
-                              productpictureurl = p.DefaultPictureModel.ImageUrl
-                          })
-                          .ToList();
+                    select new
+                    {
+                        label = p.Name,
+                        producturl = Url.RouteUrl("Product", new {SeName = p.SeName}),
+                        productpictureurl = p.DefaultPictureModel.ImageUrl
+                    })
+                .ToList();
             return Json(result);
         }
         

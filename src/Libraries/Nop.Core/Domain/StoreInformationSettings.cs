@@ -2,11 +2,14 @@
 
 namespace Nop.Core.Domain
 {
+    /// <summary>
+    /// Store onformation settings
+    /// </summary>
     public class StoreInformationSettings : ISettings
     {
         /// <summary>
         /// Gets or sets a value indicating whether "powered by nopCommerce" text should be displayed.
-        /// Please find more info at http://www.nopcommerce.com/copyrightremoval.aspx
+        /// Please find more info at https://www.nopcommerce.com/copyrightremoval.aspx
         /// </summary>
         public bool HidePoweredByNopCommerce { get; set; }
 

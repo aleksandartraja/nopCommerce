@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Specification attributes");
 }
 
-@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "specificationattribute-form" }))
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="SpecificationAttribute" asp-action="Edit" method="post" id="specificationattribute-form">
     <div class="content-header clearfix">
         <h1 class="pull-left">
-            @T("Admin.Catalog.Attributes.SpecificationAttributes.EditAttributeDetails") - @Model.Name 
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.Catalog.Attributes.SpecificationAttributes.BackToList").Text, "List")</small>
+            @T("Admin.Catalog.Attributes.SpecificationAttributes.EditAttributeDetails") - @Model.Name
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.Catalog.Attributes.SpecificationAttributes.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -28,8 +29,9 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Common.Delete")
             </span>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_specification_attribute_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
-@Html.DeleteConfirmation("specificationattribute-delete")
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="specificationattribute-delete" />

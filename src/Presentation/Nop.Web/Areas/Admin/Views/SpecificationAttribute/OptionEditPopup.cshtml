@@ -6,10 +6,9 @@
     //page title
     ViewBag.Title = T("Admin.Catalog.Attributes.SpecificationAttributes.Options.EditOptionDetails").Text;
 }
-
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="SpecificationAttribute" asp-action="OptionEditPopup" 
+      asp-route-btnId="@Context.Request.Query["btnId"]"
+      asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Catalog.Attributes.SpecificationAttributes.Options.EditOptionDetails")
@@ -18,7 +17,8 @@
             <button type="submit" name="save" class="btn bg-blue">
                 @T("Admin.Common.Save")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_specification_attribute_option_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdateOption", Model)
-}
+</form>

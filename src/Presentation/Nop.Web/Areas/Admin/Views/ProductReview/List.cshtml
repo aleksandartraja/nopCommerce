@@ -14,15 +14,15 @@
     Html.SetActiveMenuItemSystemName("Product reviews");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Catalog.ProductReviews")
     </h1>
-    @if (!Model.IsLoggedInAsVendor)
-    {
-        //these buttons are not visible to vendors
-        <div class="pull-right">
+    <div class="pull-right">
+        @if (!Model.IsLoggedInAsVendor)
+        {
+            //these buttons are not visible to vendors
             <button type="button" id="approve-selected" class="btn bg-green">
                 <i class="fa fa-check-square-o"></i>
                 @T("Admin.Catalog.ProductReviews.ApproveSelected")
@@ -35,8 +35,9 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Catalog.ProductReviews.DeleteSelected")
             </button>
-        </div>
-    }
+        }
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_product_review_list_buttons" })
+    </div>
 </div>
 
 <div class="content">
@@ -48,39 +49,39 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.CreatedOnFrom)
+                                    <nop-label asp-for="CreatedOnFrom" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.CreatedOnFrom)
+                                    <nop-editor asp-for="CreatedOnFrom" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.CreatedOnTo)
+                                    <nop-label asp-for="CreatedOnTo" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.CreatedOnTo)
+                                    <nop-editor asp-for="CreatedOnTo" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchText)
+                                    <nop-label asp-for="SearchText" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopEditorFor(model => model.SearchText)
+                                    <nop-editor asp-for="SearchText" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchApprovedId)
+                                    <nop-label asp-for="SearchApprovedId" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopDropDownList("SearchApprovedId", Model.AvailableApprovedOptions)
+                                    <nop-select asp-for="SearchApprovedId" asp-items="Model.AvailableApprovedOptions" />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchProductId)
+                                    <nop-label asp-for="SearchProductId" />
                                 </div>
                                 <div class="col-md-8">
                                     <input type="text" class="form-control" id="search-product-name" autocomplete="off" />
@@ -91,7 +92,7 @@
                                             minLength: 3,
                                             source: '@(Url.Action("ProductSearchAutoComplete"))',
                                             select: function(event, ui) {
-                                                $('#@Html.FieldIdFor(model => model.SearchProductId)').val(ui.item.productid);
+                                                $('#@Html.IdFor(model => model.SearchProductId)').val(ui.item.productid);
                                                 $('#search-product-friendly-name').text(ui.item.label);
                                                 $('#search-product-clear').show();
                                                 return false;
@@ -102,12 +103,12 @@
 
                                     <span id="search-product-friendly-name"></span>
                                     <button type="button" id="search-product-clear" class="btn bg-gray" style="display: none; margin-top: 5px;">@T("Admin.Common.Clear")</button>
-                                    @Html.TextBoxFor(model => model.SearchProductId, new {autocomplete = "off", style = "display:none;"})
+                                    <input asp-for="SearchProductId" autocomplete = "off" style = "display:none;" />
 
-                                    <script>
+                                    <script type="text/javascript">
                                     //remove button
                                     $('#search-product-clear').click(function() {
-                                        $('#@Html.FieldIdFor(model => model.SearchProductId)').val('0');
+                                        $('#@Html.IdFor(model => model.SearchProductId)').val('0');
                                         $('#search-product-friendly-name').text('');
                                         $('#search-product-clear').hide();
                                         return false;
@@ -117,10 +118,10 @@
                             </div>
                             <div class="form-group" @(Model.AvailableStores.SelectionIsNotPossible() ? Html.Raw("style=\"display:none\"") : null)>
                                 <div class="col-md-4">
-                                    @Html.NopLabelFor(model => model.SearchStoreId)
+                                    <nop-label asp-for="SearchStoreId" />
                                 </div>
                                 <div class="col-md-8">
-                                    @Html.NopDropDownListFor(model => model.SearchStoreId, Model.AvailableStores)
+                                    <nop-select asp-for="SearchStoreId" asp-items="Model.AvailableStores" />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -140,7 +141,7 @@
                 <div class="panel-body">
                     <div id="productreviews-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#productreviews-grid").kendoGrid({
                                 dataSource: {
@@ -371,11 +372,11 @@
 
                         function additionalData() {
                             var data = {
-                                CreatedOnFrom: $('#@Html.FieldIdFor(model => model.CreatedOnFrom)').val(),
-                                CreatedOnTo: $('#@Html.FieldIdFor(model => model.CreatedOnTo)').val(),
-                                SearchText: $('#@Html.FieldIdFor(model => model.SearchText)').val(),
-                                SearchStoreId: $('#@Html.FieldIdFor(model => model.SearchStoreId)').val(),
-                                SearchProductId: $('#@Html.FieldIdFor(model => model.SearchProductId)').val(),
+                                CreatedOnFrom: $('#@Html.IdFor(model => model.CreatedOnFrom)').val(),
+                                CreatedOnTo: $('#@Html.IdFor(model => model.CreatedOnTo)').val(),
+                                SearchText: $('#@Html.IdFor(model => model.SearchText)').val(),
+                                SearchStoreId: $('#@Html.IdFor(model => model.SearchStoreId)').val(),
+                                SearchProductId: $('#@Html.IdFor(model => model.SearchProductId)').val(),
                                 SearchApprovedId: $('#SearchApprovedId').val()
                             };
                             addAntiForgeryToken(data);

@@ -27,7 +27,7 @@ namespace Nop.Web.Factories
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public PrivateMessagesModelFactory(IForumService forumService,
             IWorkContext workContext, 
@@ -56,9 +56,9 @@ namespace Nop.Web.Factories
         /// <returns>Private message index model</returns>
         public virtual PrivateMessageIndexModel PreparePrivateMessageIndexModel(int? page, string tab)
         {
-            int inboxPage = 0;
-            int sentItemsPage = 0;
-            bool sentItemsTabSelected = false;
+            var inboxPage = 0;
+            var sentItemsPage = 0;
+            var sentItemsTabSelected = false;
 
             switch (tab)
             {
@@ -119,7 +119,7 @@ namespace Nop.Web.Factories
                 ShowTotalSummary = false,
                 RouteActionName = "PrivateMessagesPaged",
                 UseRouteLinks = true,
-                RouteValues = new PrivateMessageRouteValues { page = page, tab = tab }
+                RouteValues = new PrivateMessageRouteValues { pageNumber = page, tab = tab }
             };
 
             var model = new PrivateMessageListModel
@@ -161,7 +161,7 @@ namespace Nop.Web.Factories
                 ShowTotalSummary = false,
                 RouteActionName = "PrivateMessagesPaged",
                 UseRouteLinks = true,
-                RouteValues = new PrivateMessageRouteValues { page = page, tab = tab }
+                RouteValues = new PrivateMessageRouteValues { pageNumber = page, tab = tab }
             };
 
             var model = new PrivateMessageListModel
@@ -182,12 +182,14 @@ namespace Nop.Web.Factories
         public virtual SendPrivateMessageModel PrepareSendPrivateMessageModel(Customer customerTo, PrivateMessage replyToPM)
         {
             if (customerTo == null)
-                throw new ArgumentNullException("customerTo");
+                throw new ArgumentNullException(nameof(customerTo));
 
-            var model = new SendPrivateMessageModel();
-            model.ToCustomerId = customerTo.Id;
-            model.CustomerToName = customerTo.FormatUserName();
-            model.AllowViewingToProfile = _customerSettings.AllowViewingProfiles && !customerTo.IsGuest();
+            var model = new SendPrivateMessageModel
+            {
+                ToCustomerId = customerTo.Id,
+                CustomerToName = customerTo.FormatUserName(),
+                AllowViewingToProfile = _customerSettings.AllowViewingProfiles && !customerTo.IsGuest()
+            };
 
             if (replyToPM == null)
                 return model;
@@ -196,7 +198,7 @@ namespace Nop.Web.Factories
                 replyToPM.FromCustomerId == _workContext.CurrentCustomer.Id)
             {
                 model.ReplyToMessageId = replyToPM.Id;
-                model.Subject = string.Format("Re: {0}", replyToPM.Subject);
+                model.Subject = $"Re: {replyToPM.Subject}";
             }
 
             return model;
@@ -210,7 +212,7 @@ namespace Nop.Web.Factories
         public virtual PrivateMessageModel PreparePrivateMessageModel(PrivateMessage pm)
         {
             if (pm == null)
-                throw new ArgumentNullException("pm");
+                throw new ArgumentNullException(nameof(pm));
 
             var model = new PrivateMessageModel
             {

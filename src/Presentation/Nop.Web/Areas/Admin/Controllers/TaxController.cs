@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Routing;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Tax;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Tax;
 using Nop.Core.Domain.Tax;
 using Nop.Services.Configuration;
 using Nop.Services.Security;
@@ -11,7 +11,7 @@ using Nop.Services.Tax;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class TaxController : BaseAdminController
 	{
@@ -58,11 +58,16 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageTaxSettings))
                 return AccessDeniedKendoGridJson();
 
-            var taxProvidersModel = _taxService.LoadAllTaxProviders()
-                .Select(x => x.ToModel())
-                .ToList();
-            foreach (var tpm in taxProvidersModel)
-                tpm.IsPrimaryTaxProvider = tpm.SystemName.Equals(_taxSettings.ActiveTaxProviderSystemName, StringComparison.InvariantCultureIgnoreCase);
+            var taxProvidersModel = new List<TaxProviderModel>();
+            var taxProviders = _taxService.LoadAllTaxProviders();
+            foreach (var taxProvider in taxProviders)
+            {
+                var tmp1 = taxProvider.ToModel();
+                tmp1.IsPrimaryTaxProvider = tmp1.SystemName.Equals(_taxSettings.ActiveTaxProviderSystemName, StringComparison.InvariantCultureIgnoreCase);
+                tmp1.ConfigurationUrl = taxProvider.GetConfigurationPageUrl();
+                taxProvidersModel.Add(tmp1);
+            }
+                
             var gridModel = new DataSourceResult
             {
                 Data = taxProvidersModel,
@@ -71,25 +76,10 @@ namespace Nop.Admin.Controllers
 
             return Json(gridModel);
         }
-
-        public virtual IActionResult ConfigureProvider(string systemName)
-        {
-            if (!_permissionService.Authorize(StandardPermissionProvider.ManageTaxSettings))
-                return AccessDeniedView();
-
-            var taxProvider = _taxService.LoadTaxProviderBySystemName(systemName);
-            if (taxProvider == null)
-                //No tax provider found with the specified id
-                return RedirectToAction("Providers");
-
-            var url = taxProvider.GetConfigurationPageUrl();
-            //TODO implement logic when configuration page is not required
-            return Redirect(url);
-        }
-
+        
         public virtual IActionResult MarkAsPrimaryProvider(string systemName)
         {
-            if (String.IsNullOrEmpty(systemName))
+            if (string.IsNullOrEmpty(systemName))
             {
                 return RedirectToAction("Providers");
             }

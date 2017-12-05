@@ -1,6 +1,8 @@
 ﻿using System;
 using Nop.Core;
+using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Media;
+using Nop.Core.Domain.Vendors;
 using Nop.Services.Localization;
 using Nop.Services.Media;
 using Nop.Web.Framework.Security.Captcha;
@@ -20,24 +22,30 @@ namespace Nop.Web.Factories
         private readonly IPictureService _pictureService;
         
         private readonly CaptchaSettings _captchaSettings;
+        private readonly CommonSettings _commonSettings;
         private readonly MediaSettings _mediaSettings;
+        private readonly VendorSettings _vendorSettings;
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public VendorModelFactory(IWorkContext workContext,
             ILocalizationService localizationService,
             IPictureService pictureService,
             CaptchaSettings captchaSettings,
-            MediaSettings mediaSettings)
+            CommonSettings commonSettings,
+            MediaSettings mediaSettings,
+            VendorSettings vendorSettings)
         {
             this._workContext = workContext;
             this._localizationService = localizationService;
             this._pictureService = pictureService;
             
             this._captchaSettings = captchaSettings;
+            this._commonSettings = commonSettings;
             this._mediaSettings = mediaSettings;
+            this._vendorSettings = vendorSettings;
         }
 
         #endregion
@@ -54,7 +62,7 @@ namespace Nop.Web.Factories
         public virtual ApplyVendorModel PrepareApplyVendorModel(ApplyVendorModel model, bool validateVendor, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (validateVendor && _workContext.CurrentCustomer.VendorId > 0)
             {
@@ -64,6 +72,8 @@ namespace Nop.Web.Factories
             }
 
             model.DisplayCaptcha = _captchaSettings.Enabled && _captchaSettings.ShowOnApplyVendorPage;
+            model.TermsOfServiceEnabled = _vendorSettings.TermsOfServiceEnabled;
+            model.TermsOfServicePopup = _commonSettings.PopupForTermsOfServiceLinks;
 
             if (!excludeProperties)
             {
@@ -82,7 +92,7 @@ namespace Nop.Web.Factories
         public virtual VendorInfoModel PrepareVendorInfoModel(VendorInfoModel model, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             var vendor = _workContext.CurrentVendor;
             if (!excludeProperties)

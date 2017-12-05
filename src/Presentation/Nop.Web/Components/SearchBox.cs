@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using System.Linq;
-using System.Threading.Tasks;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class SearchBoxViewComponent : ViewComponent
+    public class SearchBoxViewComponent : NopViewComponent
     {
         private readonly ICatalogModelFactory _catalogModelFactory;
 
@@ -14,7 +13,7 @@ namespace Nop.Web.Components
             this._catalogModelFactory = catalogModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             var model = _catalogModelFactory.PrepareSearchBoxModel();
             return View(model);

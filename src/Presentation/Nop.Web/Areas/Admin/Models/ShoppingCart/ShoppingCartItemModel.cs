@@ -1,10 +1,8 @@
 ﻿using System;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.ShoppingCart
+namespace Nop.Web.Areas.Admin.Models.ShoppingCart
 {
     public partial class ShoppingCartItemModel : BaseNopEntityModel
     {

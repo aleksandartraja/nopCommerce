@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Admin.Models.Orders;
+using Nop.Web.Areas.Admin.Models.Orders;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
@@ -14,7 +14,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class RecurringPaymentController : BaseAdminController
     {
@@ -30,7 +30,7 @@ namespace Nop.Admin.Controllers
 
         #endregion Fields
 
-        #region Constructors
+        #region Ctor
 
         public RecurringPaymentController(IOrderService orderService,
             IOrderProcessingService orderProcessingService, ILocalizationService localizationService,
@@ -54,10 +54,10 @@ namespace Nop.Admin.Controllers
             RecurringPayment recurringPayment)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (recurringPayment == null)
-                throw new ArgumentNullException("recurringPayment");
+                throw new ArgumentNullException(nameof(recurringPayment));
             
             model.Id = recurringPayment.Id;
             model.CycleLength = recurringPayment.CycleLength;
@@ -81,10 +81,10 @@ namespace Nop.Admin.Controllers
             RecurringPaymentHistory history)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (history == null)
-                throw new ArgumentNullException("history");
+                throw new ArgumentNullException(nameof(history));
 
             var order = _orderService.GetOrderById(history.OrderId);
 

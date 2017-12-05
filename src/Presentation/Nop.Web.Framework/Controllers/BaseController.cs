@@ -28,27 +28,30 @@ namespace Nop.Web.Framework.Controllers
     /// <summary>
     /// Base controller
     /// </summary>
+    [PublishModelEvents]
+    [SignOutFromExternalAuthentication]
     [ValidatePassword]
     [SaveIpAddress]
     [SaveLastActivity]
     [SaveLastVisitedPage]
     public abstract class BaseController : Controller
     {
-        #region Methods
+        #region Rendering
 
         /// <summary>
-        /// Render componentto string
+        /// Render component to string
         /// </summary>
         /// <param name="componentName">Component name</param>
+        /// <param name="arguments">Arguments</param>
         /// <returns>Result</returns>
-        public virtual string RenderViewComponentToString(string componentName)
+        protected virtual string RenderViewComponentToString(string componentName, object arguments = null)
         {
             //original implementation: https://github.com/aspnet/Mvc/blob/dev/src/Microsoft.AspNetCore.Mvc.ViewFeatures/Internal/ViewComponentResultExecutor.cs
             //we customized it to allow running from controllers
 
             //TODO add support for parameters (pass ViewComponent as input parameter)
-            if (String.IsNullOrEmpty(componentName))
-                throw new ArgumentNullException("componentName");
+            if (string.IsNullOrEmpty(componentName))
+                throw new ArgumentNullException(nameof(componentName));
 
             var actionContextAccessor = HttpContext.RequestServices.GetService(typeof(IActionContextAccessor)) as IActionContextAccessor;
             if (actionContextAccessor == null)
@@ -56,7 +59,7 @@ namespace Nop.Web.Framework.Controllers
 
             var context = actionContextAccessor.ActionContext;
 
-            var viewComponentResult = ViewComponent(componentName);
+            var viewComponentResult = ViewComponent(componentName, arguments);
 
             var viewData = this.ViewData;
             if (viewData == null)
@@ -86,7 +89,7 @@ namespace Nop.Web.Framework.Controllers
                 var viewComponentHelper = context.HttpContext.RequestServices.GetRequiredService<IViewComponentHelper>();
                 (viewComponentHelper as IViewContextAware)?.Contextualize(viewContext);
 
-                Task<IHtmlContent> result = viewComponentResult.ViewComponentType == null ? 
+                var result = viewComponentResult.ViewComponentType == null ? 
                     viewComponentHelper.InvokeAsync(viewComponentResult.ViewComponentName, viewComponentResult.Arguments):
                     viewComponentHelper.InvokeAsync(viewComponentResult.ViewComponentType, viewComponentResult.Arguments);
 
@@ -99,7 +102,7 @@ namespace Nop.Web.Framework.Controllers
         /// Render partial view to string
         /// </summary>
         /// <returns>Result</returns>
-        public virtual string RenderPartialViewToString()
+        protected virtual string RenderPartialViewToString()
         {
             return RenderPartialViewToString(null, null);
         }
@@ -109,7 +112,7 @@ namespace Nop.Web.Framework.Controllers
         /// </summary>
         /// <param name="viewName">View name</param>
         /// <returns>Result</returns>
-        public virtual string RenderPartialViewToString(string viewName)
+        protected virtual string RenderPartialViewToString(string viewName)
         {
             return RenderPartialViewToString(viewName, null);
         }
@@ -119,7 +122,7 @@ namespace Nop.Web.Framework.Controllers
         /// </summary>
         /// <param name="model">Model</param>
         /// <returns>Result</returns>
-        public virtual string RenderPartialViewToString(object model)
+        protected virtual string RenderPartialViewToString(object model)
         {
             return RenderPartialViewToString(null, model);
         }
@@ -130,7 +133,7 @@ namespace Nop.Web.Framework.Controllers
         /// <param name="viewName">View name</param>
         /// <param name="model">Model</param>
         /// <returns>Result</returns>
-        public virtual string RenderPartialViewToString(string viewName, object model)
+        protected virtual string RenderPartialViewToString(string viewName, object model)
         {
             //get Razor view engine
             var razorViewEngine = EngineContext.Current.Resolve<IRazorViewEngine>();
@@ -144,10 +147,16 @@ namespace Nop.Web.Framework.Controllers
 
             //set model
             ViewData.Model = model;
+
+            //try to get a view by the name
             var viewResult = razorViewEngine.FindView(actionContext, viewName, false);
             if (viewResult.View == null)
-                throw new ArgumentNullException($"{viewName} view was not found");
-
+            {
+                //or try to get a view by the path
+                viewResult = razorViewEngine.GetView(null, viewName, false);
+                if (viewResult.View == null)
+                    throw new ArgumentNullException($"{viewName} view was not found");
+            }
             using (var stringWriter = new StringWriter())
             {
                 var viewContext = new ViewContext(actionContext, viewResult.View, ViewData, TempData, stringWriter, new HtmlHelperOptions());
@@ -158,23 +167,9 @@ namespace Nop.Web.Framework.Controllers
             }
         }
 
-        /// <summary>
-        /// Get active store scope (for multi-store configuration mode)
-        /// </summary>
-        /// <param name="storeService">Store service</param>
-        /// <param name="workContext">Work context</param>
-        /// <returns>Store ID; 0 if we are in a shared mode</returns>
-        public virtual int GetActiveStoreScopeConfiguration(IStoreService storeService, IWorkContext workContext)
-        {
-            //ensure that we have 2 (or more) stores
-            if (storeService.GetAllStores().Count < 2)
-                return 0;
+        #endregion
 
-            var storeId = workContext.CurrentCustomer.GetAttribute<int>(SystemCustomerAttributeNames.AdminAreaStoreScopeConfiguration);
-            var store = storeService.GetStoreById(storeId);
-
-            return store != null ? store.Id : 0;
-        }
+        #region Notifications
 
         /// <summary>
         /// Display success notification
@@ -241,7 +236,7 @@ namespace Nop.Web.Framework.Controllers
         /// <param name="persistForTheNextRequest">A value indicating whether a message should be persisted for the next request</param>
         protected virtual void AddNotification(NotifyType type, string message, bool persistForTheNextRequest)
         {
-            var dataKey = string.Format("nop.notifications.{0}", type);
+            var dataKey = $"nop.notifications.{type}";
 
             if (persistForTheNextRequest)
             {
@@ -258,10 +253,10 @@ namespace Nop.Web.Framework.Controllers
         }
 
         /// <summary>
-        /// Error's json data for kendo grid
+        /// Error's JSON data for kendo grid
         /// </summary>
         /// <param name="errorMessage">Error message</param>
-        /// <returns>Error's json data</returns>
+        /// <returns>Error's JSON data</returns>
         protected JsonResult ErrorForKendoGridJson(string errorMessage)
         {
             var gridModel = new DataSourceResult
@@ -282,6 +277,28 @@ namespace Nop.Web.Framework.Controllers
 
             pageHeadBuilder.AddEditPageUrl(editPageUrl);
         }
+
+        /// <summary>
+        /// Get active store scope (for multi-store configuration mode)
+        /// </summary>
+        /// <param name="storeService">Store service</param>
+        /// <param name="workContext">Work context</param>
+        /// <returns>Store ID; 0 if we are in a shared mode</returns>
+        protected virtual int GetActiveStoreScopeConfiguration(IStoreService storeService, IWorkContext workContext)
+        {
+            //ensure that we have 2 (or more) stores
+            if (storeService.GetAllStores().Count < 2)
+                return 0;
+
+            var storeId = workContext.CurrentCustomer.GetAttribute<int>(SystemCustomerAttributeNames.AdminAreaStoreScopeConfiguration);
+            var store = storeService.GetStoreById(storeId);
+
+            return store != null ? store.Id : 0;
+        }
+
+        #endregion
+
+        #region Localization
 
         /// <summary>
         /// Add locales for localizable entities
@@ -317,6 +334,33 @@ namespace Nop.Web.Framework.Controllers
             }
         }
 
+
+        #endregion
+
+        #region Security
+
+        /// <summary>
+        /// Access denied view
+        /// </summary>
+        /// <returns>Access denied view</returns>
+        protected virtual IActionResult AccessDeniedView()
+        {
+            var webHelper = EngineContext.Current.Resolve<IWebHelper>();
+
+            //return Challenge();
+            return RedirectToAction("AccessDenied", "Security", new { pageUrl = webHelper.GetRawUrl(this.Request) });
+        }
+
+        /// <summary>
+        /// Access denied JSON data for kendo grid
+        /// </summary>
+        /// <returns>Access denied JSON data</returns>
+        protected JsonResult AccessDeniedKendoGridJson()
+        {
+            var localizationService = EngineContext.Current.Resolve<ILocalizationService>();
+            return ErrorForKendoGridJson(localizationService.GetResource("Admin.AccessDenied.Description"));
+        }
+        
         #endregion
     }
 }

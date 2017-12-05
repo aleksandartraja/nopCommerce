@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Settings
+namespace Nop.Web.Areas.Admin.Models.Settings
 {
     public partial class CustomerUserSettingsModel : BaseNopModel
     {
@@ -17,6 +15,7 @@ namespace Nop.Admin.Models.Settings
             DateTimeSettings = new DateTimeSettingsModel();
             ExternalAuthenticationSettings = new ExternalAuthenticationSettingsModel();
         }
+
         public CustomerSettingsModel CustomerSettings { get; set; }
         public AddressSettingsModel AddressSettings { get; set; }
         public DateTimeSettingsModel DateTimeSettings { get; set; }
@@ -103,10 +102,11 @@ namespace Nop.Admin.Models.Settings
 
             [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.StoreLastVisitedPage")]
             public bool StoreLastVisitedPage { get; set; }
+            [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.StoreIpAddresses")]
+            public bool StoreIpAddresses { get; set; }
 
             [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.EnteringEmailTwice")]
             public bool EnteringEmailTwice { get; set; }
-
 
             [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.GenderEnabled")]
             public bool GenderEnabled { get; set; }
@@ -231,9 +231,10 @@ namespace Nop.Admin.Models.Settings
 
         public partial class ExternalAuthenticationSettingsModel : BaseNopModel
         {
-            [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.ExternalAuthenticationAutoRegisterEnabled")]
-            public bool AutoRegisterEnabled { get; set; }
+            [NopResourceDisplayName("Admin.Configuration.Settings.CustomerUser.AllowCustomersToRemoveAssociations")]
+            public bool AllowCustomersToRemoveAssociations { get; set; }
         }
+
         #endregion
     }
 }

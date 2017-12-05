@@ -1,12 +1,10 @@
 ﻿using System;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
-using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Messages;
 using Nop.Services.Localization;
 using Nop.Services.Messages;
 using Nop.Web.Factories;
-using Nop.Web.Framework;
 using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Web.Controllers
@@ -19,7 +17,6 @@ namespace Nop.Web.Controllers
         private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
         private readonly IWorkflowMessageService _workflowMessageService;
         private readonly IStoreContext _storeContext;
-
 
         public NewsletterController(INewsletterModelFactory newsletterModelFactory,
             ILocalizationService localizationService,
@@ -42,7 +39,7 @@ namespace Nop.Web.Controllers
         public virtual IActionResult SubscribeNewsletter(string email, bool subscribe)
         {
             string result;
-            bool success = false;
+            var success = false;
 
             if (!CommonHelper.IsValidEmail(email))
             {

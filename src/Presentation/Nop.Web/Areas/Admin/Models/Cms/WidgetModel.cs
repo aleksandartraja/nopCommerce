@@ -2,7 +2,7 @@
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Cms
+namespace Nop.Web.Areas.Admin.Models.Cms
 {
     public partial class WidgetModel : BaseNopModel
     {
@@ -17,6 +17,9 @@ namespace Nop.Admin.Models.Cms
 
         [NopResourceDisplayName("Admin.ContentManagement.Widgets.Fields.IsActive")]
         public bool IsActive { get; set; }
+
+        [NopResourceDisplayName("Admin.ContentManagement.Widgets.Configure")]
+        public string ConfigurationUrl { get; set; }
 
         public string WidgetViewComponentName { get; set; }
         public RouteValueDictionary WidgetViewComponentArguments { get; set; }

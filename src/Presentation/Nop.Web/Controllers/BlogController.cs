@@ -14,6 +14,7 @@ using Nop.Services.Security;
 using Nop.Services.Seo;
 using Nop.Services.Stores;
 using Nop.Web.Factories;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
@@ -47,7 +48,7 @@ namespace Nop.Web.Controllers
         
         #endregion
         
-        #region Constructors
+        #region Ctor
 
         public BlogController(IBlogService blogService,
             IWorkContext workContext,
@@ -93,6 +94,7 @@ namespace Nop.Web.Controllers
             var model = _blogModelFactory.PrepareBlogPostListModel(command);
             return View("List", model);
         }
+
         public virtual IActionResult BlogByTag(BlogPagingFilteringModel command)
         {
             if (!_blogSettings.Enabled)
@@ -101,6 +103,7 @@ namespace Nop.Web.Controllers
             var model = _blogModelFactory.PrepareBlogPostListModel(command);
             return View("List", model);
         }
+
         public virtual IActionResult BlogByMonth(BlogPagingFilteringModel command)
         {
             if (!_blogSettings.Enabled)
@@ -113,9 +116,9 @@ namespace Nop.Web.Controllers
         public virtual IActionResult ListRss(int languageId)
         {
             var feed = new RssFeed(
-                string.Format("{0}: Blog", _storeContext.CurrentStore.GetLocalized(x => x.Name)),
+                $"{_storeContext.CurrentStore.GetLocalized(x => x.Name)}: Blog",
                 "Blog",
-                new Uri(_webHelper.GetStoreLocation(false)),
+                new Uri(_webHelper.GetStoreLocation()),
                 DateTime.UtcNow);
 
             if (!_blogSettings.Enabled)
@@ -125,8 +128,9 @@ namespace Nop.Web.Controllers
             var blogPosts = _blogService.GetAllBlogPosts(_storeContext.CurrentStore.Id, languageId);
             foreach (var blogPost in blogPosts)
             {
-                string blogPostUrl = Url.RouteUrl("BlogPost", new { SeName = blogPost.GetSeName(blogPost.LanguageId, ensureTwoPublishedLanguages: false) }, _webHelper.IsCurrentConnectionSecured() ? "https" : "http");
-                items.Add(new RssItem(blogPost.Title, blogPost.Body, new Uri(blogPostUrl), String.Format("urn:store:{0}:blog:post:{1}", _storeContext.CurrentStore.Id, blogPost.Id), blogPost.CreatedOnUtc));
+                var blogPostUrl = Url.RouteUrl("BlogPost", new { SeName = blogPost.GetSeName(blogPost.LanguageId, ensureTwoPublishedLanguages: false) }, _webHelper.IsCurrentConnectionSecured() ? "https" : "http");
+                items.Add(new RssItem(blogPost.Title, blogPost.Body, new Uri(blogPostUrl),
+                    $"urn:store:{_storeContext.CurrentStore.Id}:blog:post:{blogPost.Id}", blogPost.CreatedOnUtc));
             }
             feed.Items = items;
             return new RssActionResult(feed, _webHelper.GetThisPageUrl(false));
@@ -149,7 +153,7 @@ namespace Nop.Web.Controllers
             
             //display "edit" (manage) link
             if (_permissionService.Authorize(StandardPermissionProvider.AccessAdminPanel) && _permissionService.Authorize(StandardPermissionProvider.ManageBlog))
-                DisplayEditLink(Url.Action("Edit", "Blog", new { id = blogPost.Id, area = "Admin" }));
+                DisplayEditLink(Url.Action("Edit", "Blog", new { id = blogPost.Id, area = AreaNames.Admin }));
 
             var model = new BlogPostModel();
             _blogModelFactory.PrepareBlogPostModel(model, blogPost, true);

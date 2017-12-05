@@ -18,6 +18,7 @@ namespace Nop.Services.Catalog
     public partial class ManufacturerService : IManufacturerService
     {
         #region Constants
+
         /// <summary>
         /// Key for caching
         /// </summary>
@@ -110,6 +111,7 @@ namespace Nop.Services.Catalog
             this._catalogSettings = catalogSettings;
             this._eventPublisher = eventPublisher;
         }
+
         #endregion
 
         #region Methods
@@ -121,7 +123,7 @@ namespace Nop.Services.Catalog
         public virtual void DeleteManufacturer(Manufacturer manufacturer)
         {
             if (manufacturer == null)
-                throw new ArgumentNullException("manufacturer");
+                throw new ArgumentNullException(nameof(manufacturer));
             
             manufacturer.Deleted = true;
             UpdateManufacturer(manufacturer);
@@ -148,7 +150,7 @@ namespace Nop.Services.Catalog
             var query = _manufacturerRepository.Table;
             if (!showHidden)
                 query = query.Where(m => m.Published);
-            if (!String.IsNullOrWhiteSpace(manufacturerName))
+            if (!string.IsNullOrWhiteSpace(manufacturerName))
                 query = query.Where(m => m.Name.Contains(manufacturerName));
             query = query.Where(m => !m.Deleted);
             query = query.OrderBy(m => m.DisplayOrder).ThenBy(m => m.Id);
@@ -198,7 +200,7 @@ namespace Nop.Services.Catalog
             if (manufacturerId == 0)
                 return null;
             
-            string key = string.Format(MANUFACTURERS_BY_ID_KEY, manufacturerId);
+            var key = string.Format(MANUFACTURERS_BY_ID_KEY, manufacturerId);
             return _cacheManager.Get(key, () => _manufacturerRepository.GetById(manufacturerId));
         }
 
@@ -209,7 +211,7 @@ namespace Nop.Services.Catalog
         public virtual void InsertManufacturer(Manufacturer manufacturer)
         {
             if (manufacturer == null)
-                throw new ArgumentNullException("manufacturer");
+                throw new ArgumentNullException(nameof(manufacturer));
 
             _manufacturerRepository.Insert(manufacturer);
 
@@ -228,7 +230,7 @@ namespace Nop.Services.Catalog
         public virtual void UpdateManufacturer(Manufacturer manufacturer)
         {
             if (manufacturer == null)
-                throw new ArgumentNullException("manufacturer");
+                throw new ArgumentNullException(nameof(manufacturer));
 
             _manufacturerRepository.Update(manufacturer);
 
@@ -239,7 +241,6 @@ namespace Nop.Services.Catalog
             //event notification
             _eventPublisher.EntityUpdated(manufacturer);
         }
-        
 
         /// <summary>
         /// Deletes a product manufacturer mapping
@@ -248,7 +249,7 @@ namespace Nop.Services.Catalog
         public virtual void DeleteProductManufacturer(ProductManufacturer productManufacturer)
         {
             if (productManufacturer == null)
-                throw new ArgumentNullException("productManufacturer");
+                throw new ArgumentNullException(nameof(productManufacturer));
 
             _productManufacturerRepository.Delete(productManufacturer);
 
@@ -274,7 +275,7 @@ namespace Nop.Services.Catalog
             if (manufacturerId == 0)
                 return new PagedList<ProductManufacturer>(new List<ProductManufacturer>(), pageIndex, pageSize);
 
-            string key = string.Format(PRODUCTMANUFACTURERS_ALLBYMANUFACTURERID_KEY, showHidden, manufacturerId, pageIndex, pageSize, _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
+            var key = string.Format(PRODUCTMANUFACTURERS_ALLBYMANUFACTURERID_KEY, showHidden, manufacturerId, pageIndex, pageSize, _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
             return _cacheManager.Get(key, () =>
             {
                 var query = from pm in _productManufacturerRepository.Table
@@ -337,7 +338,7 @@ namespace Nop.Services.Catalog
             if (productId == 0)
                 return new List<ProductManufacturer>();
 
-            string key = string.Format(PRODUCTMANUFACTURERS_ALLBYPRODUCTID_KEY, showHidden, productId, _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
+            var key = string.Format(PRODUCTMANUFACTURERS_ALLBYPRODUCTID_KEY, showHidden, productId, _workContext.CurrentCustomer.Id, _storeContext.CurrentStore.Id);
             return _cacheManager.Get(key, () =>
             {
                 var query = from pm in _productManufacturerRepository.Table
@@ -411,7 +412,7 @@ namespace Nop.Services.Catalog
         public virtual void InsertProductManufacturer(ProductManufacturer productManufacturer)
         {
             if (productManufacturer == null)
-                throw new ArgumentNullException("productManufacturer");
+                throw new ArgumentNullException(nameof(productManufacturer));
 
             _productManufacturerRepository.Insert(productManufacturer);
 
@@ -430,7 +431,7 @@ namespace Nop.Services.Catalog
         public virtual void UpdateProductManufacturer(ProductManufacturer productManufacturer)
         {
             if (productManufacturer == null)
-                throw new ArgumentNullException("productManufacturer");
+                throw new ArgumentNullException(nameof(productManufacturer));
 
             _productManufacturerRepository.Update(productManufacturer);
 
@@ -458,7 +459,6 @@ namespace Nop.Services.Catalog
                 .ToDictionary(items => items.Key, items => items.Select(a => a.ManufacturerId).ToArray());
         }
 
-
         /// <summary>
         /// Returns a list of names of not existing manufacturers
         /// </summary>
@@ -467,7 +467,7 @@ namespace Nop.Services.Catalog
         public virtual string[] GetNotExistingManufacturers(string[] manufacturerNames)
         {
             if (manufacturerNames == null)
-                throw new ArgumentNullException("manufacturerNames");
+                throw new ArgumentNullException(nameof(manufacturerNames));
 
             var query = _manufacturerRepository.Table;
             var queryFilter = manufacturerNames.Distinct().ToArray();

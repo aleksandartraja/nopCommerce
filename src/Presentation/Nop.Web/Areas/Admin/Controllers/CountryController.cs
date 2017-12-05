@@ -5,8 +5,8 @@ using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Directory;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Directory;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Services.Common;
@@ -20,7 +20,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class CountryController : BaseAdminController
 	{
@@ -41,7 +41,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public CountryController(ICountryService countryService,
             IStateProvinceService stateProvinceService, 
@@ -79,27 +79,27 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(country,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
             }
         }
-        
-        protected virtual void UpdateLocales(StateProvince stateProvince, StateProvinceModel model)
-        {
-            foreach (var localized in model.Locales)
-            {
-                _localizedEntityService.SaveLocalizedValue(stateProvince,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
-            }
-        }
-        
-        protected virtual void PrepareStoresMappingModel(CountryModel model, Country country, bool excludeProperties)
+
+	    protected virtual void UpdateLocales(StateProvince stateProvince, StateProvinceModel model)
+	    {
+	        foreach (var localized in model.Locales)
+	        {
+	            _localizedEntityService.SaveLocalizedValue(stateProvince,
+	                x => x.Name,
+	                localized.Name,
+	                localized.LanguageId);
+	        }
+	    }
+
+	    protected virtual void PrepareStoresMappingModel(CountryModel model, Country country, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && country != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(country).ToList();
@@ -341,6 +341,7 @@ namespace Nop.Admin.Controllers
 
             return Json(new { Result = true });
         }
+
         [HttpPost]
         public virtual IActionResult UnpublishSelected(ICollection<int> selectedIds)
         {
@@ -385,17 +386,19 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCountries))
                 return AccessDeniedView();
 
-            var model = new StateProvinceModel();
-            model.CountryId = countryId;
-            //default value
-            model.Published = true;
+            var model = new StateProvinceModel
+            {
+                CountryId = countryId,
+                //default value
+                Published = true
+            };
             //locales
             AddLocales(_languageService, model.Locales);
             return View(model);
         }
 
         [HttpPost]
-        public virtual IActionResult StateCreatePopup(string btnId, string formId, StateProvinceModel model)
+        public virtual IActionResult StateCreatePopup(StateProvinceModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCountries))
                 return AccessDeniedView();
@@ -417,8 +420,6 @@ namespace Nop.Admin.Controllers
                 UpdateLocales(sp, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -448,7 +449,7 @@ namespace Nop.Admin.Controllers
         }
 
         [HttpPost]
-        public virtual IActionResult StateEditPopup(string btnId, string formId, StateProvinceModel model)
+        public virtual IActionResult StateEditPopup(StateProvinceModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCountries))
                 return AccessDeniedView();
@@ -469,8 +470,6 @@ namespace Nop.Admin.Controllers
                 UpdateLocales(sp, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -509,8 +508,8 @@ namespace Nop.Admin.Controllers
 
 
             // This action method gets called via an ajax request
-            if (String.IsNullOrEmpty(countryId))
-                throw new ArgumentNullException("countryId");
+            if (string.IsNullOrEmpty(countryId))
+                throw new ArgumentNullException(nameof(countryId));
 
             var country = _countryService.GetCountryById(Convert.ToInt32(countryId));
             var states = country != null ? _stateProvinceService.GetStateProvincesByCountryId(country.Id, showHidden: true).ToList() : new List<StateProvince>();
@@ -565,10 +564,10 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCountries))
                 return AccessDeniedView();
 
-            string fileName = String.Format("states_{0}_{1}.txt", DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss"), CommonHelper.GenerateRandomDigitCode(4));
+            var fileName = $"states_{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}_{CommonHelper.GenerateRandomDigitCode(4)}.txt";
 
             var states = _stateProvinceService.GetStateProvinces(true);
-            string result = _exportManager.ExportStatesToTxt(states);
+            var result = _exportManager.ExportStatesToTxt(states);
 
             return File(Encoding.UTF8.GetBytes(result), MimeTypes.TextCsv, fileName);
         }
@@ -583,8 +582,8 @@ namespace Nop.Admin.Controllers
             {
                 if (importcsvfile != null && importcsvfile.Length > 0)
                 {
-                    int count = _importManager.ImportStatesFromTxt(importcsvfile.OpenReadStream());
-                    SuccessNotification(String.Format(_localizationService.GetResource("Admin.Configuration.Countries.ImportSuccess"), count));
+                    var count = _importManager.ImportStatesFromTxt(importcsvfile.OpenReadStream());
+                    SuccessNotification(string.Format(_localizationService.GetResource("Admin.Configuration.Countries.ImportSuccess"), count));
                     return RedirectToAction("List");
                 }
                 ErrorNotification(_localizationService.GetResource("Admin.Common.UploadFile"));

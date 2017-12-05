@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
-using Nop.Core.Domain.Catalog;
-using Nop.Services.Catalog;
-using Nop.Services.Security;
-using Nop.Services.Stores;
+﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using System.Linq;
-using System.Threading.Tasks;
-using Nop.Web.Models.Catalog;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class PollBlockViewComponent : ViewComponent
+    public class PollBlockViewComponent : NopViewComponent
     {
         private readonly IPollModelFactory _pollModelFactory;
 
@@ -21,10 +13,10 @@ namespace Nop.Web.Components
             this._pollModelFactory = pollModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string systemKeyword)
+        public IViewComponentResult Invoke(string systemKeyword)
         {
 
-            if (String.IsNullOrWhiteSpace(systemKeyword))
+            if (string.IsNullOrWhiteSpace(systemKeyword))
                 return Content("");
 
             var model = _pollModelFactory.PreparePollModelBySystemName(systemKeyword);

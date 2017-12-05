@@ -1,5 +1,4 @@
-﻿
-namespace Nop.Core.Events
+﻿namespace Nop.Core.Events
 {
     /// <summary>
     /// A container for entities that have been inserted.
@@ -7,11 +6,18 @@ namespace Nop.Core.Events
     /// <typeparam name="T"></typeparam>
     public class EntityInserted<T> where T : BaseEntity
     {
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="entity">Entity</param>
         public EntityInserted(T entity)
         {
-            this.Entity = entity;
+            Entity = entity;
         }
 
-        public T Entity { get; private set; }
+        /// <summary>
+        /// Entity
+        /// </summary>
+        public T Entity { get; }
     }
 }

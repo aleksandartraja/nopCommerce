@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
-using FluentValidation.Results;
-using Nop.Admin.Models.Customers;
+using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Core.Domain.Customers;
 using Nop.Data;
 using Nop.Services.Customers;
@@ -10,7 +9,7 @@ using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;
 
-namespace Nop.Admin.Validators.Customers
+namespace Nop.Web.Areas.Admin.Validators.Customers
 {
     public partial class CustomerValidator : BaseNopValidator<CustomerModel>
     {
@@ -42,7 +41,7 @@ namespace Nop.Admin.Validators.Customers
                 customerSettings.StateProvinceEnabled &&
                 customerSettings.StateProvinceRequired)
             {
-                Custom(x =>
+                RuleFor(x => x.StateProvinceId).Must((x, context) =>
                 {
                     //does selected country have states?
                     var hasStates = stateProvinceService.GetStateProvincesByCountryId(x.CountryId).Any();
@@ -50,12 +49,11 @@ namespace Nop.Admin.Validators.Customers
                     {
                         //if yes, then ensure that a state is selected
                         if (x.StateProvinceId == 0)
-                        {
-                            return new ValidationFailure("StateProvinceId", localizationService.GetResource("Account.Fields.StateProvince.Required"));
-                        }
+                            return false;
                     }
-                    return null;
-                });
+
+                    return true;
+                }).WithMessage(localizationService.GetResource("Account.Fields.StateProvince.Required"));
             }
             if (customerSettings.CompanyRequired && customerSettings.CompanyEnabled)
             {
@@ -125,7 +123,7 @@ namespace Nop.Admin.Validators.Customers
                 if (model.SelectedCustomerRoleIds.Contains(customerRole.Id))
                     newCustomerRoles.Add(customerRole);
 
-            bool isInRegisteredRole = newCustomerRoles.FirstOrDefault(cr => cr.SystemName == SystemCustomerRoleNames.Registered) != null;
+            var isInRegisteredRole = newCustomerRoles.FirstOrDefault(cr => cr.SystemName == SystemCustomerRoleNames.Registered) != null;
             return isInRegisteredRole;
         }
     }

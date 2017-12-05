@@ -7,9 +7,9 @@
     ViewBag.Title = T("Admin.Configuration.Countries.States.EditStateDetails").Text;
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Country" asp-action="StateEditPopup"
+      asp-route-btnId="@Context.Request.Query["btnId"]"
+      asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Configuration.Countries.States.EditStateDetails")
@@ -19,7 +19,8 @@
                 <i class="fa fa-floppy-o"></i>
                 @T("Admin.Common.Save")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_country_state_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdateState", Model)
-}
+</form>

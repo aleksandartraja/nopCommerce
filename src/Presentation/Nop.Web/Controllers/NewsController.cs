@@ -95,13 +95,12 @@ namespace Nop.Web.Controllers
             return View(model);
         }
 
-
         public virtual IActionResult ListRss(int languageId)
         {
             var feed = new RssFeed(
-                string.Format("{0}: News", _storeContext.CurrentStore.GetLocalized(x => x.Name)),
+                $"{_storeContext.CurrentStore.GetLocalized(x => x.Name)}: News",
                 "News",
-                new Uri(_webHelper.GetStoreLocation(false)),
+                new Uri(_webHelper.GetStoreLocation()),
                 DateTime.UtcNow);
 
             if (!_newsSettings.Enabled)
@@ -111,13 +110,12 @@ namespace Nop.Web.Controllers
             var newsItems = _newsService.GetAllNews(languageId, _storeContext.CurrentStore.Id);
             foreach (var n in newsItems)
             {
-                string newsUrl = Url.RouteUrl("NewsItem", new { SeName = n.GetSeName(n.LanguageId, ensureTwoPublishedLanguages: false) }, _webHelper.IsCurrentConnectionSecured() ? "https" : "http");
-                items.Add(new RssItem(n.Title, n.Short, new Uri(newsUrl), String.Format("urn:store:{0}:news:blog:{1}", _storeContext.CurrentStore.Id, n.Id), n.CreatedOnUtc));
+                var newsUrl = Url.RouteUrl("NewsItem", new { SeName = n.GetSeName(n.LanguageId, ensureTwoPublishedLanguages: false) }, _webHelper.IsCurrentConnectionSecured() ? "https" : "http");
+                items.Add(new RssItem(n.Title, n.Short, new Uri(newsUrl), $"urn:store:{_storeContext.CurrentStore.Id}:news:blog:{n.Id}", n.CreatedOnUtc));
             }
             feed.Items = items;
             return new RssActionResult(feed, _webHelper.GetThisPageUrl(false));
         }
-
 
         public virtual IActionResult NewsItem(int newsItemId)
         {
@@ -138,7 +136,7 @@ namespace Nop.Web.Controllers
 
             //display "edit" (manage) link
             if (_permissionService.Authorize(StandardPermissionProvider.AccessAdminPanel) && _permissionService.Authorize(StandardPermissionProvider.ManageNews))
-                DisplayEditLink(Url.Action("Edit", "News", new { id = newsItem.Id, area = "Admin" }));
+                DisplayEditLink(Url.Action("Edit", "News", new { id = newsItem.Id, area = AreaNames.Admin }));
 
             return View(model);
         }
@@ -201,7 +199,6 @@ namespace Nop.Web.Controllers
 
                 return RedirectToRoute("NewsItem", new { SeName = newsItem.GetSeName(newsItem.LanguageId, ensureTwoPublishedLanguages: false) });
             }
-
 
             //If we got this far, something failed, redisplay form
             model = _newsModelFactory.PrepareNewsItemModel(model, newsItem, true);

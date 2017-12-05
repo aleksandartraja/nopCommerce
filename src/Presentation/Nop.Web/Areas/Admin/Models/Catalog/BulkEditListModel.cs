@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Catalog
+namespace Nop.Web.Areas.Admin.Models.Catalog
 {
     public partial class BulkEditListModel : BaseNopModel
     {
@@ -25,7 +25,6 @@ namespace Nop.Admin.Models.Catalog
         [NopResourceDisplayName("Admin.Catalog.Products.List.SearchProductType")]
         public int SearchProductTypeId { get; set; }
         public IList<SelectListItem> AvailableProductTypes { get; set; }
-        
 
         public IList<SelectListItem> AvailableCategories { get; set; }
         public IList<SelectListItem> AvailableManufacturers { get; set; }

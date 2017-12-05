@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Blogs;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Blogs;
 using Nop.Core.Domain.Blogs;
+using Nop.Core.Domain.Customers;
 using Nop.Services.Blogs;
 using Nop.Services.Events;
 using Nop.Services.Helpers;
@@ -11,16 +15,12 @@ using Nop.Services.Logging;
 using Nop.Services.Security;
 using Nop.Services.Seo;
 using Nop.Services.Stores;
+using Nop.Web.Framework.Extensions;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Nop.Core.Domain.Customers;
-using Nop.Web.Framework.Extensions;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class BlogController : BaseAdminController
 	{
@@ -71,7 +71,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareLanguagesModel(BlogPostModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             var languages = _languageService.GetAllLanguages(true);
             foreach (var language in languages)
@@ -87,7 +87,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareStoresMappingModel(BlogPostModel model, BlogPost blogPost, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && blogPost != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(blogPost).ToList();
@@ -171,7 +171,7 @@ namespace Nop.Admin.Controllers
                     if (x.EndDateUtc.HasValue)
                         m.EndDate = _dateTimeHelper.ConvertToUserTime(x.EndDateUtc.Value, DateTimeKind.Utc);
                     m.CreatedOn = _dateTimeHelper.ConvertToUserTime(x.CreatedOnUtc, DateTimeKind.Utc);
-                    m.LanguageName = x.Language.Name;
+                    m.LanguageName = _languageService.GetLanguageById(x.LanguageId)?.Name;
                     m.ApprovedComments = _blogService.GetBlogCommentsCount(x, isApproved: true);
                     m.NotApprovedComments = _blogService.GetBlogCommentsCount(x, isApproved: false);
 
@@ -372,11 +372,13 @@ namespace Nop.Admin.Controllers
             {
                 Data = comments.PagedForCommand(command).Select(blogComment =>
                 {
-                    var commentModel = new BlogCommentModel();
-                    commentModel.Id = blogComment.Id;
-                    commentModel.BlogPostId = blogComment.BlogPostId;
-                    commentModel.BlogPostTitle = blogComment.BlogPost.Title;
-                    commentModel.CustomerId = blogComment.CustomerId;
+                    var commentModel = new BlogCommentModel
+                    {
+                        Id = blogComment.Id,
+                        BlogPostId = blogComment.BlogPostId,
+                        BlogPostTitle = blogComment.BlogPost.Title,
+                        CustomerId = blogComment.CustomerId
+                    };
                     var customer = blogComment.Customer;
                     commentModel.CustomerInfo = customer.IsRegistered() ? customer.Email : _localizationService.GetResource("Admin.Customers.Guest");
                     commentModel.CreatedOn = _dateTimeHelper.ConvertToUserTime(blogComment.CreatedOnUtc, DateTimeKind.Utc);
@@ -444,7 +446,6 @@ namespace Nop.Admin.Controllers
             if (selectedIds != null)
             {
                 var comments = _blogService.GetBlogCommentsByIds(selectedIds.ToArray());
-                var blogPosts = _blogService.GetBlogPostsByIds(comments.Select(p => p.BlogPostId).Distinct().ToArray());
 
                 _blogService.DeleteBlogComments(comments);
                 //activity log

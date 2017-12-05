@@ -1,15 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Nop.Admin.Models.Settings;
-using Nop.Admin.Models.Stores;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Services.Common;
 using Nop.Services.Stores;
+using Nop.Web.Areas.Admin.Models.Settings;
+using Nop.Web.Areas.Admin.Models.Stores;
+using Nop.Web.Framework.Components;
 
-namespace Nop.Admin.Components
+namespace Nop.Web.Areas.Admin.Components
 {
-    public class StoreScopeConfigurationViewComponent : ViewComponent
+    public class StoreScopeConfigurationViewComponent : NopViewComponent
     {
         private readonly IStoreService _storeService;
         private readonly IWorkContext _workContext;
@@ -20,7 +20,7 @@ namespace Nop.Admin.Components
             this._workContext = workContext;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             var allStores = _storeService.GetAllStores();
             if (allStores.Count < 2)

@@ -1,12 +1,12 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Nop.Web.Framework.Components;
 
-namespace Nop.Plugin.Payments.CheckMoneyOrder.Components
+namespace Nop.Plugin.Payments.PayPalStandard.Components
 {
     [ViewComponent(Name = "PaymentPayPalStandard")]
-    public class PaymentPayPalStandardViewComponent : ViewComponent
+    public class PaymentPayPalStandardViewComponent : NopViewComponent
     {
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             return View("~/Plugins/Payments.PayPalStandard/Views/PaymentInfo.cshtml");
         }

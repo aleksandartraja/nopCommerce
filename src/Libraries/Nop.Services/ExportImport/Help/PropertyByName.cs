@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Core.Extensions;
 
 namespace Nop.Services.ExportImport.Help
 {
@@ -35,12 +34,12 @@ namespace Nop.Services.ExportImport.Help
         /// <summary>
         /// Feature property access
         /// </summary>
-        public Func<T, object> GetProperty { get; private set; }
+        public Func<T, object> GetProperty { get; }
 
         /// <summary>
         /// Property name
         /// </summary>
-        public string PropertyName { get; private set; }
+        public string PropertyName { get; }
 
         /// <summary>
         /// Property value
@@ -62,8 +61,7 @@ namespace Nop.Services.ExportImport.Help
         {
             get
             {
-                int rez;
-                if (PropertyValue == null || !int.TryParse(PropertyValue.ToString(), out rez))
+                if (PropertyValue == null || !int.TryParse(PropertyValue.ToString(), out int rez))
                     return default(int);
                 return rez;
             }
@@ -76,8 +74,7 @@ namespace Nop.Services.ExportImport.Help
         {
             get
             {
-                bool rez;
-                if (PropertyValue == null || !bool.TryParse(PropertyValue.ToString(), out rez))
+                if (PropertyValue == null || !bool.TryParse(PropertyValue.ToString(), out bool rez))
                     return default(bool);
                 return rez;
             }
@@ -101,8 +98,7 @@ namespace Nop.Services.ExportImport.Help
         {
             get
             {
-                decimal rez;
-                if (PropertyValue == null || !decimal.TryParse(PropertyValue.ToString(), out rez))
+                if (PropertyValue == null || !decimal.TryParse(PropertyValue.ToString(), out decimal rez))
                     return default(decimal);
                 return rez;
             }
@@ -115,8 +111,7 @@ namespace Nop.Services.ExportImport.Help
         {
             get
             {
-                decimal rez;
-                if (PropertyValue == null || !decimal.TryParse(PropertyValue.ToString(), out rez))
+                if (PropertyValue == null || !decimal.TryParse(PropertyValue.ToString(), out decimal rez))
                     return null;
                 return rez;
             }
@@ -129,8 +124,7 @@ namespace Nop.Services.ExportImport.Help
         {
             get
             {
-                double rez;
-                if (PropertyValue == null || !double.TryParse(PropertyValue.ToString(), out rez))
+                if (PropertyValue == null || !double.TryParse(PropertyValue.ToString(), out double rez))
                     return default(double);
                 return rez;
             }
@@ -147,6 +141,10 @@ namespace Nop.Services.ExportImport.Help
             }
         }
 
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns>String</returns>
         public override string ToString()
         {
             return PropertyName;
@@ -157,25 +155,42 @@ namespace Nop.Services.ExportImport.Help
         /// </summary>
         public bool Ignore { get; set; }
 
+        /// <summary>
+        /// Is drop down cell
+        /// </summary>
         public bool IsDropDownCell
         {
             get { return DropDownElements != null; }
 
         }
 
+        /// <summary>
+        /// Get DropDown elements
+        /// </summary>
+        /// <returns>Result</returns>
         public string[] GetDropDownElements()
         {
             return  IsDropDownCell ? DropDownElements.Select(ev => ev.Text).ToArray() : new string[0];
         }
 
+        /// <summary>
+        /// Get item text
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <returns>Text</returns>
         public string GetItemText(object id)
         {
-            return DropDownElements.FirstOrDefault(ev => ev.Value == id.ToString()).Return(ev => ev.Text, String.Empty);
+            return DropDownElements.FirstOrDefault(ev => ev.Value == id.ToString())?.Text ?? string.Empty;
         }
 
+        /// <summary>
+        /// Get item identifier
+        /// </summary>
+        /// <param name="name">Name</param>
+        /// <returns>Identifier</returns>
         public int GetItemId(object name)
         {
-            return DropDownElements.FirstOrDefault(ev => ev.Text.Trim() == name.Return(s => s.ToString(), String.Empty).Trim()).Return(ev => Convert.ToInt32(ev.Value), 0);
+            return Convert.ToInt32(DropDownElements.FirstOrDefault(ev => ev.Text.Trim() == (name ?? string.Empty).ToString().Trim())?.Value ?? "0");
         }
         
         /// <summary>
@@ -188,6 +203,9 @@ namespace Nop.Services.ExportImport.Help
         /// </summary>
         public bool AllowBlank { get; set; }
 
+        /// <summary>
+        /// Is caption
+        /// </summary>
         public bool IsCaption
         {
             get { return PropertyName == StringValue || PropertyName == _propertyValue.ToString(); }

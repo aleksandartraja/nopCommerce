@@ -1,28 +1,28 @@
 ﻿using AutoMapper;
-using Nop.Admin.Models.Blogs;
-using Nop.Admin.Models.Catalog;
-using Nop.Admin.Models.Cms;
-using Nop.Admin.Models.Common;
-using Nop.Admin.Models.Customers;
-using Nop.Admin.Models.Directory;
-using Nop.Admin.Models.Discounts;
-using Nop.Admin.Models.ExternalAuthentication;
-using Nop.Admin.Models.Forums;
-using Nop.Admin.Models.Localization;
-using Nop.Admin.Models.Logging;
-using Nop.Admin.Models.Messages;
-using Nop.Admin.Models.News;
-using Nop.Admin.Models.Orders;
-using Nop.Admin.Models.Payments;
-using Nop.Admin.Models.Plugins;
-using Nop.Admin.Models.Polls;
-using Nop.Admin.Models.Settings;
-using Nop.Admin.Models.Shipping;
-using Nop.Admin.Models.Stores;
-using Nop.Admin.Models.Tax;
-using Nop.Admin.Models.Templates;
-using Nop.Admin.Models.Topics;
-using Nop.Admin.Models.Vendors;
+using Nop.Web.Areas.Admin.Models.Blogs;
+using Nop.Web.Areas.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Cms;
+using Nop.Web.Areas.Admin.Models.Common;
+using Nop.Web.Areas.Admin.Models.Customers;
+using Nop.Web.Areas.Admin.Models.Directory;
+using Nop.Web.Areas.Admin.Models.Discounts;
+using Nop.Web.Areas.Admin.Models.ExternalAuthentication;
+using Nop.Web.Areas.Admin.Models.Forums;
+using Nop.Web.Areas.Admin.Models.Localization;
+using Nop.Web.Areas.Admin.Models.Logging;
+using Nop.Web.Areas.Admin.Models.Messages;
+using Nop.Web.Areas.Admin.Models.News;
+using Nop.Web.Areas.Admin.Models.Orders;
+using Nop.Web.Areas.Admin.Models.Payments;
+using Nop.Web.Areas.Admin.Models.Plugins;
+using Nop.Web.Areas.Admin.Models.Polls;
+using Nop.Web.Areas.Admin.Models.Settings;
+using Nop.Web.Areas.Admin.Models.Shipping;
+using Nop.Web.Areas.Admin.Models.Stores;
+using Nop.Web.Areas.Admin.Models.Tax;
+using Nop.Web.Areas.Admin.Models.Templates;
+using Nop.Web.Areas.Admin.Models.Topics;
+using Nop.Web.Areas.Admin.Models.Vendors;
 using Nop.Core.Domain.Blogs;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Common;
@@ -53,7 +53,7 @@ using Nop.Services.Shipping.Pickup;
 using Nop.Services.Tax;
 using Nop.Web.Framework.Security.Captcha;
 
-namespace Nop.Admin.Infrastructure.Mapper
+namespace Nop.Web.Areas.Admin.Infrastructure.Mapper
 {
     /// <summary>
     /// AutoMapper configuration for admin area models
@@ -129,7 +129,6 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.Search, mo => mo.Ignore())
                 .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
             CreateMap<LanguageModel, Language>()
-                .ForMember(dest => dest.LocaleStringResources, mo => mo.Ignore())
                 .ForMember(dest => dest.LimitedToStores, mo => mo.Ignore());
             //email account
             CreateMap<EmailAccount, EmailAccountModel>()
@@ -187,7 +186,7 @@ namespace Nop.Admin.Infrastructure.Mapper
             CreateMap<CampaignModel, Campaign>()
                 .ForMember(dest => dest.DontSendBeforeDateUtc, mo => mo.Ignore())
                 .ForMember(dest => dest.CreatedOnUtc, mo => mo.Ignore());
-            //topcis
+            //topics
             CreateMap<Topic, TopicModel>()
                 .ForMember(dest => dest.AvailableTopicTemplates, mo => mo.Ignore())
                 .ForMember(dest => dest.Url, mo => mo.Ignore())
@@ -271,7 +270,6 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.Locales, mo => mo.Ignore())
                 .ForMember(dest => dest.AvailableCategories, mo => mo.Ignore())
                 .ForMember(dest => dest.AvailableManufacturers, mo => mo.Ignore())
-                .ForMember(dest => dest.AvailableProductAttributes, mo => mo.Ignore())
                 .ForMember(dest => dest.AddPictureModel, mo => mo.Ignore())
                 .ForMember(dest => dest.ProductPictureModels, mo => mo.Ignore())
                 .ForMember(dest => dest.AddSpecificationAttributeModel, mo => mo.Ignore())
@@ -300,7 +298,8 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.LastStockQuantity, mo => mo.Ignore())
                 .ForMember(dest => dest.ProductEditorSettingsModel, mo => mo.Ignore())
                 .ForMember(dest => dest.StockQuantityHistory, mo => mo.Ignore())
-                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
+                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
+                .ForMember(dest => dest.ProductAttributesExist, mo => mo.Ignore());
             CreateMap<ProductModel, Product>()
                 .ForMember(dest => dest.ProductTags, mo => mo.Ignore())
                 .ForMember(dest => dest.CreatedOnUtc, mo => mo.Ignore())
@@ -381,10 +380,8 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.FriendlyName, mo => mo.MapFrom(src => src.PluginDescriptor.FriendlyName))
                 .ForMember(dest => dest.SystemName, mo => mo.MapFrom(src => src.PluginDescriptor.SystemName))
                 .ForMember(dest => dest.IsPrimaryTaxProvider, mo => mo.Ignore())
-                .ForMember(dest => dest.ConfigurationActionName, mo => mo.Ignore())
-                .ForMember(dest => dest.ConfigurationControllerName, mo => mo.Ignore())
-                .ForMember(dest => dest.ConfigurationRouteValues, mo => mo.Ignore())
-                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
+                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
+                .ForMember(dest => dest.ConfigurationUrl, mo => mo.Ignore());
             //tax categories
             CreateMap<TaxCategory, TaxCategoryModel>()
                 .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
@@ -412,7 +409,8 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.DisplayOrder, mo => mo.MapFrom(src => src.PluginDescriptor.DisplayOrder))
                 .ForMember(dest => dest.IsActive, mo => mo.Ignore())
                 .ForMember(dest => dest.LogoUrl, mo => mo.Ignore())
-                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
+                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
+                .ForMember(dest => dest.ConfigurationUrl, mo => mo.Ignore());
             //pickup point providers
             CreateMap<IPickupPointProvider, PickupPointProviderModel>()
                 .ForMember(dest => dest.FriendlyName, mo => mo.MapFrom(src => src.PluginDescriptor.FriendlyName))
@@ -423,7 +421,8 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.ConfigurationActionName, mo => mo.Ignore())
                 .ForMember(dest => dest.ConfigurationControllerName, mo => mo.Ignore())
                 .ForMember(dest => dest.ConfigurationRouteValues, mo => mo.Ignore())
-                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
+                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
+                .ForMember(dest => dest.ConfigurationUrl, mo => mo.Ignore());
             //payment methods
             CreateMap<IPaymentMethod, PaymentMethodModel>()
                 .ForMember(dest => dest.FriendlyName, mo => mo.MapFrom(src => src.PluginDescriptor.FriendlyName))
@@ -433,17 +432,16 @@ namespace Nop.Admin.Infrastructure.Mapper
                     mo => mo.MapFrom(src => src.RecurringPaymentType.ToString()))
                 .ForMember(dest => dest.IsActive, mo => mo.Ignore())
                 .ForMember(dest => dest.LogoUrl, mo => mo.Ignore())
-                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
+                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
+                .ForMember(dest => dest.ConfigurationUrl, mo => mo.Ignore());
             //external authentication methods
             CreateMap<IExternalAuthenticationMethod, AuthenticationMethodModel>()
                 .ForMember(dest => dest.FriendlyName, mo => mo.MapFrom(src => src.PluginDescriptor.FriendlyName))
                 .ForMember(dest => dest.SystemName, mo => mo.MapFrom(src => src.PluginDescriptor.SystemName))
                 .ForMember(dest => dest.DisplayOrder, mo => mo.MapFrom(src => src.PluginDescriptor.DisplayOrder))
                 .ForMember(dest => dest.IsActive, mo => mo.Ignore())
-                .ForMember(dest => dest.ConfigurationActionName, mo => mo.Ignore())
-                .ForMember(dest => dest.ConfigurationControllerName, mo => mo.Ignore())
-                .ForMember(dest => dest.ConfigurationRouteValues, mo => mo.Ignore())
-                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
+                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
+                .ForMember(dest => dest.ConfigurationUrl, mo => mo.Ignore());
             //widgets
             CreateMap<IWidgetPlugin, WidgetModel>()
                 .ForMember(dest => dest.FriendlyName, mo => mo.MapFrom(src => src.PluginDescriptor.FriendlyName))
@@ -452,7 +450,8 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.IsActive, mo => mo.Ignore())
                 .ForMember(dest => dest.WidgetViewComponentName, mo => mo.Ignore())
                 .ForMember(dest => dest.WidgetViewComponentArguments, mo => mo.Ignore())
-                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
+                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
+                .ForMember(dest => dest.ConfigurationUrl, mo => mo.Ignore());
             //plugins
             CreateMap<PluginDescriptor, PluginModel>()
                 .ForMember(dest => dest.ConfigurationUrl, mo => mo.Ignore())
@@ -548,6 +547,7 @@ namespace Nop.Admin.Infrastructure.Mapper
             //customer roles
             CreateMap<CustomerRole, CustomerRoleModel>()
                 .ForMember(dest => dest.PurchasedWithProductName, mo => mo.Ignore())
+                .ForMember(dest => dest.TaxDisplayTypeValues, mo => mo.Ignore())
                 .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
             CreateMap<CustomerRoleModel, CustomerRole>()
                 .ForMember(dest => dest.PermissionRecords, mo => mo.Ignore());
@@ -645,6 +645,19 @@ namespace Nop.Admin.Infrastructure.Mapper
             //Settings
             CreateMap<CaptchaSettings, GeneralCommonSettingsModel.CaptchaSettingsModel>()
                 .ForMember(dest => dest.AvailableReCaptchaVersions, mo => mo.Ignore())
+                .ForMember(dest => dest.Enabled_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnLoginPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnRegistrationPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnContactUsPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnEmailWishlistToFriendPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnEmailProductToFriendPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnBlogCommentPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnNewsCommentPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnProductReviewPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ShowOnApplyVendorPage_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ReCaptchaPublicKey_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ReCaptchaPrivateKey_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ReCaptchaVersion_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
             CreateMap<GeneralCommonSettingsModel.CaptchaSettingsModel, CaptchaSettings>()
                 .ForMember(dest => dest.ReCaptchaTheme, mo => mo.Ignore())
@@ -752,6 +765,7 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.ShowVendorOnProductDetailsPage_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.AllowCustomersToContactVendors_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.AllowCustomersToApplyForVendorAccount_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.TermsOfServiceEnabled_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.AllowSearchByVendor_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.AllowVendorsToEditInfo_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.NotifyStoreOwnerAboutVendorInformationChange_OverrideForStore, mo => mo.Ignore())
@@ -846,7 +860,10 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
                 .ForMember(dest => dest.ShowProductReviewsOnAccountPage_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.ProductReviewsPageSizeOnAccountPage_OverrideForStore, mo => mo.Ignore())
-                .ForMember(dest => dest.ExportImportProductAttributes_OverrideForStore, mo => mo.Ignore());
+                .ForMember(dest => dest.ExportImportProductAttributes_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ExportImportProductSpecificationAttributes_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ExportImportProductCategoryBreadcrumb_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.ExportImportCategoriesUsingCategoryName_OverrideForStore, mo => mo.Ignore());
             CreateMap<CatalogSettingsModel, CatalogSettings>()
                 .ForMember(dest => dest.PublishBackProductWhenCancellingOrders, mo => mo.Ignore())
                 .ForMember(dest => dest.DefaultViewMode, mo => mo.Ignore())
@@ -899,10 +916,11 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.AttachPdfInvoiceToOrderPlacedEmail_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.AttachPdfInvoiceToOrderPaidEmail_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.AttachPdfInvoiceToOrderCompletedEmail_OverrideForStore, mo => mo.Ignore())
-                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore())
                 .ForMember(dest => dest.ReturnRequestNumberMask_OverrideForStore, mo => mo.Ignore())
                 .ForMember(dest => dest.CustomOrderNumberMask_OverrideForStore, mo => mo.Ignore())
-                .ForMember(dest => dest.ExportWithProducts_OverrideForStore, mo => mo.Ignore());
+                .ForMember(dest => dest.ExportWithProducts_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.AllowAdminsToBuyCallForPriceProducts_OverrideForStore, mo => mo.Ignore())
+                .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
             CreateMap<OrderSettingsModel, OrderSettings>()
                 .ForMember(dest => dest.GeneratePdfInvoiceInCustomerLanguage, mo => mo.Ignore())
                 .ForMember(dest => dest.ReturnRequestsFileMaximumSize, mo => mo.Ignore())
@@ -954,7 +972,8 @@ namespace Nop.Admin.Infrastructure.Mapper
                 .ForMember(dest => dest.DefaultPictureZoomEnabled_OverrideForStore, mo => mo.Ignore());
             CreateMap<MediaSettingsModel, MediaSettings>()
                 .ForMember(dest => dest.ImageSquarePictureSize, mo => mo.Ignore())
-                .ForMember(dest => dest.AutoCompleteSearchThumbPictureSize, mo => mo.Ignore());
+                .ForMember(dest => dest.AutoCompleteSearchThumbPictureSize, mo => mo.Ignore())
+                .ForMember(dest => dest.AzureCacheControlHeader, mo => mo.Ignore());
             CreateMap<CustomerSettings, CustomerUserSettingsModel.CustomerSettingsModel>()
                 .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
             CreateMap<CustomerUserSettingsModel.CustomerSettingsModel, CustomerSettings>()

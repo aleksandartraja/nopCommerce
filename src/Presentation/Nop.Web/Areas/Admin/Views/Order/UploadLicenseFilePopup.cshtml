@@ -10,35 +10,37 @@
 @if (ViewBag.RefreshPage == true)
 {
     <script type="text/javascript">
-        try {window.opener.document.forms['@(ViewBag.formId)'].@(ViewBag.btnId).click();}
+        try {window.opener.document.forms['@(Context.Request.Query["formId"])'].@(Context.Request.Query["btnId"]).click();}
         catch (e){}
         window.close();
     </script>
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Order" asp-action="UploadLicenseFilePopup"
+      asp-route-orderItemId="@Context.Request.Query["orderItemId"]"
+      asp-route-btnId="@Context.Request.Query["btnId"]"
+      asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Orders.Products.License.UploadFile")
         </h1>
         <div class="pull-right">
             &nbsp;
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_order_upload_license_buttons" })
         </div>
     </div>
 
     <div class="content">
-        @Html.ValidationSummary(false)
+        <div asp-validation-summary="All"></div>
         <div class="form-horizontal">
             <div class="panel-group">
                 <div class="panel panel-default panel-popup">
                     <div class="panel-body">
-                        @Html.HiddenFor(model => model.OrderId)
-                        @Html.HiddenFor(model => model.OrderItemId)
+                        <input asp-for="OrderId" type="hidden" />
+                        <input asp-for="OrderItemId" type="hidden" />
                         <div class="form-group">
                             <div class="col-sm-12">
-                                @Html.NopEditorFor(model => model.LicenseDownloadId)
+                                <nop-editor asp-for="LicenseDownloadId" />
                             </div>
                         </div>
                         <div class="form-group">
@@ -46,17 +48,11 @@
                                 <button type="submit" name="uploadlicense" id="uploadlicense" class="btn btn-primary">
                                     @T("Admin.Common.Save")
                                 </button>
-                            </div>
-                            <div class="col-sm-2">
                                 @if (Model.LicenseDownloadId > 0)
                                 {
                                     <button type="submit" name="deletelicense" id="deletelicense" class="btn bg-red">
                                         @T("Admin.Common.Delete")
                                     </button>
-                                }
-                                else
-                                {
-                                    <text>&nbsp;</text>
                                 }
                             </div>
                         </div>
@@ -65,4 +61,4 @@
             </div>
         </div>
     </div>
-}
+</form>

@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Manage forums");
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Forum" asp-action="CreateForum" method="post">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.ContentManagement.Forums.Forum.CreateForum") 
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.ContentManagement.Forums.Forum.BackToList").Text, "List")</small>
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.ContentManagement.Forums.Forum.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -24,7 +25,8 @@
                 <i class="fa fa-floppy-o"></i>
                 @T("Admin.Common.SaveContinue")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_forum_details_buttons" })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdateForum", Model)
-}
+</form>

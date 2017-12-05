@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Configuration;
-using Nop.Core.Extensions;
 using Nop.Core.Infrastructure.DependencyManagement;
 using Nop.Core.Infrastructure.Mapper;
 using Nop.Core.Plugins;
@@ -35,11 +34,15 @@ namespace Nop.Core.Infrastructure
 
         #region Utilities
 
+        /// <summary>
+        /// Get IServiceProvider
+        /// </summary>
+        /// <returns>IServiceProvider</returns>
         protected IServiceProvider GetServiceProvider()
         {
-            var accessor = _serviceProvider.GetService<IHttpContextAccessor>();
+            var accessor = ServiceProvider.GetService<IHttpContextAccessor>();
             var context = accessor.HttpContext;
-            return context != null ? context.RequestServices : _serviceProvider;
+            return context != null ? context.RequestServices : ServiceProvider;
         }
 
         /// <summary>
@@ -52,8 +55,9 @@ namespace Nop.Core.Infrastructure
             var startupTasks = typeFinder.FindClassesOfType<IStartupTask>();
 
             //create and sort instances of startup tasks
+            //we startup this interface even for not installed plugins. 
+            //otherwise, DbContext initializers won't run and a plugin installation won't work
             var instances = startupTasks
-                .Where(startupTask => PluginManager.FindPlugin(startupTask).Return(plugin => plugin.Installed, true)) //ignore not installed plugins
                 .Select(startupTask => (IStartupTask)Activator.CreateInstance(startupTask))
                 .OrderBy(startupTask => startupTask.Order);
 
@@ -65,10 +69,10 @@ namespace Nop.Core.Infrastructure
         /// <summary>
         /// Register dependencies using Autofac
         /// </summary>
-        /// <param name="nopConfiguration">Startup Nop configuration parameters</param>
+        /// <param name="nopConfig">Startup Nop configuration parameters</param>
         /// <param name="services">Collection of service descriptors</param>
         /// <param name="typeFinder">Type finder</param>
-        protected virtual IServiceProvider RegisterDependencies(NopConfig nopConfiguration, IServiceCollection services, ITypeFinder typeFinder)
+        protected virtual IServiceProvider RegisterDependencies(NopConfig nopConfig, IServiceCollection services, ITypeFinder typeFinder)
         {
             var containerBuilder = new ContainerBuilder();
 
@@ -89,7 +93,7 @@ namespace Nop.Core.Infrastructure
 
             //register all provided dependencies
             foreach (var dependencyRegistrar in instances)
-                dependencyRegistrar.Register(containerBuilder, typeFinder, nopConfiguration);
+                dependencyRegistrar.Register(containerBuilder, typeFinder, nopConfig);
 
             //populate Autofac container builder with the set of registered service descriptors
             containerBuilder.Populate(services);
@@ -111,9 +115,8 @@ namespace Nop.Core.Infrastructure
 
             //create and sort instances of mapper configurations
             var instances = mapperConfigurations
-                    .Where(mapperConfiguration => PluginManager.FindPlugin(mapperConfiguration)
-                        .Return(plugin => plugin.Installed, true)) //ignore not installed plugins
-                .Select(mapperConfiguration => (IMapperProfile)Activator.CreateInstance(mapperConfiguration))
+                .Where(mapperConfiguration => PluginManager.FindPlugin(mapperConfiguration)?.Installed ?? true) //ignore not installed plugins
+                .Select(mapperConfiguration => (IMapperProfile) Activator.CreateInstance(mapperConfiguration))
                 .OrderBy(mapperConfiguration => mapperConfiguration.Order);
 
             //create AutoMapper configuration
@@ -145,14 +148,14 @@ namespace Nop.Core.Infrastructure
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             //set base application path
-            var hostingEnvironment = services.BuildServiceProvider().GetRequiredService<IHostingEnvironment>();
+            var provider = services.BuildServiceProvider();
+            var hostingEnvironment = provider.GetRequiredService<IHostingEnvironment>();
+            var nopConfig = provider.GetRequiredService<NopConfig>();
             CommonHelper.BaseDirectory = hostingEnvironment.ContentRootPath;
 
             //initialize plugins
             var mvcCoreBuilder = services.AddMvcCore();
-            PluginManager.Initialize(mvcCoreBuilder.PartManager);
-            //resolve assemblies here. otherwise, plugins can thrown exceptions when rendering views
-            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+            PluginManager.Initialize(mvcCoreBuilder.PartManager, nopConfig);
         }
 
         private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
@@ -162,7 +165,7 @@ namespace Nop.Core.Infrastructure
             if (assembly != null)
                 return assembly;
 
-            //get assembly fron TypeFinder
+            //get assembly from TypeFinder
             var tf = Resolve<ITypeFinder>();
             assembly = tf.GetAssemblies().FirstOrDefault(a => a.FullName == args.Name);
             return assembly;
@@ -182,7 +185,7 @@ namespace Nop.Core.Infrastructure
 
             //create and sort instances of startup configurations
             var instances = startupConfigurations
-                .Where(startup => PluginManager.FindPlugin(startup).Return(plugin => plugin.Installed, true)) //ignore not installed plugins
+                .Where(startup => PluginManager.FindPlugin(startup)?.Installed ?? true) //ignore not installed plugins
                 .Select(startup => (INopStartup)Activator.CreateInstance(startup))
                 .OrderBy(startup => startup.Order);
 
@@ -201,6 +204,12 @@ namespace Nop.Core.Infrastructure
             if (!nopConfig.IgnoreStartupTasks)
                 RunStartupTasks(typeFinder);
 
+            //resolve assemblies here. otherwise, plugins can throw an exception when rendering views
+            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
+
+            //set App_Data path as base data directory (required to create and save SQL Server Compact database file in App_Data folder)
+            AppDomain.CurrentDomain.SetData("DataDirectory", CommonHelper.MapPath("~/App_Data/"));
+
             return _serviceProvider;
         }
 
@@ -216,7 +225,7 @@ namespace Nop.Core.Infrastructure
 
             //create and sort instances of startup configurations
             var instances = startupConfigurations
-                .Where(startup => PluginManager.FindPlugin(startup).Return(plugin => plugin.Installed, true)) //ignore not installed plugins
+                .Where(startup => PluginManager.FindPlugin(startup)?.Installed ?? true) //ignore not installed plugins
                 .Select(startup => (INopStartup)Activator.CreateInstance(startup))
                 .OrderBy(startup => startup.Order);
 
@@ -231,7 +240,7 @@ namespace Nop.Core.Infrastructure
         /// <typeparam name="T">Type of resolved service</typeparam>
         /// <returns>Resolved service</returns>
         public T Resolve<T>() where T : class
-		{
+        {
             return (T)GetServiceProvider().GetRequiredService(typeof(T));
         }
 
@@ -262,6 +271,7 @@ namespace Nop.Core.Infrastructure
         /// <returns>Resolved service</returns>
         public virtual object ResolveUnregistered(Type type)
         {
+            Exception innerException = null;
             foreach (var constructor in type.GetConstructors())
             {
                 try
@@ -278,10 +288,22 @@ namespace Nop.Core.Infrastructure
                     //all is ok, so create instance
                     return Activator.CreateInstance(type, parameters.ToArray());
                 }
-                catch (NopException) { }
+                catch (Exception ex)
+                {
+                    innerException = ex;
+                }
             }
-            throw new NopException("No constructor was found that had all the dependencies satisfied.");
+            throw new NopException("No constructor was found that had all the dependencies satisfied.", innerException);
         }
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// Service provider
+        /// </summary>
+        public virtual IServiceProvider ServiceProvider => _serviceProvider;
 
         #endregion
     }

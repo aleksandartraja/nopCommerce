@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Plugins
+namespace Nop.Web.Areas.Admin.Models.Plugins
 {
     public partial class OfficialFeedListModel : BaseNopModel
     {
@@ -24,7 +22,6 @@ namespace Nop.Admin.Models.Plugins
         public int SearchCategoryId { get; set; }
         [NopResourceDisplayName("Admin.Configuration.Plugins.OfficialFeed.Price")]
         public int SearchPriceId { get; set; }
-
 
         [NopResourceDisplayName("Admin.Configuration.Plugins.OfficialFeed.Version")]
         public IList<SelectListItem> AvailableVersions { get; set; }

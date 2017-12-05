@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Nop.Core.Data
+﻿namespace Nop.Core.Data
 {
     /// <summary>
     /// Data settings helper
@@ -18,13 +16,15 @@ namespace Nop.Core.Data
             if (!_databaseIsInstalled.HasValue)
             {
                 var manager = new DataSettingsManager();
-                var settings = manager.LoadSettings();
-                _databaseIsInstalled = settings != null && !String.IsNullOrEmpty(settings.DataConnectionString);
+                var settings = manager.LoadSettings(reloadSettings:true);
+                _databaseIsInstalled = settings != null && !string.IsNullOrEmpty(settings.DataConnectionString);
             }
             return _databaseIsInstalled.Value;
         }
 
-        //Reset information cached in the "DatabaseIsInstalled" method
+        /// <summary>
+        /// Reset information cached in the "DatabaseIsInstalled" method
+        /// </summary>
         public static void ResetCache()
         {
             _databaseIsInstalled = null;

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
@@ -28,10 +27,12 @@ namespace Nop.Web.Framework.Infrastructure
         public void Configure(IApplicationBuilder application)
         {
             //exception handling
-            var hostingEnvironment = EngineContext.Current.Resolve<IHostingEnvironment>();
-            application.UseExceptionHandler(hostingEnvironment.IsDevelopment());
+            application.UseNopExceptionHandler();
 
-            //handle 404 errors
+            //handle 400 errors (bad request)
+            application.UseBadRequestResult();
+
+            //handle 404 errors (not found)
             application.UsePageNotFound();
         }
 

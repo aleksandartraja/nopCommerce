@@ -7,11 +7,12 @@
 }
 
     <div class="panel-group">
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_customer_details_wishlist_top", additionalData = Model.Id })
         <div class="panel panel-default">
             <div class="panel-body">
                 <div id="currentwishlist-grid"></div>
 
-                <script>
+                <script type="text/javascript">
                     $(document).ready(function () {
                         $("#currentwishlist-grid").kendoGrid({
                             dataSource: {
@@ -85,4 +86,5 @@
                 </script>
             </div>
         </div>
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_customer_details_wishlist_bottom", additionalData = Model.Id })
     </div>

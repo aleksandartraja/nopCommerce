@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Models.Catalog;
+using Nop.Web.Areas.Admin.Models.Catalog;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Customers;
@@ -17,7 +17,7 @@ using Nop.Services.Stores;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class ProductReviewController : BaseAdminController
     {
@@ -34,7 +34,7 @@ namespace Nop.Admin.Controllers
 
         #endregion Fields
 
-        #region Constructors
+        #region Ctor
 
         public ProductReviewController(IProductService productService, 
             IDateTimeHelper dateTimeHelper,
@@ -63,10 +63,10 @@ namespace Nop.Admin.Controllers
             ProductReview productReview, bool excludeProperties, bool formatReviewAndReplyText)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (productReview == null)
-                throw new ArgumentNullException("productReview");
+                throw new ArgumentNullException(nameof(productReview));
 
             model.Id = productReview.Id;
             model.StoreName = productReview.Store.Name;
@@ -95,7 +95,6 @@ namespace Nop.Admin.Controllers
 
             //a vendor should have access only to his products
             model.IsLoggedInAsVendor = _workContext.CurrentVendor != null;
-
         }
 
         #endregion
@@ -113,9 +112,11 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageProductReviews))
                 return AccessDeniedView();
 
-            var model = new ProductReviewListModel();
-            //a vendor should have access only to his products
-            model.IsLoggedInAsVendor = _workContext.CurrentVendor != null;
+            var model = new ProductReviewListModel
+            {
+                //a vendor should have access only to his products
+                IsLoggedInAsVendor = _workContext.CurrentVendor != null
+            };
 
             model.AvailableStores.Add(new SelectListItem { Text = _localizationService.GetResource("Admin.Common.All"), Value = "0" });
             var stores = _storeService.GetAllStores().Select(st => new SelectListItem() { Text = st.Name, Value = st.Id.ToString() });
@@ -146,10 +147,10 @@ namespace Nop.Admin.Controllers
                 vendorId = _workContext.CurrentVendor.Id;
             }
 
-            DateTime? createdOnFromValue = (model.CreatedOnFrom == null) ? null
+            var createdOnFromValue = (model.CreatedOnFrom == null) ? null
                             : (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.CreatedOnFrom.Value, _dateTimeHelper.CurrentTimeZone);
 
-            DateTime? createdToFromValue = (model.CreatedOnTo == null) ? null
+            var createdToFromValue = (model.CreatedOnTo == null) ? null
                             : (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.CreatedOnTo.Value, _dateTimeHelper.CurrentTimeZone).AddDays(1);
 
             bool? approved = null;
@@ -371,7 +372,7 @@ namespace Nop.Admin.Controllers
                 return Content("");
 
             const int searchTermMinimumLength = 3;
-            if (String.IsNullOrWhiteSpace(term) || term.Length < searchTermMinimumLength)
+            if (string.IsNullOrWhiteSpace(term) || term.Length < searchTermMinimumLength)
                 return Content("");
 
             //a vendor should have access only to his products

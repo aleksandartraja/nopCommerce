@@ -13,13 +13,14 @@
     Html.SetActiveMenuItemSystemName("Current shopping carts");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.CurrentCarts")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_current_shopping_cart_list_buttons" })
     </div>
 </div>
 
@@ -30,7 +31,7 @@
                 <div class="panel-body">
                     <div id="carts-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#carts-grid").kendoGrid({
                                 dataSource: {

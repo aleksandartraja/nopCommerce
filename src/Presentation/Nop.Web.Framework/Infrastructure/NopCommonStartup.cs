@@ -1,5 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System.Linq;
+using ImageResizer.Configuration;
+using ImageResizer.Plugins.PrettyGifs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.StaticFiles;
@@ -9,7 +11,10 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Net.Http.Headers;
 using Nop.Core;
 using Nop.Core.Configuration;
+using Nop.Core.Data;
+using Nop.Core.Domain.Security;
 using Nop.Core.Infrastructure;
+using Nop.Web.Framework.Compression;
 using Nop.Web.Framework.Infrastructure.Extensions;
 
 namespace Nop.Web.Framework.Infrastructure
@@ -26,40 +31,32 @@ namespace Nop.Web.Framework.Infrastructure
         /// <param name="configuration">Configuration root of the application</param>
         public void ConfigureServices(IServiceCollection services, IConfigurationRoot configuration)
         {
+            //compression
+            services.AddResponseCompression();
+
             //add options feature
             services.AddOptions();
-
-            //add NopConfig configuration parameters
-            var nopConfig = services.ConfigureStartupConfig<NopConfig>(configuration.GetSection("Nop"));
-
-            //add hosting configuration parameters
-            services.ConfigureStartupConfig<HostingConfig>(configuration.GetSection("Hosting"));
-
-            if (nopConfig.RedisCachingEnabled)
-            {
-                //add Redis distributed cache
-                services.AddDistributedRedisCache(options =>
-                {
-                    options.Configuration = nopConfig.RedisCachingConnectionString;
-                });
-            }
-            else
-                services.AddDistributedMemoryCache();
 
             //add memory cache
             services.AddMemoryCache();
 
-            //add accessor to HttpContext
-            services.AddHttpContextAccessor();
-
+            //add distributed memory cache
+            services.AddDistributedMemoryCache();
+                        
             //add HTTP sesion state feature
             services.AddHttpSession();
+
+            //add anti-forgery
+            services.AddAntiForgery();
 
             //add localization
             services.AddLocalization();
 
             //add theme support
             services.AddThemes();
+            
+            //add gif resizing support
+            new PrettyGifs().Install(Config.Current);
         }
 
         /// <summary>
@@ -68,14 +65,24 @@ namespace Nop.Web.Framework.Infrastructure
         /// <param name="application">Builder for configuring an application's request pipeline</param>
         public void Configure(IApplicationBuilder application)
         {
-            //static files
             var nopConfig = EngineContext.Current.Resolve<NopConfig>();
+
+            //compression
+            if (nopConfig.UseResponseCompression)
+            {
+                //gzip by default
+                application.UseResponseCompression();
+                //workaround with "vary" header
+                application.UseMiddleware<ResponseCompressionVaryWorkaroundMiddleware>();
+            }
+
+            //static files
             application.UseStaticFiles(new StaticFileOptions
             {
                 //TODO duplicated code (below)
                 OnPrepareResponse = ctx =>
                 {
-                    if (!String.IsNullOrEmpty(nopConfig.StaticFilesCacheControl))
+                    if (!string.IsNullOrEmpty(nopConfig.StaticFilesCacheControl))
                         ctx.Context.Response.Headers.Append(HeaderNames.CacheControl, nopConfig.StaticFilesCacheControl);
                 }
             });
@@ -86,21 +93,45 @@ namespace Nop.Web.Framework.Infrastructure
                 RequestPath = new PathString("/Themes"),
                 OnPrepareResponse = ctx =>
                 {
-                    if (!String.IsNullOrEmpty(nopConfig.StaticFilesCacheControl))
+                    if (!string.IsNullOrEmpty(nopConfig.StaticFilesCacheControl))
                         ctx.Context.Response.Headers.Append(HeaderNames.CacheControl, nopConfig.StaticFilesCacheControl);
                 }
             });
+            
             //plugins
-            application.UseStaticFiles(new StaticFileOptions
+            var staticFileOptions = new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Plugins")),
                 RequestPath = new PathString("/Plugins"),
                 OnPrepareResponse = ctx =>
                 {
-                    if (!String.IsNullOrEmpty(nopConfig.StaticFilesCacheControl))
-                        ctx.Context.Response.Headers.Append(HeaderNames.CacheControl, nopConfig.StaticFilesCacheControl);
+                    if (!string.IsNullOrEmpty(nopConfig.StaticFilesCacheControl))
+                        ctx.Context.Response.Headers.Append(HeaderNames.CacheControl,
+                            nopConfig.StaticFilesCacheControl);
                 }
-            });
+            };
+            //whether database is installed
+            if (DataSettingsHelper.DatabaseIsInstalled())
+            {
+                var securitySettings = EngineContext.Current.Resolve<SecuritySettings>();
+                if (!string.IsNullOrEmpty(securitySettings.PluginStaticFileExtensionsBlacklist))
+                {
+                    var fileExtensionContentTypeProvider = new FileExtensionContentTypeProvider();
+
+                    foreach (var ext in securitySettings.PluginStaticFileExtensionsBlacklist
+                        .Split(';', ',')
+                        .Select(e => e.Trim().ToLower())
+                        .Select(e => $"{(e.StartsWith(".") ? string.Empty : ".")}{e}")
+                        .Where(fileExtensionContentTypeProvider.Mappings.ContainsKey))
+                    {
+                        fileExtensionContentTypeProvider.Mappings.Remove(ext);
+                    }
+
+                    staticFileOptions.ContentTypeProvider = fileExtensionContentTypeProvider;
+                }
+            }
+            application.UseStaticFiles(staticFileOptions);
+
             //add support for backups
             var provider = new FileExtensionContentTypeProvider();
             provider.Mappings[".bak"] = MimeTypes.ApplicationOctetStream;

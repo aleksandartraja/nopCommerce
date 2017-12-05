@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Customers;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Validators.Customers;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Customers
+namespace Nop.Web.Areas.Admin.Models.Customers
 {
     [Validator(typeof(CustomerRoleValidator))]
     public partial class CustomerRoleModel : BaseNopEntityModel
@@ -33,12 +31,17 @@ namespace Nop.Admin.Models.Customers
         [NopResourceDisplayName("Admin.Customers.CustomerRoles.Fields.EnablePasswordLifetime")]
         public bool EnablePasswordLifetime { get; set; }
 
+        [NopResourceDisplayName("Admin.Customers.CustomerRoles.Fields.OverrideTaxDisplayType")]
+        public bool OverrideTaxDisplayType { get; set; }
+        [NopResourceDisplayName("Admin.Customers.CustomerRoles.Fields.DefaultTaxDisplayType")]
+        public int DefaultTaxDisplayTypeId { get; set; }
+        public SelectList TaxDisplayTypeValues { get; set; }
+
         [NopResourceDisplayName("Admin.Customers.CustomerRoles.Fields.PurchasedWithProduct")]
         public int PurchasedWithProductId { get; set; }
 
         [NopResourceDisplayName("Admin.Customers.CustomerRoles.Fields.PurchasedWithProduct")]
         public string PurchasedWithProductName { get; set; }
-
 
         #region Nested classes
 
@@ -75,9 +78,9 @@ namespace Nop.Admin.Models.Customers
             //vendor
             public bool IsLoggedInAsVendor { get; set; }
 
-
             public int AssociatedToProductId { get; set; }
         }
+
         #endregion
     }
 }

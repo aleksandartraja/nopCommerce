@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Messages;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Messages;
 using Nop.Core.Domain.Messages;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -16,7 +15,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class MessageTemplateController : BaseAdminController
     {
@@ -72,31 +71,31 @@ namespace Nop.Admin.Controllers
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(mt,
-                                                           x => x.BccEmailAddresses,
-                                                           localized.BccEmailAddresses,
-                                                           localized.LanguageId);
+                    x => x.BccEmailAddresses,
+                    localized.BccEmailAddresses,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(mt,
-                                                           x => x.Subject,
-                                                           localized.Subject,
-                                                           localized.LanguageId);
+                    x => x.Subject,
+                    localized.Subject,
+                    localized.LanguageId);
 
                 _localizedEntityService.SaveLocalizedValue(mt,
-                                                           x => x.Body,
-                                                           localized.Body,
-                                                           localized.LanguageId);
+                    x => x.Body,
+                    localized.Body,
+                    localized.LanguageId);
 
-               _localizedEntityService.SaveLocalizedValue(mt,
-                                                            x => x.EmailAccountId,
-                                                            localized.EmailAccountId,
-                                                            localized.LanguageId);
+                _localizedEntityService.SaveLocalizedValue(mt,
+                    x => x.EmailAccountId,
+                    localized.EmailAccountId,
+                    localized.LanguageId);
             }
         }
         
         protected virtual void PrepareStoresMappingModel(MessageTemplateModel model, MessageTemplate messageTemplate, bool excludeProperties)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             if (!excludeProperties && messageTemplate != null)
                 model.SelectedStoreIds = _storeMappingService.GetStoresIdsWithAccess(messageTemplate).ToList();
@@ -177,7 +176,7 @@ namespace Nop.Admin.Controllers
                             .GetAllStores()
                             .Where(s => !x.LimitedToStores || templateModel.SelectedStoreIds.Contains(s.Id))
                             .ToList();
-                    for (int i = 0; i < stores.Count; i++)
+                    for (var i = 0; i < stores.Count; i++)
                     {
                         templateModel.ListOfStores += stores[i].Name;
                         if (i != stores.Count - 1)
@@ -205,8 +204,7 @@ namespace Nop.Admin.Controllers
             model.SendImmediately = !model.DelayBeforeSend.HasValue;
             model.HasAttachedDownload = model.AttachedDownloadId > 0;
             var allowedTokens = string.Join(", ", _messageTokenProvider.GetListOfAllowedTokens(messageTemplate.GetTokenGroups()));
-            model.AllowedTokens = string.Format("{0}{1}{1}{2}{1}", allowedTokens, Environment.NewLine,
-                _localizationService.GetResource("Admin.ContentManagement.MessageTemplates.Tokens.ConditionalStatement"));
+            model.AllowedTokens = $"{allowedTokens}{Environment.NewLine}{Environment.NewLine}{_localizationService.GetResource("Admin.ContentManagement.MessageTemplates.Tokens.ConditionalStatement")}{Environment.NewLine}";
 
             //available email accounts
             foreach (var ea in _emailAccountService.GetAllEmailAccounts())
@@ -286,8 +284,7 @@ namespace Nop.Admin.Controllers
             //if we got this far, something failed, redisplay form
             model.HasAttachedDownload = model.AttachedDownloadId > 0;
             var allowedTokens = string.Join(", ", _messageTokenProvider.GetListOfAllowedTokens(messageTemplate.GetTokenGroups()));
-            model.AllowedTokens = string.Format("{0}{1}{1}{2}{1}", allowedTokens, Environment.NewLine,
-                _localizationService.GetResource("Admin.ContentManagement.MessageTemplates.Tokens.ConditionalStatement"));
+            model.AllowedTokens = $"{allowedTokens}{Environment.NewLine}{Environment.NewLine}{_localizationService.GetResource("Admin.ContentManagement.MessageTemplates.Tokens.ConditionalStatement")}{Environment.NewLine}";
 
             //available email accounts
             foreach (var ea in _emailAccountService.GetAllEmailAccounts())
@@ -387,7 +384,7 @@ namespace Nop.Admin.Controllers
 
         [HttpPost, ActionName("TestTemplate")]
         [FormValueRequired("send-test")]
-        public virtual IActionResult TestTemplate(TestMessageTemplateModel model, IFormCollection form)
+        public virtual IActionResult TestTemplate(TestMessageTemplateModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageMessageTemplates))
                 return AccessDeniedView();
@@ -398,6 +395,7 @@ namespace Nop.Admin.Controllers
                 return RedirectToAction("List");
 
             var tokens = new List<Token>();
+            var form = model.Form;
             foreach (var formKey in form.Keys)
                 if (formKey.StartsWith("token_", StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -406,14 +404,11 @@ namespace Nop.Admin.Controllers
 
                     //try get non-string value
                     object tokenValue;
-                    bool boolValue;
-                    int intValue;
-                    decimal decimalValue;
-                    if (bool.TryParse(stringValue, out boolValue))
+                    if (bool.TryParse(stringValue, out bool boolValue))
                         tokenValue = boolValue;
-                    else if (int.TryParse(stringValue, out intValue))
+                    else if (int.TryParse(stringValue, out int intValue))
                         tokenValue = intValue;
-                    else if (decimal.TryParse(stringValue, out decimalValue))
+                    else if (decimal.TryParse(stringValue, out decimal decimalValue))
                         tokenValue = decimalValue;
                     else
                         tokenValue = stringValue;

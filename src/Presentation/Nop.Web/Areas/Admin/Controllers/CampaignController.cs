@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Messages;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Messages;
 using Nop.Core;
 using Nop.Core.Domain.Messages;
 using Nop.Services.Customers;
@@ -18,7 +18,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
 	public partial class CampaignController : BaseAdminController
 	{
@@ -75,7 +75,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareStoresModel(CampaignModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             model.AvailableStores.Add(new SelectListItem
             {
@@ -96,7 +96,7 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareCustomerRolesModel(CampaignModel model)
 	    {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             model.AvailableCustomerRoles.Add(new SelectListItem
             {
@@ -117,12 +117,12 @@ namespace Nop.Admin.Controllers
         protected virtual void PrepareEmailAccountsModel(CampaignModel model)
         {
             if (model == null)
-                throw new ArgumentNullException("model");
+                throw new ArgumentNullException(nameof(model));
 
             model.AvailableEmailAccounts = _emailAccountService.GetAllEmailAccounts().Select(emailAccount => new SelectListItem
             {
                 Value = emailAccount.Id.ToString(),
-                Text = string.Format("{0} ({1})", emailAccount.DisplayName, emailAccount.Email)
+                Text = $"{emailAccount.DisplayName} ({emailAccount.Email})"
             }).ToList();
         }
 
@@ -199,8 +199,10 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCampaigns))
                 return AccessDeniedView();
 
-            var model = new CampaignModel();
-            model.AllowedTokens = string.Join(", ", _messageTokenProvider.GetListOfCampaignAllowedTokens());
+            var model = new CampaignModel
+            {
+                AllowedTokens = string.Join(", ", _messageTokenProvider.GetListOfCampaignAllowedTokens())
+            };
             //stores
             PrepareStoresModel(model);
             //customer roles

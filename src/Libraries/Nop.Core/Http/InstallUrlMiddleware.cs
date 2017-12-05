@@ -18,6 +18,10 @@ namespace Nop.Core.Http
 
         #region Ctor
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="next">Next</param>
         public InstallUrlMiddleware(RequestDelegate next)
         {
             _next = next;
@@ -38,7 +42,7 @@ namespace Nop.Core.Http
             //whether database is installed
             if (!DataSettingsHelper.DatabaseIsInstalled())
             {
-                var installUrl = string.Format("{0}install", webHelper.GetStoreLocation());
+                var installUrl = $"{webHelper.GetStoreLocation()}install";
                 if (!webHelper.GetThisPageUrl(false).StartsWith(installUrl, StringComparison.InvariantCultureIgnoreCase))
                 {
                     //redirect

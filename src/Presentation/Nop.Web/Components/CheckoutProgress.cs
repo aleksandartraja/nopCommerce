@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using System.Threading.Tasks;
+using Nop.Web.Framework.Components;
 using Nop.Web.Models.Checkout;
 
 namespace Nop.Web.Components
 {
-    public class CheckoutProgressViewComponent : ViewComponent
+    public class CheckoutProgressViewComponent : NopViewComponent
     {
         private readonly ICheckoutModelFactory _checkoutModelFactory;
 
@@ -14,7 +14,7 @@ namespace Nop.Web.Components
             this._checkoutModelFactory = checkoutModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(CheckoutProgressStep step)
+        public IViewComponentResult Invoke(CheckoutProgressStep step)
         {
             var model = _checkoutModelFactory.PrepareCheckoutProgressModel(step);
             return View(model);

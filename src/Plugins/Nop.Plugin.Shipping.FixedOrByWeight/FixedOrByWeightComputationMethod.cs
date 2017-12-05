@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Nop.Core;
 using Nop.Core.Domain.Shipping;
@@ -9,6 +8,7 @@ using Nop.Plugin.Shipping.FixedOrByWeight.Services;
 using Nop.Services.Catalog;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
+using Nop.Services.Orders;
 using Nop.Services.Shipping;
 using Nop.Services.Shipping.Tracking;
 
@@ -21,36 +21,42 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
     {
         #region Fields
 
-        private readonly ISettingService _settingService;
-        private readonly IShippingService _shippingService;
-        private readonly IShippingByWeightService _shippingByWeightService;
         private readonly FixedOrByWeightSettings _fixedOrByWeightSettings;
-        private readonly IStoreContext _storeContext;
         private readonly IPriceCalculationService _priceCalculationService;
-        private readonly ShippingByWeightObjectContext _objectContext;
+        private readonly IProductAttributeParser _productAttributeParser;
+        private readonly IProductService _productService;
+        private readonly ISettingService _settingService;
+        private readonly IShippingByWeightService _shippingByWeightService;
+        private readonly IShippingService _shippingService;
+        private readonly IStoreContext _storeContext;
         private readonly IWebHelper _webHelper;
+        private readonly ShippingByWeightObjectContext _objectContext;
 
         #endregion
 
         #region Ctor
 
-        public FixedOrByWeightComputationMethod(ISettingService settingService,
-            IShippingService shippingService,
-            FixedOrByWeightSettings fixedOrByWeightSettings,
-            IShippingByWeightService shippingByWeightService,
-            IStoreContext storeContext,
+        public FixedOrByWeightComputationMethod(FixedOrByWeightSettings fixedOrByWeightSettings,
             IPriceCalculationService priceCalculationService,
-            ShippingByWeightObjectContext objectContext,
-            IWebHelper webHelper)
+            IProductAttributeParser productAttributeParser,
+            IProductService productService,
+            ISettingService settingService,
+            IShippingByWeightService shippingByWeightService,
+            IShippingService shippingService,
+            IStoreContext storeContext,
+            IWebHelper webHelper,
+            ShippingByWeightObjectContext objectContext)
         {
-            this._settingService = settingService;
-            this._shippingService = shippingService;
             this._fixedOrByWeightSettings = fixedOrByWeightSettings;
-            this._shippingByWeightService = shippingByWeightService;
-            this._storeContext = storeContext;
             this._priceCalculationService = priceCalculationService;
-            this._objectContext = objectContext;
+            this._productAttributeParser = productAttributeParser;
+            this._productService = productService;
+            this._settingService = settingService;
+            this._shippingByWeightService = shippingByWeightService;
+            this._shippingService = shippingService;
+            this._storeContext = storeContext;
             this._webHelper = webHelper;
+            this._objectContext = objectContext;
         }
 
         #endregion
@@ -64,9 +70,7 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
         /// <returns>Rate</returns>
         private decimal GetRate(int shippingMethodId)
         {
-            var key = string.Format("ShippingRateComputationMethod.FixedOrByWeight.Rate.ShippingMethodId{0}", shippingMethodId);
-            var rate = _settingService.GetSettingByKey<decimal>(key);
-            return rate;
+            return _settingService.GetSettingByKey<decimal>(string.Format(FixedOrByWeightDefaults.FixedRateSettingsKey, shippingMethodId));
         }
 
         /// <summary>
@@ -84,8 +88,7 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
         private decimal? GetRate(decimal subTotal, decimal weight, int shippingMethodId,
             int storeId, int warehouseId, int countryId, int stateProvinceId, string zip)
         {
-            var shippingByWeightRecord = _shippingByWeightService.FindRecord(shippingMethodId,
-                storeId, warehouseId, countryId, stateProvinceId, zip, weight);
+            var shippingByWeightRecord = _shippingByWeightService.FindRecord(shippingMethodId, storeId, warehouseId, countryId, stateProvinceId, zip, weight);
             if (shippingByWeightRecord == null)
             {
                 if (_fixedOrByWeightSettings.LimitMethodsToCreated)
@@ -96,23 +99,21 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
 
             //additional fixed cost
             var shippingTotal = shippingByWeightRecord.AdditionalFixedCost;
+
             //charge amount per weight unit
             if (shippingByWeightRecord.RatePerWeightUnit > decimal.Zero)
             {
-                var weightRate = weight - shippingByWeightRecord.LowerWeightLimit;
-                if (weightRate < decimal.Zero)
-                    weightRate = decimal.Zero;
+                var weightRate = Math.Max(weight - shippingByWeightRecord.LowerWeightLimit, decimal.Zero);
                 shippingTotal += shippingByWeightRecord.RatePerWeightUnit * weightRate;
             }
+
             //percentage rate of subtotal
             if (shippingByWeightRecord.PercentageRateOfSubtotal > decimal.Zero)
             {
                 shippingTotal += Math.Round((decimal)((((float)subTotal) * ((float)shippingByWeightRecord.PercentageRateOfSubtotal)) / 100f), 2);
             }
-
-            if (shippingTotal < decimal.Zero)
-                shippingTotal = decimal.Zero;
-            return shippingTotal;
+            
+            return Math.Max(shippingTotal, decimal.Zero);
         }
 
         #endregion
@@ -127,7 +128,7 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
         public GetShippingOptionResponse GetShippingOptions(GetShippingOptionRequest getShippingOptionRequest)
         {
             if (getShippingOptionRequest == null)
-                throw new ArgumentNullException("getShippingOptionRequest");
+                throw new ArgumentNullException(nameof(getShippingOptionRequest));
 
             var response = new GetShippingOptionResponse();
 
@@ -148,61 +149,50 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
                     return response;
                 }
 
-                var storeId = getShippingOptionRequest.StoreId;
-
-                if (storeId == 0)
-                    storeId = _storeContext.CurrentStore.Id;
-
-                var countryId = getShippingOptionRequest.ShippingAddress.CountryId.HasValue ? getShippingOptionRequest.ShippingAddress.CountryId.Value : 0;
-                var stateProvinceId = getShippingOptionRequest.ShippingAddress.StateProvinceId.HasValue ? getShippingOptionRequest.ShippingAddress.StateProvinceId.Value : 0;
-                var warehouseId = getShippingOptionRequest.WarehouseFrom != null ? getShippingOptionRequest.WarehouseFrom.Id : 0;
+                var storeId = getShippingOptionRequest.StoreId != 0 ? getShippingOptionRequest.StoreId : _storeContext.CurrentStore.Id;
+                var countryId = getShippingOptionRequest.ShippingAddress.CountryId ?? 0;
+                var stateProvinceId = getShippingOptionRequest.ShippingAddress.StateProvinceId ?? 0;
+                var warehouseId = getShippingOptionRequest.WarehouseFrom?.Id ?? 0;
                 var zip = getShippingOptionRequest.ShippingAddress.ZipPostalCode;
-                var subTotal = decimal.Zero;
 
+                //get subtotal of shipped items
+                var subTotal = decimal.Zero;
                 foreach (var packageItem in getShippingOptionRequest.Items)
                 {
-                    if (packageItem.ShoppingCartItem.IsFreeShipping)
+                    if (packageItem.ShoppingCartItem.IsFreeShipping(_productService, _productAttributeParser))
                         continue;
+
                     //TODO we should use getShippingOptionRequest.Items.GetQuantity() method to get subtotal
                     subTotal += _priceCalculationService.GetSubTotal(packageItem.ShoppingCartItem);
                 }
 
-                var weight = _shippingService.GetTotalWeight(getShippingOptionRequest);
-
-                var shippingMethods = _shippingService.GetAllShippingMethods(countryId);
-                foreach (var shippingMethod in shippingMethods)
+                //get weight of shipped items (excluding items with free shipping)
+                var weight = _shippingService.GetTotalWeight(getShippingOptionRequest, ignoreFreeShippedItems: true);
+                
+                foreach (var shippingMethod in _shippingService.GetAllShippingMethods(countryId))
                 {
                     var rate = GetRate(subTotal, weight, shippingMethod.Id, storeId, warehouseId, countryId, stateProvinceId, zip);
+                    if (!rate.HasValue)
+                        continue;
 
-                    if (!rate.HasValue) continue;
-
-                    var shippingOption = new ShippingOption
+                    response.ShippingOptions.Add(new ShippingOption
                     {
                         Name = shippingMethod.GetLocalized(x => x.Name),
                         Description = shippingMethod.GetLocalized(x => x.Description),
                         Rate = rate.Value
-                    };
-
-                    response.ShippingOptions.Add(shippingOption);
+                    });
                 }
             }
             else
             {
                 //shipping rate calculation by fixed rate
-
-                var restrictByCountryId = getShippingOptionRequest.ShippingAddress != null && getShippingOptionRequest.ShippingAddress.Country != null ? (int?)getShippingOptionRequest.ShippingAddress.Country.Id : null;
-                var shippingMethods = _shippingService.GetAllShippingMethods(restrictByCountryId);
-
-                foreach (var shippingMethod in shippingMethods)
+                var restrictByCountryId = getShippingOptionRequest.ShippingAddress?.Country?.Id;
+                response.ShippingOptions = _shippingService.GetAllShippingMethods(restrictByCountryId).Select(shippingMethod => new ShippingOption
                 {
-                    var shippingOption = new ShippingOption
-                    {
-                        Name = shippingMethod.GetLocalized(x => x.Name),
-                        Description = shippingMethod.GetLocalized(x => x.Description),
-                        Rate = GetRate(shippingMethod.Id)
-                    };
-                    response.ShippingOptions.Add(shippingOption);
-                }
+                    Name = shippingMethod.GetLocalized(x => x.Name),
+                    Description = shippingMethod.GetLocalized(x => x.Description),
+                    Rate = GetRate(shippingMethod.Id)
+                }).ToList();
             }
 
             return response;
@@ -215,27 +205,20 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
         /// <returns>Fixed shipping rate; or null in case there's no fixed shipping rate</returns>
         public decimal? GetFixedRate(GetShippingOptionRequest getShippingOptionRequest)
         {
+            if (getShippingOptionRequest == null)
+                throw new ArgumentNullException(nameof(getShippingOptionRequest));
+
             //if the "shipping calculation by weight" method is selected, the fixed rate isn't calculated
             if (_fixedOrByWeightSettings.ShippingByWeightEnabled)
                 return null;
 
-            if (getShippingOptionRequest == null)
-                throw new ArgumentNullException("getShippingOptionRequest");
-
-            var restrictByCountryId = getShippingOptionRequest.ShippingAddress != null && getShippingOptionRequest.ShippingAddress.Country != null ? (int?)getShippingOptionRequest.ShippingAddress.Country.Id : null;
-            var shippingMethods = _shippingService.GetAllShippingMethods(restrictByCountryId);
-            
-            var rates = new List<decimal>();
-            foreach (var shippingMethod in shippingMethods)
-            {
-                var rate = GetRate(shippingMethod.Id);
-                if (!rates.Contains(rate))
-                    rates.Add(rate);
-            }
+            var restrictByCountryId = getShippingOptionRequest.ShippingAddress?.Country?.Id;
+            var rates = _shippingService.GetAllShippingMethods(restrictByCountryId)
+                .Select(shippingMethod => GetRate(shippingMethod.Id)).Distinct().ToList();
 
             //return default rate if all of them equal
             if (rates.Count == 1)
-                return rates[0];
+                return rates.FirstOrDefault();
 
             return null;
         }
@@ -254,12 +237,7 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
         public override void Install()
         {
             //settings
-            var settings = new FixedOrByWeightSettings
-            {
-                LimitMethodsToCreated = false,
-                ShippingByWeightEnabled = false
-            };
-            _settingService.SaveSetting(settings);
+            _settingService.SaveSetting(new FixedOrByWeightSettings());
 
             //database objects
             _objectContext.Install();
@@ -309,6 +287,12 @@ namespace Nop.Plugin.Shipping.FixedOrByWeight
         {
             //settings
             _settingService.DeleteSetting<FixedOrByWeightSettings>();
+
+            //fixed rates
+            var fixedRates = _shippingService.GetAllShippingMethods()
+                .Select(shippingMethod => _settingService.GetSetting(string.Format(FixedOrByWeightDefaults.FixedRateSettingsKey, shippingMethod.Id)))
+                .Where(setting => setting != null).ToList();
+            _settingService.DeleteSettings(fixedRates);
 
             //database objects
             _objectContext.Uninstall();

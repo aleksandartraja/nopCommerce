@@ -9,9 +9,10 @@
     ViewBag.Title = T("Admin.Promotions.Discounts.AppliedToCategories.AddNew").Text;
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Discount" asp-action="CategoryAddPopup"
+      asp-route-discountId="@Context.Request.Query["discountId"]"
+      asp-route-btnId="@Context.Request.Query["btnId"]"
+      asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Promotions.Discounts.AppliedToCategories.AddNew")
@@ -21,10 +22,10 @@
         </div>
     </div>
 
-    if (ViewBag.RefreshPage == true)
+    @if (ViewBag.RefreshPage == true)
     {
         <script type="text/javascript">
-            try {window.opener.document.forms['@(ViewBag.formId)'].@(ViewBag.btnId).click();}
+            try {window.opener.document.forms['@(Context.Request.Query["formId"])'].@(Context.Request.Query["btnId"]).click();}
             catch (e){}
             window.close();
         </script>
@@ -39,10 +40,10 @@
                             <div class="col-sm-8">
                                 <div class="form-group">
                                     <div class="col-sm-4">
-                                        @Html.NopLabelFor(model => model.SearchCategoryName)
+                                        <nop-label asp-for="SearchCategoryName" />
                                     </div>
                                     <div class="col-sm-8">
-                                        @Html.NopEditorFor(model => model.SearchCategoryName)
+                                        <nop-editor asp-for="SearchCategoryName" />
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -59,7 +60,7 @@
                     <div class="panel-body">
                         <div id="categories-grid"></div>
 
-                        <script>
+                        <script type="text/javascript">
                             $(document).ready(function () {
                                 $("#categories-grid").kendoGrid({
                                     dataSource: {
@@ -129,7 +130,7 @@
                                     return false;
                                 });
 
-                                $("#@Html.FieldIdFor(model => model.SearchCategoryName)").keydown(function(event) {
+                                $("#@Html.IdFor(model => model.SearchCategoryName)").keydown(function(event) {
                                     if (event.keyCode == 13) {
                                         $("#search-categories").click();
                                         return false;
@@ -148,7 +149,7 @@
 
                             function additionalData() {
                                 var data = {
-                                    SearchCategoryName: $('#@Html.FieldIdFor(model => model.SearchCategoryName)').val()
+                                    SearchCategoryName: $('#@Html.IdFor(model => model.SearchCategoryName)').val()
                                 };
                                 addAntiForgeryToken(data);
                                 return data;
@@ -172,4 +173,4 @@
             </div>
         </div>
     </div>
-}
+</form>

@@ -7,13 +7,14 @@
     Html.SetActiveMenuItemSystemName("Checkout attributes");
 }
 
-@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "checkoutattribute-form" }))
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="CheckoutAttribute" asp-action="Edit" method="post" id="checkoutattribute-form">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Catalog.Attributes.CheckoutAttributes.EditAttributeDetails") - @Model.Name 
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.Catalog.Attributes.CheckoutAttributes.BackToList").Text, "List")</small>
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.Catalog.Attributes.CheckoutAttributes.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -28,8 +29,9 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Common.Delete")
             </span>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_checkout_attribute_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
-@Html.DeleteConfirmation("checkoutattribute-delete")
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="checkoutattribute-delete" />

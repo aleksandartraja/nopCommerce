@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Polls;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Validators.Polls;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Polls
+namespace Nop.Web.Areas.Admin.Models.Polls
 {
     [Validator(typeof(PollValidator))]
     public partial class PollModel : BaseNopEntityModel
@@ -18,6 +16,7 @@ namespace Nop.Admin.Models.Polls
         {
             this.AvailableLanguages = new List<SelectListItem>();
         }
+
         [NopResourceDisplayName("Admin.ContentManagement.Polls.Fields.Language")]
         public int LanguageId { get; set; }
         public IList<SelectListItem> AvailableLanguages { get; set; }
@@ -50,6 +49,5 @@ namespace Nop.Admin.Models.Polls
         [NopResourceDisplayName("Admin.ContentManagement.Polls.Fields.EndDate")]
         [UIHint("DateTimeNullable")]
         public DateTime? EndDate { get; set; }
-
     }
 }

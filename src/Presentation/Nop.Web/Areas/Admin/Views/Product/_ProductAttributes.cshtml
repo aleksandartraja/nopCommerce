@@ -6,8 +6,8 @@
 {
     foreach (var attribute in Model)
     {
-        string controlId = string.Format("product_attribute_{0}", attribute.Id);
-        string textPrompt = !string.IsNullOrEmpty(attribute.TextPrompt) ? attribute.TextPrompt : attribute.Name;
+        var controlId = $"product_attribute_{attribute.Id}";
+        var textPrompt = !string.IsNullOrEmpty(attribute.TextPrompt) ? attribute.TextPrompt : attribute.Name;
         <div class="form-group">
             <div class="col-sm-4">
                 <div class="label-wrapper">
@@ -77,7 +77,13 @@
                             break;
                         case AttributeControlType.Datepicker:
                             {
-                                @Html.DatePickerDropDowns(controlId + "_day", controlId + "_month", controlId + "_year", DateTime.Now.Year, DateTime.Now.Year + 1)
+                                <nop-date-picker 
+                                    asp-day-name="@(controlId + "_day")" 
+                                    asp-month-name="@(controlId + "_month")" 
+                                    asp-year-name="@(controlId + "_year")"
+                                    asp-begin-year="@(DateTime.Now.Year)"
+                                    asp-end-year="@(DateTime.Now.Year + 1)"
+                                />
                             }
                             break;
                         case AttributeControlType.FileUpload:
@@ -89,7 +95,7 @@
                     <div class="input-group-btn">
                         @if (attribute.IsRequired)
                         {
-                            @Html.RequiredHint()
+                            <nop-required />
                         }
                     </div>
                 </div>

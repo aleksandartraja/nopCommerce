@@ -7,9 +7,10 @@
     ViewBag.Title = T("Admin.Configuration.Plugins.EditDetails").Text;
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Plugin" asp-action="EditPopup"
+      asp-route-systemName="@Context.Request.Query["systemName"]"
+      asp-route-btnId="@Context.Request.Query["btnId"]"
+      asp-route-formId="@Context.Request.Query["formId"]">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Configuration.Plugins.EditDetails")
@@ -19,7 +20,8 @@
                 <i class="fa fa-floppy-o"></i>
                 @T("Admin.Common.Save")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_plugin_details_buttons", additionalData = Model.SystemName })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdatePlugin", Model)
-}
+</form>

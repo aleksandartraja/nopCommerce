@@ -1,11 +1,9 @@
 ﻿using FluentValidation.Attributes;
-using Nop.Admin.Validators.Polls;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Validators.Polls;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Polls
+namespace Nop.Web.Areas.Admin.Models.Polls
 {
     [Validator(typeof(PollAnswerValidator))]
     public partial class PollAnswerModel : BaseNopEntityModel
@@ -20,6 +18,5 @@ namespace Nop.Admin.Models.Polls
 
         [NopResourceDisplayName("Admin.ContentManagement.Polls.Answers.Fields.DisplayOrder")]
         public int DisplayOrder { get; set; }
-
     }
 }

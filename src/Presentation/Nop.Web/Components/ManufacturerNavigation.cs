@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Factories;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Catalog;
+using Nop.Web.Factories;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class ManufacturerNavigationViewComponent : ViewComponent
+    public class ManufacturerNavigationViewComponent : NopViewComponent
     {
         private readonly ICatalogModelFactory _catalogModelFactory;
         private readonly CatalogSettings _catalogSettings;
@@ -18,7 +18,7 @@ namespace Nop.Web.Components
             this._catalogSettings = catalogSettings;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int currentManufacturerId)
+        public IViewComponentResult Invoke(int currentManufacturerId)
         {
             if (_catalogSettings.ManufacturersBlockItemsToDisplay == 0)
                 return Content("");

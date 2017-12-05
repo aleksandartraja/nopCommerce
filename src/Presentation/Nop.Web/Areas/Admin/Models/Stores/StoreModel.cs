@@ -1,14 +1,12 @@
 ﻿using System.Collections.Generic;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Stores;
-using Nop.Web.Framework;
+using Nop.Web.Areas.Admin.Validators.Stores;
 using Nop.Web.Framework.Localization;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Stores
+namespace Nop.Web.Areas.Admin.Models.Stores
 {
     [Validator(typeof(StoreValidator))]
     public partial class StoreModel : BaseNopEntityModel, ILocalizedModel<StoreLocalizedModel>
@@ -53,8 +51,7 @@ namespace Nop.Admin.Models.Stores
 
         [NopResourceDisplayName("Admin.Configuration.Stores.Fields.CompanyVat")]
         public string CompanyVat { get; set; }
-
-
+        
         public IList<StoreLocalizedModel> Locales { get; set; }
     }
 

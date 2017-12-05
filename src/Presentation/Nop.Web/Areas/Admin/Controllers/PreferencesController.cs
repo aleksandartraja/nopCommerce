@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Services.Common;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class PreferencesController : BaseAdminController
     {
@@ -32,7 +32,7 @@ namespace Nop.Admin.Controllers
         {
             //permission validation is not required here
             if (string.IsNullOrEmpty(name))
-                throw new ArgumentNullException("name");
+                throw new ArgumentNullException(nameof(name));
 
             _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, name, value);
 

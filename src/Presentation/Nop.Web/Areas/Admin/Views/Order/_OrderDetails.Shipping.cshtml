@@ -1,6 +1,7 @@
 ﻿@model OrderModel
 
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_order_details_shipping_top", additionalData = Model.Id })
     @if (Model.IsShippable)
     {
         if (Model.ShippingAddress != null)
@@ -9,7 +10,7 @@
                 <div class="panel-body">
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.ShippingAddress)
+                            <nop-label asp-for="ShippingAddress" />
                         </div>
                         <div class="col-md-9">
                             <img alt="google maps" src="@Url.Content("~/css/admin/images/google-maps.gif")" />
@@ -137,7 +138,7 @@
                                         </td>
                                     </tr>
                                 }
-                                @if (!String.IsNullOrEmpty(Model.ShippingAddress.FormattedCustomAddressAttributes))
+                                @if (!string.IsNullOrEmpty(Model.ShippingAddress.FormattedCustomAddressAttributes))
                                 {
                                     <tr class="custom-attributes-view">
                                         <td colspan="2">
@@ -152,7 +153,7 @@
                     {
                         <div class="form-group">
                             <div class="col-md-9 col-md-offset-3">
-                                <a href="@Url.Action("AddressEdit", new {addressId = Model.ShippingAddress.Id, orderId = Model.Id})" class="btn btn-primary">@T("Admin.Common.Edit")</a>
+                                <a asp-action="AddressEdit" asp-route-addressId="@Model.ShippingAddress.Id" asp-route-orderId="@Model.Id" class="btn btn-primary">@T("Admin.Common.Edit")</a>
                             </div>
                         </div>
                     }
@@ -166,7 +167,7 @@
                 <div class="panel-body">
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.PickupAddress)
+                            <nop-label asp-for="PickupAddress" />
                         </div>
                         <div class="col-md-9">
                             <img alt="google maps" src="@Url.Content("~/css/admin/images/google-maps.gif")" />
@@ -228,7 +229,7 @@
             <div class="panel-body">
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.ShippingMethod)
+                        <nop-label asp-for="ShippingMethod" />
                     </div>
                     <div class="col-md-9">
                         @if (!Model.IsLoggedInAsVendor)
@@ -256,9 +257,11 @@
                             </script>
                             <div class="input-group input-group-short">
                                 <div id="lblShippingMethod" class="input-group-text">
-                                    @Html.NopDisplayFor(model => model.ShippingMethod)
+                                    <div class="form-text-row">@Model.ShippingMethod</div>
                                 </div>
-                                <div id="divShippingMethod">@Html.NopEditorFor(model => model.ShippingMethod)</div>
+                                <div id="divShippingMethod">
+                                    <nop-editor asp-for="ShippingMethod" />
+                                </div>
                                 <span class="input-group-btn">
                                     <button type="submit" onclick="toggleEditShippingMethod(true);return false;" id="btnEditShippingMethod" class="btn btn-primary">
                                         @T("Admin.Common.Edit")
@@ -267,7 +270,7 @@
                                     <button type="submit" id="btnSaveShippingMethod" name="save-shipping-method" class="btn btn-primary">
                                         @T("Admin.Common.Save")
                                     </button>
-                                    @Html.ActionConfirmation("btnSaveShippingMethod")
+                                    <nop-action-confirmation asp-button-id="btnSaveShippingMethod" />
 
                                     <button type="submit" onclick="toggleEditShippingMethod(false);return false;" id="btnCancelShippingMethod" class="btn bg-teal">
                                         @T("Admin.Common.Cancel")
@@ -278,7 +281,7 @@
                         else
                         {
                             <div id="lblShippingMethod">
-                                @Html.NopDisplayFor(model => model.ShippingMethod)
+                                <div class="form-text-row">@Model.ShippingMethod</div>
                             </div>
                         }
                     </div>
@@ -288,10 +291,10 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.ShippingStatus)
+                            <nop-label asp-for="ShippingStatus" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplayFor(model => model.ShippingStatus)
+                            <div class="form-text-row">@Model.ShippingStatus</div>
                         </div>
                     </div>
                 }
@@ -305,7 +308,7 @@
             <div class="panel-body">
                 <div id="shipments-grid"></div>
 
-                <script>
+                <script type="text/javascript">
                     $(document).ready(function () {
                         $("#shipments-grid").kendoGrid({
                             dataSource: {
@@ -465,4 +468,5 @@
             </div>
         </div>
     }
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_order_details_shipping_bottom", additionalData = Model.Id })
 </div>

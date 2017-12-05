@@ -74,6 +74,10 @@ namespace Nop.Services.Discounts.Cache
 
         private readonly IStaticCacheManager _cacheManager;
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="cacheManager">Cache manager</param>
         public DiscountEventConsumer(IStaticCacheManager cacheManager)
         {
             this._cacheManager = cacheManager;
@@ -152,6 +156,5 @@ namespace Nop.Services.Discounts.Cache
         {
             _cacheManager.RemoveByPattern(DISCOUNT_MANUFACTURER_IDS_PATTERN_KEY);
         }
-
     }
 }

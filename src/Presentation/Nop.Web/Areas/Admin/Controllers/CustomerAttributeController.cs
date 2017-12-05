@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Customers;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Customers;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Services.Customers;
@@ -13,7 +13,7 @@ using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class CustomerAttributeController : BaseAdminController
     {
@@ -29,7 +29,7 @@ namespace Nop.Admin.Controllers
 
         #endregion
 
-        #region Constructors
+        #region Ctor
 
         public CustomerAttributeController(ICustomerAttributeService customerAttributeService,
             ILanguageService languageService, 
@@ -51,26 +51,26 @@ namespace Nop.Admin.Controllers
         #endregion
         
         #region Utilities
-        
+
         protected virtual void UpdateAttributeLocales(CustomerAttribute customerAttribute, CustomerAttributeModel model)
         {
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(customerAttribute,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
             }
         }
-        
-        protected  virtual void UpdateValueLocales(CustomerAttributeValue customerAttributeValue, CustomerAttributeValueModel model)
+
+        protected virtual void UpdateValueLocales(CustomerAttributeValue customerAttributeValue, CustomerAttributeValueModel model)
         {
             foreach (var localized in model.Locales)
             {
                 _localizedEntityService.SaveLocalizedValue(customerAttributeValue,
-                                                               x => x.Name,
-                                                               localized.Name,
-                                                               localized.LanguageId);
+                    x => x.Name,
+                    localized.Name,
+                    localized.LanguageId);
             }
         }
 
@@ -272,15 +272,17 @@ namespace Nop.Admin.Controllers
                 //No customer attribute found with the specified id
                 return RedirectToAction("List");
 
-            var model = new CustomerAttributeValueModel();
-            model.CustomerAttributeId = customerAttributeId;
+            var model = new CustomerAttributeValueModel
+            {
+                CustomerAttributeId = customerAttributeId
+            };
             //locales
             AddLocales(_languageService, model.Locales);
             return View(model);
         }
 
         [HttpPost]
-        public virtual IActionResult ValueCreatePopup(string btnId, string formId, CustomerAttributeValueModel model)
+        public virtual IActionResult ValueCreatePopup(CustomerAttributeValueModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
@@ -308,8 +310,6 @@ namespace Nop.Admin.Controllers
                 UpdateValueLocales(cav, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 
@@ -346,7 +346,7 @@ namespace Nop.Admin.Controllers
         }
 
         [HttpPost]
-        public virtual IActionResult ValueEditPopup(string btnId, string formId, CustomerAttributeValueModel model)
+        public virtual IActionResult ValueEditPopup(CustomerAttributeValueModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageSettings))
                 return AccessDeniedView();
@@ -369,8 +369,6 @@ namespace Nop.Admin.Controllers
                 UpdateValueLocales(cav, model);
 
                 ViewBag.RefreshPage = true;
-                ViewBag.btnId = btnId;
-                ViewBag.formId = formId;
                 return View(model);
             }
 

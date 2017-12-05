@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Nop.Web.Factories;
-using System.Threading.Tasks;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class ForumBreadcrumbViewComponent : ViewComponent
+    public class ForumBreadcrumbViewComponent : NopViewComponent
     {
         private readonly IForumModelFactory _forumModelFactory;
 
@@ -13,7 +13,7 @@ namespace Nop.Web.Components
             this._forumModelFactory = forumModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int? forumGroupId, int? forumId, int? forumTopicId)
+        public IViewComponentResult Invoke(int? forumGroupId, int? forumId, int? forumTopicId)
         {
             var model = _forumModelFactory.PrepareForumBreadcrumbModel(forumGroupId, forumId, forumTopicId);
             return View(model);

@@ -8,7 +8,6 @@ using System.Net;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using System.Web;
 
 namespace Nop.Core
 {
@@ -17,6 +16,23 @@ namespace Nop.Core
     /// </summary>
     public partial class CommonHelper
     {
+        #region Fields
+
+        private static readonly Regex _emailRegex;
+        //we use EmailValidator from FluentValidation. So let's keep them sync - https://github.com/JeremySkinner/FluentValidation/blob/master/src/FluentValidation/Validators/EmailValidator.cs
+        private const string _emailExpression = @"^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-||_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+([a-z]+|\d|-|\.{0,1}|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])?([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$";
+
+        #endregion
+
+        #region Ctor
+
+        static CommonHelper()
+        {
+            _emailRegex = new Regex(_emailExpression, RegexOptions.IgnoreCase);
+        }
+
+        #endregion
+
         #region Methods
 
         /// <summary>
@@ -26,7 +42,7 @@ namespace Nop.Core
         /// <returns></returns>
         public static string EnsureSubscriberEmailOrThrow(string email)
         {
-            string output = EnsureNotNull(email);
+            var output = EnsureNotNull(email);
             output = output.Trim();
             output = EnsureMaximumLength(output, 255);
 
@@ -45,12 +61,12 @@ namespace Nop.Core
         /// <returns>true if the string is a valid e-mail address and false if it's not</returns>
         public static bool IsValidEmail(string email)
         {
-            if (String.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(email))
                 return false;
 
             email = email.Trim();
-            var result = Regex.IsMatch(email, "^(?:[\\w\\!\\#\\$\\%\\&\\'\\*\\+\\-\\/\\=\\?\\^\\`\\{\\|\\}\\~]+\\.)*[\\w\\!\\#\\$\\%\\&\\'\\*\\+\\-\\/\\=\\?\\^\\`\\{\\|\\}\\~]+@(?:(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\\-](?!\\.)){0,61}[a-zA-Z0-9]?\\.)+[a-zA-Z0-9](?:[a-zA-Z0-9\\-](?!$)){0,61}[a-zA-Z0-9]?)|(?:\\[(?:(?:[01]?\\d{1,2}|2[0-4]\\d|25[0-5])\\.){3}(?:[01]?\\d{1,2}|2[0-4]\\d|25[0-5])\\]))$", RegexOptions.IgnoreCase);
-            return result;
+
+           return _emailRegex.IsMatch(email);
         }
 
         /// <summary>
@@ -60,8 +76,7 @@ namespace Nop.Core
         /// <returns>true if the string is a valid IpAddress and false if it's not</returns>
         public static bool IsValidIpAddress(string ipAddress)
         {
-            IPAddress ip;
-            return IPAddress.TryParse(ipAddress, out ip);
+            return IPAddress.TryParse(ipAddress, out IPAddress _);
         }
 
         /// <summary>
@@ -72,9 +87,9 @@ namespace Nop.Core
         public static string GenerateRandomDigitCode(int length)
         {
             var random = new Random();
-            string str = string.Empty;
-            for (int i = 0; i < length; i++)
-                str = String.Concat(str, random.Next(10).ToString());
+            var str = string.Empty;
+            for (var i = 0; i < length; i++)
+                str = string.Concat(str, random.Next(10).ToString());
             return str;
         }
 
@@ -100,7 +115,7 @@ namespace Nop.Core
         /// <returns>Input string if its lengh is OK; otherwise, truncated input string</returns>
         public static string EnsureMaximumLength(string str, int maxLength, string postfix = null)
         {
-            if (String.IsNullOrEmpty(str))
+            if (string.IsNullOrEmpty(str))
                 return str;
 
             if (str.Length > maxLength)
@@ -108,7 +123,7 @@ namespace Nop.Core
                 var pLen = postfix == null ? 0 : postfix.Length;
 
                 var result = str.Substring(0, maxLength - pLen);
-                if (!String.IsNullOrEmpty(postfix))
+                if (!string.IsNullOrEmpty(postfix))
                 {
                     result += postfix;
                 }
@@ -168,49 +183,14 @@ namespace Nop.Core
                 return false;
 
             var comparer = EqualityComparer<T>.Default;
-            for (int i = 0; i < a1.Length; i++)
+            for (var i = 0; i < a1.Length; i++)
             {
                 if (!comparer.Equals(a1[i], a2[i])) return false;
             }
             return true;
         }
-
-        private static AspNetHostingPermissionLevel? _trustLevel;
-        /// <summary>
-        /// Finds the trust level of the running application (http://blogs.msdn.com/dmitryr/archive/2007/01/23/finding-out-the-current-trust-level-in-asp-net.aspx)
-        /// </summary>
-        /// <returns>The current trust level.</returns>
-        public static AspNetHostingPermissionLevel GetTrustLevel()
-        {
-            if (!_trustLevel.HasValue)
-            {
-                //set minimum
-                _trustLevel = AspNetHostingPermissionLevel.None;
-
-                //determine maximum
-                foreach (AspNetHostingPermissionLevel trustLevel in new[] {
-                                AspNetHostingPermissionLevel.Unrestricted,
-                                AspNetHostingPermissionLevel.High,
-                                AspNetHostingPermissionLevel.Medium,
-                                AspNetHostingPermissionLevel.Low,
-                                AspNetHostingPermissionLevel.Minimal
-                            })
-                {
-                    try
-                    {
-                        new AspNetHostingPermission(trustLevel).Demand();
-                        _trustLevel = trustLevel;
-                        break; //we've set the highest permission we can
-                    }
-                    catch (System.Security.SecurityException)
-                    {
-                        continue;
-                    }
-                }
-            }
-            return _trustLevel.Value;
-        }
-
+        
+       
         /// <summary>
         /// Sets a property on an object to a valuae.
         /// </summary>
@@ -219,11 +199,11 @@ namespace Nop.Core
         /// <param name="value">The value to set the property to.</param>
         public static void SetProperty(object instance, string propertyName, object value)
         {
-            if (instance == null) throw new ArgumentNullException("instance");
-            if (propertyName == null) throw new ArgumentNullException("propertyName");
+            if (instance == null) throw new ArgumentNullException(nameof(instance));
+            if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
 
-            Type instanceType = instance.GetType();
-            PropertyInfo pi = instanceType.GetProperty(propertyName);
+            var instanceType = instance.GetType();
+            var pi = instanceType.GetProperty(propertyName);
             if (pi == null)
                 throw new NopException("No property '{0}' found on the instance of type '{1}'.", propertyName, instanceType);
             if (!pi.CanWrite)
@@ -294,7 +274,7 @@ namespace Nop.Core
         public static string ConvertEnum(string str)
         {
             if (string.IsNullOrEmpty(str)) return string.Empty;
-            string result = string.Empty;
+            var result = string.Empty;
             foreach (var c in str)
                 if (c.ToString() != c.ToString().ToLower())
                     result += " " + c.ToString();
@@ -328,7 +308,7 @@ namespace Nop.Core
         {
             //source: http://stackoverflow.com/questions/9/how-do-i-calculate-someones-age-in-c
             //this assumes you are looking for the western idea of age and not using East Asian reckoning.
-            int age = endDate.Year - startDate.Year;
+            var age = endDate.Year - startDate.Year;
             if (startDate > endDate.AddYears(-age))
                 age--;
             return age;
@@ -342,7 +322,76 @@ namespace Nop.Core
         public static string MapPath(string path)
         {
             path = path.Replace("~/", "").TrimStart('/').Replace('/', '\\');
-            return Path.Combine(BaseDirectory, path);
+            return Path.Combine(BaseDirectory??string.Empty, path);
+        }
+
+        /// <summary>
+        /// Get private fields property value
+        /// </summary>
+        /// <param name="target">Target object</param>
+        /// <param name="fieldName">Feild name</param>
+        /// <returns>Value</returns>
+        public static object GetPrivateFieldValue(object target, string fieldName)
+        {
+            if (target == null)
+            {
+                throw new ArgumentNullException("target", "The assignment target cannot be null.");
+            }
+
+            if (string.IsNullOrEmpty(fieldName))
+            {
+                throw new ArgumentException("fieldName", "The field name cannot be null or empty.");
+            }
+
+            var t = target.GetType();
+            FieldInfo fi = null;
+
+            while (t != null)
+            {
+                fi = t.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+
+                if (fi != null) break;
+
+                t = t.BaseType;
+            }
+
+            if (fi == null)
+            {
+                throw new Exception($"Field '{fieldName}' not found in type hierarchy.");
+            }
+
+            return fi.GetValue(target);
+        }
+
+        /// <summary>
+        ///  Depth-first recursive delete, with handling for descendant directories open in Windows Explorer.
+        /// </summary>
+        /// <param name="path">Directory path</param>
+        public static void DeleteDirectory(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+                throw new ArgumentNullException(path);
+
+            //find more info about directory deletion
+            //and why we use this approach at https://stackoverflow.com/questions/329355/cannot-delete-directory-with-directory-deletepath-true
+
+            foreach (var directory in Directory.GetDirectories(path))
+            {
+                DeleteDirectory(directory);
+            }
+
+            try
+            {
+                Directory.Delete(path, true);
+            }
+            catch (IOException)
+            {
+                Directory.Delete(path, true);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Directory.Delete(path, true);
+            }
         }
 
         #endregion
@@ -353,7 +402,7 @@ namespace Nop.Core
         /// Gets or sets application base path
         /// </summary>
         internal static string BaseDirectory { get; set; }
-
+        
         #endregion
     }
 }

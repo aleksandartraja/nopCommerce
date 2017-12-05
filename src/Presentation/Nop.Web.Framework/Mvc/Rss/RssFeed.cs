@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Linq;
 using Nop.Core;
-using Nop.Core.Extensions;
 
 namespace Nop.Web.Framework.Mvc.Rss
 {
@@ -24,6 +23,10 @@ namespace Nop.Web.Framework.Mvc.Rss
             Init(title, description, link, lastBuildDate);
         }
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="link">URL</param>
         public RssFeed(Uri link)
         {
             Init(string.Empty, string.Empty, link, DateTimeOffset.Now);
@@ -74,19 +77,17 @@ namespace Nop.Web.Framework.Mvc.Rss
             try
             {
                 var document = XDocument.Load(reader);
-                
-                if (document.Root == null)
-                    return null;
 
-                var channel = document.Root.Element("channel");
+                var channel = document.Root?.Element("channel");
 
                 if (channel == null)
                     return null;
 
-                var title = channel.Element("title").Return(e => e.Value, string.Empty);
-                var description = channel.Element("description").Return(e => e.Value, string.Empty);
-                var link = new Uri(channel.Element("link").Return(e => e.Value, string.Empty));
-                var lastBuildDate = channel.Element("lastBuildDate").Return(e => DateTimeOffset.ParseExact(e.Value, "r", null), DateTimeOffset.Now);
+                var title = channel.Element("title")?.Value ?? string.Empty;
+                var description = channel.Element("description")?.Value ?? string.Empty;
+                var link = new Uri(channel.Element("link")?.Value ?? string.Empty);
+                var lastBuildDateValue = channel.Element("lastBuildDate")?.Value;
+                var lastBuildDate = lastBuildDateValue == null ? DateTimeOffset.Now : DateTimeOffset.ParseExact(lastBuildDateValue, "r", null);
 
                 var feed = new RssFeed(title, description, link, lastBuildDate);
 
@@ -145,7 +146,7 @@ namespace Nop.Web.Framework.Mvc.Rss
             root.Add(channel);
             document.Add(root);
 
-            return XmlHelper.XmlDecode(document.ToString());
+            return document.ToString();
         }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Nop.Core;
 using Nop.Core.Data;
+using Nop.Core.Domain.Customers;
 using Nop.Services.Customers;
 
 namespace Nop.Web.Framework.Mvc.Filters
@@ -13,12 +14,16 @@ namespace Nop.Web.Framework.Mvc.Filters
     /// </summary>
     public class SaveIpAddressAttribute : TypeFilterAttribute
     {
+        #region Ctor
+
         /// <summary>
         /// Create instance of the filter attribute
         /// </summary>
         public SaveIpAddressAttribute() : base(typeof(SaveIpAddressFilter))
         {
         }
+
+        #endregion
 
         #region Nested filter
 
@@ -32,6 +37,7 @@ namespace Nop.Web.Framework.Mvc.Filters
             private readonly ICustomerService _customerService;
             private readonly IWebHelper _webHelper;
             private readonly IWorkContext _workContext;
+            private readonly CustomerSettings _customerSettings;
 
             #endregion
 
@@ -39,11 +45,13 @@ namespace Nop.Web.Framework.Mvc.Filters
 
             public SaveIpAddressFilter(ICustomerService customerService,
                 IWebHelper webHelper,
-                IWorkContext workContext)
+                IWorkContext workContext,
+                CustomerSettings customerSettings)
             {
                 this._customerService = customerService;
                 this._webHelper = webHelper;
                 this._workContext = workContext;
+                this._customerSettings = customerSettings;
             }
 
             #endregion
@@ -56,14 +64,21 @@ namespace Nop.Web.Framework.Mvc.Filters
             /// <param name="context">A context for action filters</param>
             public void OnActionExecuting(ActionExecutingContext context)
             {
-                if (context == null || context.HttpContext == null || context.HttpContext.Request == null)
+                if (context == null)
+                    throw new ArgumentNullException(nameof(context));
+
+                if (context.HttpContext.Request == null)
+                    return;
+
+                //only in GET requests
+                if (!context.HttpContext.Request.Method.Equals(WebRequestMethods.Http.Get, StringComparison.InvariantCultureIgnoreCase))
                     return;
 
                 if (!DataSettingsHelper.DatabaseIsInstalled())
                     return;
 
-                //only in GET requests
-                if (!context.HttpContext.Request.Method.Equals(WebRequestMethods.Http.Get, StringComparison.InvariantCultureIgnoreCase))
+                //check whether we store IP addresses
+                if (!_customerSettings.StoreIpAddresses)
                     return;
 
                 //get current IP address

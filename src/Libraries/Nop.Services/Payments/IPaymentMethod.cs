@@ -6,7 +6,7 @@ using Nop.Core.Plugins;
 namespace Nop.Services.Payments
 {
     /// <summary>
-    /// Provides an interface for creating payment gateways & methods
+    /// Provides an interface for creating payment gateways and methods
     /// </summary>
     public partial interface IPaymentMethod : IPlugin
     {
@@ -28,14 +28,14 @@ namespace Nop.Services.Payments
         /// <summary>
         /// Returns a value indicating whether payment method should be hidden during checkout
         /// </summary>
-        /// <param name="cart">Shoping cart</param>
+        /// <param name="cart">Shopping cart</param>
         /// <returns>true - hide; false - display.</returns>
         bool HidePaymentMethod(IList<ShoppingCartItem> cart);
 
         /// <summary>
         /// Gets additional handling fee
         /// </summary>
-        /// <param name="cart">Shoping cart</param>
+        /// <param name="cart">Shopping cart</param>
         /// <returns>Additional handling fee</returns>
         decimal GetAdditionalHandlingFee(IList<ShoppingCartItem> cart);
 
@@ -96,11 +96,10 @@ namespace Nop.Services.Payments
         ProcessPaymentRequest GetPaymentInfo(IFormCollection form);
 
         /// <summary>
-        /// Gets a route for payment info
+        /// Gets a view component for displaying plugin in public store ("payment info" checkout step)
         /// </summary>
         /// <param name="viewComponentName">View component name</param>
-        /// <param name="viewComponentArguments">View component arguments</param>
-        void GetPaymentInfoRoute(out string viewComponentName, out object viewComponentArguments);
+        void GetPublicViewComponent(out string viewComponentName);
 
         #endregion
 

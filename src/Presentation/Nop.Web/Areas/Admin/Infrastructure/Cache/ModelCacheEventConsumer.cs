@@ -3,10 +3,9 @@ using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Configuration;
 using Nop.Core.Domain.Vendors;
 using Nop.Core.Events;
-using Nop.Core.Infrastructure;
 using Nop.Services.Events;
 
-namespace Nop.Admin.Infrastructure.Cache
+namespace Nop.Web.Areas.Admin.Infrastructure.Cache
 {
     /// <summary>
     /// Model cache event consumer (used for caching of presentation layer models)
@@ -69,7 +68,6 @@ namespace Nop.Admin.Infrastructure.Cache
         /// </remarks>
         public const string VENDORS_LIST_KEY = "Nop.pres.admin.vendors.list-{0}";
         public const string VENDORS_LIST_PATTERN_KEY = "Nop.pres.admin.vendors.list";
-
 
         private readonly ICacheManager _cacheManager;
         

@@ -7,13 +7,15 @@
     Html.SetActiveMenuItemSystemName("Languages");
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+
+<form asp-controller="Language" asp-action="Edit" method="post">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.Configuration.Languages.EditLanguageDetails") - @Model.Name
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.Configuration.Languages.BackToList").Text, "List")</small>
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.Configuration.Languages.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -24,7 +26,7 @@
                 <i class="fa fa-floppy-o"></i>
                 @T("Admin.Common.SaveContinue")
             </button>
-            <a href="@Url.Action("ExportXml", new {id = Model.Id})" class="btn bg-green">
+            <a asp-action="ExportXml" asp-route-id="@Model.Id" class="btn bg-green">
                 <i class="fa fa-download"></i>
                 @T("Admin.Configuration.Languages.Export")
             </a>
@@ -36,11 +38,12 @@
                 <i class="fa fa-trash-o"></i>
                 @T("Admin.Common.Delete")
             </span>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_language_details_buttons", additionalData = Model.Id })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
-@Html.DeleteConfirmation("language-delete")
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="language-delete" />
 
 @*import resources form*@
 <div id="importxml-window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importxml-window-title">
@@ -50,11 +53,9 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="importxml-window-title">@T("Admin.Configuration.Languages.Import")</h4>
             </div>
-            @using (Html.BeginForm("ImportXml", "Language", new { id = Model.Id }, FormMethod.Post, false, new { enctype = "multipart/form-data" }))
-            {
+            <form asp-controller="Language" asp-route-id="@Model.Id" asp-action="ImportXml" method="post" enctype="multipart/form-data">
                 <div class="form-horizontal">
                     <div class="modal-body">
-                        @Html.AntiForgeryToken()
                         <ul class="common-list">
                             <li>
                                 <strong>@T("Admin.Configuration.Languages.XmlFile.Note1")</strong>
@@ -80,7 +81,7 @@
                         <input id="importxmlsubmit" type="submit" class="btn btn-primary" value="@T("Admin.Configuration.Languages.Import")" />
                     </div>
                 </div>
-            }
+            </form>
         </div>
     </div>
 </div>

@@ -92,9 +92,9 @@ namespace Nop.Web.Controllers
                 //now create connection string to 'master' dabatase. It always exists.
                 builder.InitialCatalog = "master";
                 var masterCatalogConnectionString = builder.ToString();
-                string query = string.Format("CREATE DATABASE [{0}]", databaseName);
-                if (!String.IsNullOrWhiteSpace(collation))
-                    query = string.Format("{0} COLLATE {1}", query, collation);
+                var query = $"CREATE DATABASE [{databaseName}]";
+                if (!string.IsNullOrWhiteSpace(collation))
+                    query = $"{query} COLLATE {collation}";
                 using (var conn = new SqlConnection(masterCatalogConnectionString))
                 {
                     conn.Open();
@@ -145,10 +145,12 @@ namespace Nop.Web.Controllers
             string serverName, string databaseName,
             string userName, string password, int timeout = 0)
         {
-            var builder = new SqlConnectionStringBuilder();
-            builder.IntegratedSecurity = trustedConnection;
-            builder.DataSource = serverName;
-            builder.InitialCatalog = databaseName;
+            var builder = new SqlConnectionStringBuilder
+            {
+                IntegratedSecurity = trustedConnection,
+                DataSource = serverName,
+                InitialCatalog = databaseName
+            };
             if (!trustedConnection)
             {
                 builder.UserID = userName;
@@ -174,11 +176,6 @@ namespace Nop.Web.Controllers
         {
             if (DataSettingsHelper.DatabaseIsInstalled())
                 return RedirectToRoute("HomePage");
-            
-            #if NET451
-            //set page timeout to 5 minutes
-            this.Server.ScriptTimeout = 300;
-            #endif
 
             var model = new InstallModel
             {
@@ -213,11 +210,6 @@ namespace Nop.Web.Controllers
         {
             if (DataSettingsHelper.DatabaseIsInstalled())
                 return RedirectToRoute("HomePage");
-            
-            #if NET451
-            //set page timeout to 5 minutes
-            this.Server.ScriptTimeout = 300;
-            #endif
 
             if (model.DatabaseConnectionString != null)
                 model.DatabaseConnectionString = model.DatabaseConnectionString.Trim();
@@ -275,7 +267,6 @@ namespace Nop.Web.Controllers
                 }
             }
 
-
             //Consider granting access rights to the resource to the ASP.NET request identity. 
             //ASP.NET has a base process identity 
             //(typically {MACHINE}\ASPNET on IIS 5 or Network Service on IIS 6 and IIS 7, 
@@ -285,12 +276,12 @@ namespace Nop.Web.Controllers
             var webHelper = EngineContext.Current.Resolve<IWebHelper>();
             //validate permissions
             var dirsToCheck = FilePermissionHelper.GetDirectoriesWrite();
-            foreach (string dir in dirsToCheck)
+            foreach (var dir in dirsToCheck)
                 if (!FilePermissionHelper.CheckPermissions(dir, false, true, true, false))
                     ModelState.AddModelError("", string.Format(_locService.GetResource("ConfigureDirectoryPermissions"), WindowsIdentity.GetCurrent().Name, dir));
 
             var filesToCheck = FilePermissionHelper.GetFilesWrite();
-            foreach (string file in filesToCheck)
+            foreach (var file in filesToCheck)
                 if (!FilePermissionHelper.CheckPermissions(file, false, true, true, true))
                     ModelState.AddModelError("", string.Format(_locService.GetResource("ConfigureFilePermissions"), WindowsIdentity.GetCurrent().Name, file));
 
@@ -332,7 +323,7 @@ namespace Nop.Web.Controllers
                                 //create database
                                 var collation = model.UseCustomCollation ? model.Collation : "";
                                 var errorCreatingDatabase = CreateDatabase(connectionString, collation);
-                                if (!String.IsNullOrEmpty(errorCreatingDatabase))
+                                if (!string.IsNullOrEmpty(errorCreatingDatabase))
                                     throw new Exception(errorCreatingDatabase);
                             }
                         }
@@ -346,12 +337,12 @@ namespace Nop.Web.Controllers
                     else
                     {
                         //SQL CE
-                        string databaseFileName = "Nop.Db.sdf";
-                        string databasePath = @"|DataDirectory|\" + databaseFileName;
+                        var databaseFileName = "Nop.Db.sdf";
+                        var databasePath = @"|DataDirectory|\" + databaseFileName;
                         connectionString = "Data Source=" + databasePath + ";Persist Security Info=False";
 
                         //drop database if exists
-                        string databaseFullPath = CommonHelper.MapPath("~/App_Data/") + databaseFileName;
+                        var databaseFullPath = CommonHelper.MapPath("~/App_Data/") + databaseFileName;
                         if (System.IO.File.Exists(databaseFullPath))
                         {
                             System.IO.File.Delete(databaseFullPath);
@@ -371,7 +362,6 @@ namespace Nop.Web.Controllers
                     var dataProviderInstance = EngineContext.Current.Resolve<BaseDataProviderManager>().LoadDataProvider();
                     dataProviderInstance.InitDatabase();
 
-
                     //now resolve installation service
                     var installationService = EngineContext.Current.Resolve<IInstallationService>();
                     installationService.InstallData(model.AdminEmail, model.AdminPassword, model.InstallSampleData);
@@ -387,7 +377,7 @@ namespace Nop.Web.Controllers
                         .OrderBy(x => x.PluginDescriptor.Group)
                         .ThenBy(x => x.PluginDescriptor.DisplayOrder)
                         .ToList();
-                    var pluginsIgnoredDuringInstallation = String.IsNullOrEmpty(_config.PluginsIgnoredDuringInstallation) ?
+                    var pluginsIgnoredDuringInstallation = string.IsNullOrEmpty(_config.PluginsIgnoredDuringInstallation) ?
                         new List<string>() :
                         _config.PluginsIgnoredDuringInstallation
                         .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
@@ -397,9 +387,8 @@ namespace Nop.Web.Controllers
                     {
                         if (pluginsIgnoredDuringInstallation.Contains(plugin.PluginDescriptor.SystemName))
                             continue;
-#if NET451
+
                         plugin.Install();
-#endif
                     }
 
                     //register default permissions
@@ -408,7 +397,7 @@ namespace Nop.Web.Controllers
                     permissionProviders.Add(typeof(StandardPermissionProvider));
                     foreach (var providerType in permissionProviders)
                     {
-                        dynamic provider = Activator.CreateInstance(providerType);
+                        var provider = (IPermissionProvider)Activator.CreateInstance(providerType);
                         EngineContext.Current.Resolve<IPermissionService>().InstallPermissions(provider);
                     }
 
@@ -423,10 +412,8 @@ namespace Nop.Web.Controllers
                     //reset cache
                     DataSettingsHelper.ResetCache();
                     
-#if NET451
-                    var cacheManager = EngineContext.Current.ContainerManager.Resolve<IStaticCacheManager>();
+                    var cacheManager = EngineContext.Current.Resolve<IStaticCacheManager>();
                     cacheManager.Clear();
-#endif
 
                     //clear provider settings if something got wrong
                     settingsManager.SaveSettings(new DataSettings

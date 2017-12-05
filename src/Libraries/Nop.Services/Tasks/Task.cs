@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Linq;
+using Nop.Core.Caching;
 using Nop.Core.Configuration;
 using Nop.Core.Domain.Tasks;
 using Nop.Core.Infrastructure;
-using Nop.Services.Infrastructure;
 using Nop.Services.Logging;
 
 namespace Nop.Services.Tasks
@@ -12,15 +13,13 @@ namespace Nop.Services.Tasks
     /// </summary>
     public partial class Task
     {
-        #region Ctor
+        #region Fields
 
-        /// <summary>
-        /// Ctor for Task
-        /// </summary>
-        private Task()
-        {
-            this.Enabled = true;
-        }
+        private bool? _enabled;
+
+        #endregion
+
+        #region Ctor
 
         /// <summary>
         /// Ctor for Task
@@ -28,25 +27,30 @@ namespace Nop.Services.Tasks
         /// <param name="task">Task </param>
         public Task(ScheduleTask task)
         {
-            this.Type = task.Type;
-            this.Enabled = task.Enabled;
-            this.StopOnError = task.StopOnError;
-            this.Name = task.Name;
-            this.LastSuccessUtc = task.LastSuccessUtc;
+            ScheduleTask = task;
         }
 
         #endregion
 
         #region Utilities
 
-        private ITask CreateTask()
+        /// <summary>
+        /// Initialize and execute task
+        /// </summary>
+        private void ExecuteTask()
         {
-            if (!this.Enabled)
-                return null;
+            var scheduleTaskService = EngineContext.Current.Resolve<IScheduleTaskService>();
+            
+            if (!Enabled)
+                return;
 
-            var type = System.Type.GetType(this.Type);
+            var type = Type.GetType(ScheduleTask.Type) ??
+                //ensure that it works fine when only the type name is specified (do not require fully qualified names)
+                AppDomain.CurrentDomain.GetAssemblies()
+                .Select(a => a.GetType(ScheduleTask.Type))
+                .FirstOrDefault(t => t != null);
             if (type == null)
-                return null;
+                throw new Exception($"Schedule task ({ScheduleTask.Type}) cannot by instantiated");
 
             object instance = null;
             try
@@ -63,7 +67,41 @@ namespace Nop.Services.Tasks
                 instance = EngineContext.Current.ResolveUnregistered(type);
             }
 
-            return instance as ITask;
+            var task = instance as IScheduleTask;
+            if (task == null)
+                return;
+
+            ScheduleTask.LastStartUtc = DateTime.UtcNow;
+            //update appropriate datetime properties
+            scheduleTaskService.UpdateTask(ScheduleTask);
+            task.Execute();
+            ScheduleTask.LastEndUtc = ScheduleTask.LastSuccessUtc = DateTime.UtcNow;
+            //update appropriate datetime properties
+            scheduleTaskService.UpdateTask(ScheduleTask);
+        }
+
+        /// <summary>
+        /// Is task already running?
+        /// </summary>
+        /// <param name="scheduleTask">Schedule task</param>
+        /// <returns>Result</returns>
+        protected virtual bool IsTaskAlreadyRunning(ScheduleTask scheduleTask)
+        {
+            //task run for the first time
+            if (!scheduleTask.LastStartUtc.HasValue && !scheduleTask.LastEndUtc.HasValue)
+                return false;
+
+            var lastStartUtc = scheduleTask.LastStartUtc ?? DateTime.UtcNow;
+
+            //task already finished
+            if (scheduleTask.LastEndUtc.HasValue && lastStartUtc < scheduleTask.LastEndUtc)
+                return false;
+
+            //task wasn't finished last time
+            if (lastStartUtc.AddSeconds(scheduleTask.Seconds) <= DateTime.UtcNow)
+                return false;
+
+            return true;
         }
 
         #endregion
@@ -74,116 +112,55 @@ namespace Nop.Services.Tasks
         /// Executes the task
         /// </summary>
         /// <param name="throwException">A value indicating whether exception should be thrown if some error happens</param>
-        /// <param name="ensureRunOnOneWebFarmInstance">A value indicating whether we should ensure this task is run on one farm node at a time</param>
-        public void Execute(bool throwException = false, bool ensureRunOnOneWebFarmInstance = true)
+        /// <param name="ensureRunOncePerPeriod">A value indicating whether we should ensure this task is run once per run period</param>
+        public void Execute(bool throwException = false, bool ensureRunOncePerPeriod = true)
         {
-            var scheduleTaskService = EngineContext.Current.Resolve<IScheduleTaskService>();
-            var scheduleTask = scheduleTaskService.GetTaskByType(this.Type);
+            if (ScheduleTask == null || !Enabled)
+                return;
+
+            if (ensureRunOncePerPeriod)
+            {
+                //task already running
+                if (IsTaskAlreadyRunning(ScheduleTask))
+                    return;
+
+                //validation (so nobody else can invoke this method when he wants)
+                if (ScheduleTask.LastEndUtc.HasValue && (DateTime.UtcNow - ScheduleTask.LastEndUtc).Value.TotalSeconds <
+                    ScheduleTask.Seconds)
+                    //too early
+                    return;
+            }
 
             try
             {
-                //flag that task is already executed
-                var taskExecuted = false;
-
-                //task is run on one farm node at a time?
-                if (ensureRunOnOneWebFarmInstance)
+                var nopConfig = EngineContext.Current.Resolve<NopConfig>();
+                if (nopConfig.RedisCachingEnabled)
                 {
-                    //is web farm enabled (multiple instances)?
-                    var nopConfig = EngineContext.Current.Resolve<NopConfig>();
-                    if (nopConfig.MultipleInstancesEnabled)
-                    {
-                        var machineNameProvider = EngineContext.Current.Resolve<IMachineNameProvider>();
-                        var machineName = machineNameProvider.GetMachineName();
-                        if (String.IsNullOrEmpty(machineName))
-                        {
-                            throw new Exception("Machine name cannot be detected. You cannot run in web farm.");
-                            //actually in this case we can generate some unique string (e.g. Guid) and store it in some "static" (!!!) variable
-                            //then it can be used as a machine name
-                        }
+                    //get expiration time
+                    var expirationInSeconds = ScheduleTask.Seconds <= 300 ? ScheduleTask.Seconds - 1 : 300;
 
-                        if (scheduleTask != null)
-                        {
-                            if (nopConfig.RedisCachingEnabled)
-                            {
-                                //get expiration time
-                                var expirationInSeconds = scheduleTask.Seconds <= 300 ? scheduleTask.Seconds - 1 : 300;
-
-                                var executeTaskAction = new Action(() =>
-                                {
-                                    //execute task
-                                    taskExecuted = true;
-                                    var task = this.CreateTask();
-                                    if (task != null)
-                                    {
-                                        //update appropriate datetime properties
-                                        scheduleTask.LastStartUtc = DateTime.UtcNow;
-                                        scheduleTaskService.UpdateTask(scheduleTask);
-                                        task.Execute();
-                                        this.LastEndUtc = this.LastSuccessUtc = DateTime.UtcNow;
-                                    }
-                                });
-
-                                //execute task with lock
-#if NET451
-                                var redisWrapper = EngineContext.Current.ContainerManager.Resolve<IRedisConnectionWrapper>(scope: scope);
-                                if (!redisWrapper.PerformActionWithLock(scheduleTask.Type, TimeSpan.FromSeconds(expirationInSeconds), executeTaskAction))
-                                    return;
-#endif
-                            }
-                            else
-                            {
-                                //lease can't be acquired only if for a different machine and it has not expired
-                                if (scheduleTask.LeasedUntilUtc.HasValue &&
-                                    scheduleTask.LeasedUntilUtc.Value >= DateTime.UtcNow &&
-                                    scheduleTask.LeasedByMachineName != machineName)
-                                    return;
-
-                                //lease the task. so it's run on one farm node at a time
-                                scheduleTask.LeasedByMachineName = machineName;
-                                scheduleTask.LeasedUntilUtc = DateTime.UtcNow.AddMinutes(30);
-                                scheduleTaskService.UpdateTask(scheduleTask);
-                            }
-                        }
-                    }
+                    //execute task with lock
+                    var redisWrapper = EngineContext.Current.Resolve<IRedisConnectionWrapper>();
+                    redisWrapper.PerformActionWithLock(ScheduleTask.Type, TimeSpan.FromSeconds(expirationInSeconds), ExecuteTask);
                 }
-
-                //execute task in case if is not executed yet
-                if (!taskExecuted)
+                else
                 {
-                    //initialize and execute
-                    var task = this.CreateTask();
-                    if (task != null)
-                    {
-                        this.LastStartUtc = DateTime.UtcNow;
-                        if (scheduleTask != null)
-                        {
-                            //update appropriate datetime properties
-                            scheduleTask.LastStartUtc = this.LastStartUtc;
-                            scheduleTaskService.UpdateTask(scheduleTask);
-                        }
-                        task.Execute();
-                        this.LastEndUtc = this.LastSuccessUtc = DateTime.UtcNow;
-                    }
+                    ExecuteTask();
                 }
             }
             catch (Exception exc)
             {
-                this.Enabled = !this.StopOnError;
-                this.LastEndUtc = DateTime.UtcNow;
+                var scheduleTaskService = EngineContext.Current.Resolve<IScheduleTaskService>();
+
+                ScheduleTask.Enabled = !ScheduleTask.StopOnError;
+                ScheduleTask.LastEndUtc = DateTime.UtcNow;
+                scheduleTaskService.UpdateTask(ScheduleTask);
 
                 //log error
                 var logger = EngineContext.Current.Resolve<ILogger>();
-                logger.Error(string.Format("Error while running the '{0}' schedule task. {1}", this.Name, exc.Message), exc);
+                logger.Error($"Error while running the '{ScheduleTask.Name}' schedule task. {exc.Message}", exc);
                 if (throwException)
                     throw;
-            }
-
-            if (scheduleTask != null)
-            {
-                //update appropriate datetime properties
-                scheduleTask.LastEndUtc = this.LastEndUtc;
-                scheduleTask.LastSuccessUtc = this.LastSuccessUtc;
-                scheduleTaskService.UpdateTask(scheduleTask);
             }
         }
 
@@ -192,39 +169,24 @@ namespace Nop.Services.Tasks
         #region Properties
 
         /// <summary>
-        /// Datetime of the last start
+        /// Schedule task
         /// </summary>
-        public DateTime? LastStartUtc { get; private set; }
-
-        /// <summary>
-        /// Datetime of the last end
-        /// </summary>
-        public DateTime? LastEndUtc { get; private set; }
-
-        /// <summary>
-        /// Datetime of the last success
-        /// </summary>
-        public DateTime? LastSuccessUtc { get; private set; }
-
-        /// <summary>
-        /// A value indicating type of the task
-        /// </summary>
-        public string Type { get; private set; }
-
-        /// <summary>
-        /// A value indicating whether to stop task on error
-        /// </summary>
-        public bool StopOnError { get; private set; }
-
-        /// <summary>
-        /// Get the task name
-        /// </summary>
-        public string Name { get; private set; }
+        public ScheduleTask ScheduleTask { get; }
 
         /// <summary>
         /// A value indicating whether the task is enabled
         /// </summary>
-        public bool Enabled { get; set; }
+        public bool Enabled
+        {
+            get
+            {
+                if (!_enabled.HasValue)
+                    _enabled = ScheduleTask?.Enabled;
+
+                    return _enabled.HasValue && _enabled.Value;
+            }
+            set => _enabled = value;
+        }
 
         #endregion
     }

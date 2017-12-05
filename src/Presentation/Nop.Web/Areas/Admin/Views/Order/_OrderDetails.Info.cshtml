@@ -40,33 +40,33 @@
         function toggleCC(editmode) {
             if (editmode) {
                 $('#lblCardType').hide();
-                $('#@Html.FieldIdFor(model => model.CardType)').show();
+                $('#@Html.IdFor(model => model.CardType)').show();
                 $('#lblCardName').hide();
-                $('#@Html.FieldIdFor(model => model.CardName)').show();
+                $('#@Html.IdFor(model => model.CardName)').show();
                 $('#lblCardNumber').hide();
-                $('#@Html.FieldIdFor(model => model.CardNumber)').show();
+                $('#@Html.IdFor(model => model.CardNumber)').show();
                 $('#lblCardCvv2').hide();
-                $('#@Html.FieldIdFor(model => model.CardCvv2)').show();
+                $('#@Html.IdFor(model => model.CardCvv2)').show();
                 $('#lblCardExpirationMonth').hide();
-                $('#@Html.FieldIdFor(model => model.CardExpirationMonth)').show();
+                $('#@Html.IdFor(model => model.CardExpirationMonth)').show();
                 $('#lblCardExpirationYear').hide();
-                $('#@Html.FieldIdFor(model => model.CardExpirationYear)').show();
+                $('#@Html.IdFor(model => model.CardExpirationYear)').show();
                 $('#btnEditCC').hide();
                 $('#btnSaveCC').show();
                 $('#btnCancelCC').show();
             } else {
                 $('#lblCardType').show();
-                $('#@Html.FieldIdFor(model => model.CardType)').hide();
+                $('#@Html.IdFor(model => model.CardType)').hide();
                 $('#lblCardName').show();
-                $('#@Html.FieldIdFor(model => model.CardName)').hide();
+                $('#@Html.IdFor(model => model.CardName)').hide();
                 $('#lblCardNumber').show();
-                $('#@Html.FieldIdFor(model => model.CardNumber)').hide();
+                $('#@Html.IdFor(model => model.CardNumber)').hide();
                 $('#lblCardCvv2').show();
-                $('#@Html.FieldIdFor(model => model.CardCvv2)').hide();
+                $('#@Html.IdFor(model => model.CardCvv2)').hide();
                 $('#lblCardExpirationMonth').show();
-                $('#@Html.FieldIdFor(model => model.CardExpirationMonth)').hide();
+                $('#@Html.IdFor(model => model.CardExpirationMonth)').hide();
                 $('#lblCardExpirationYear').show();
-                $('#@Html.FieldIdFor(model => model.CardExpirationYear)').hide();
+                $('#@Html.IdFor(model => model.CardExpirationYear)').hide();
                 $('#btnEditCC').show();
                 $('#btnSaveCC').hide();
                 $('#btnCancelCC').hide();
@@ -75,19 +75,20 @@
     </script>
 }
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_order_details_info_top", additionalData = Model.Id })
     <div class="panel panel-default">
         <div class="panel-body">
             @if (!Model.IsLoggedInAsVendor)
             {
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.OrderStatus)
+                        <nop-label asp-for="OrderStatus" />
                     </div>
                     <div class="col-md-9">
                         <div class="input-group input-group-short">
                             <div class="input-group-text">
                                 <strong>
-                                    @Html.NopDisplayFor(model => model.OrderStatus)
+                                    <div class="form-text-row">@Model.OrderStatus</div>
                                 </strong>
                             </div>
                             <div class="input-group-btn">
@@ -96,17 +97,17 @@
                                     <button type="submit" name="cancelorder" id="cancelorder" class="btn bg-red" style="margin-right: 3px;">
                                         @T("Admin.Orders.Fields.OrderStatus.Cancel")
                                     </button>
-                                    @Html.ActionConfirmation("cancelorder")
+                                    <nop-action-confirmation asp-button-id="cancelorder" />
                                 }
                                 <button type="submit" name="btnChangeOrderStatus" onclick="toggleChangeOrderStatus(true);return false;" id="btnChangeOrderStatus" class="btn btn-primary">
                                     @T("Admin.Orders.Fields.OrderStatus.Change")
                                 </button>
                                 <div id="pnlChangeOrderStatus" style="margin-top: 3px;">
-                                    @Html.NopDropDownListFor(model => model.OrderStatusId, ((OrderStatus) Model.OrderStatusId).ToSelectList())
+                                    <nop-select asp-for="OrderStatusId" asp-items="@(((OrderStatus) Model.OrderStatusId).ToSelectList())" />
                                     <button type="submit" name="btnSaveOrderStatus" id="btnSaveOrderStatus" class="btn btn-primary" style="margin-left: 3px">
                                         @T("Admin.Common.Save")
                                     </button>
-                                    @Html.ActionConfirmation("btnSaveOrderStatus")
+                                    <nop-action-confirmation asp-button-id="btnSaveOrderStatus" />
                                     <button type="submit" name="btnCancelOrderStatus" onclick="toggleChangeOrderStatus(false);return false;" id="btnCancelOrderStatus" class="btn bg-teal" style="margin-left: 3px">
                                         @T("Admin.Common.Cancel")
                                     </button>
@@ -138,29 +139,29 @@
             }
             <div class="form-group">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.CustomOrderNumber)
+                    <nop-label asp-for="CustomOrderNumber" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopDisplayFor(model => model.CustomOrderNumber)
+                    <div class="form-text-row">@Model.CustomOrderNumber</div>
                 </div>
             </div>           
             @if (!Model.IsLoggedInAsVendor)
             {
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.OrderGuid)
+                        <nop-label asp-for="OrderGuid" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopDisplayFor(model => model.OrderGuid)
+                        <div class="form-text-row">@Model.OrderGuid</div>
                     </div>
                 </div>
             }
             <div class="form-group">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.StoreName)
+                    <nop-label asp-for="StoreName" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopDisplayFor(model => model.StoreName)
+                    <div class="form-text-row">@Model.StoreName</div>
                 </div>
             </div>
         </div>
@@ -172,39 +173,39 @@
         <div class="panel-body">
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.CustomerId)
+                        <nop-label asp-for="CustomerId" />
                     </div>
                     <div class="col-md-9">
-                        @Html.ActionLink(Model.CustomerInfo, "Edit", "Customer", new { id = Model.CustomerId }, new { })
+                        <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.CustomerId">@Model.CustomerInfo</a>
                     </div>
                 </div>
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.CustomerIp)
+                        <nop-label asp-for="CustomerIp" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopDisplayFor(model => model.CustomerIp)
+                        <div class="form-text-row">@Model.CustomerIp</div>
                     </div>
                 </div>
                 @if (Model.RecurringPaymentId > 0)
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.RecurringPaymentId)
+                            <nop-label asp-for="RecurringPaymentId" />
                         </div>
                         <div class="col-md-9">
-                            <a href="@Url.Action("Edit", "RecurringPayment", new {id = Model.RecurringPaymentId})">@T("Admin.Common.View")</a>
+                            <a asp-controller="RecurringPayment" asp-action="Edit" asp-route-id="@Model.RecurringPaymentId">@T("Admin.Common.View")</a>
                         </div>
                     </div>
                 }
-                @if (!String.IsNullOrEmpty(Model.VatNumber))
+                @if (!string.IsNullOrEmpty(Model.VatNumber))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.VatNumber)
+                            <nop-label asp-for="VatNumber" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplayFor(model => model.VatNumber)
+                            <div class="form-text-row">@Model.VatNumber</div>
                         </div>
                     </div>
                 }
@@ -212,10 +213,10 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AffiliateId)
+                            <nop-label asp-for="AffiliateId" />
                         </div>
                         <div class="col-md-9">
-                            <a href="@Url.Action("Edit", "Affiliate", new {id = Model.AffiliateId})">@Model.AffiliateName - @T("Admin.Common.View")</a>
+                            <a asp-controller="Affiliate" asp-action="Edit" asp-route-id="@Model.AffiliateId">@Model.AffiliateName - @T("Admin.Common.View")</a>
                         </div>
                     </div>
                 }
@@ -234,7 +235,7 @@
                             {
                                 <div class="col-md-2">
                                     <div class="form-text-row">
-                                        @Html.DisplayFor(model => model.OrderSubtotalInclTax) <strong>@T("Admin.Orders.Fields.OrderSubtotalInclTax")</strong>
+                                        @Model.OrderSubtotalInclTax <strong>@T("Admin.Orders.Fields.OrderSubtotalInclTax")</strong>
                                     </div>
                                 </div>
                             }
@@ -242,15 +243,15 @@
                             {
                                 <div class="col-md-10">
                                     <div class="form-text-row">
-                                        @Html.DisplayFor(model => model.OrderSubtotalExclTax) <strong>@T("Admin.Orders.Fields.OrderSubtotalExclTax")</strong>
+                                        @Model.OrderSubtotalExclTax <strong>@T("Admin.Orders.Fields.OrderSubtotalExclTax")</strong>
                                     </div>
                                 </div>
                             }
                         </div>
                     </div>
                 </div>
-                @if (((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.IncludingTax) && !String.IsNullOrEmpty(Model.OrderSubTotalDiscountInclTax)) ||
-                    ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.ExcludingTax) && !String.IsNullOrEmpty(Model.OrderSubTotalDiscountExclTax)))
+                @if (((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.IncludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountInclTax)) ||
+                    ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.ExcludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountExclTax)))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
@@ -263,19 +264,19 @@
                         </div>
                         <div class="col-md-7">
                             <div class="row">
-                                @if ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.IncludingTax) && !String.IsNullOrEmpty(Model.OrderSubTotalDiscountInclTax))
+                                @if ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.IncludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountInclTax))
                                 {
                                     <div class="col-md-2">
                                         <div class="form-text-row">
-                                            @Html.DisplayFor(model => model.OrderSubTotalDiscountInclTax) <strong>@T("Admin.Orders.Fields.OrderSubTotalDiscountInclTax")</strong>
+                                            @Model.OrderSubTotalDiscountInclTax <strong>@T("Admin.Orders.Fields.OrderSubTotalDiscountInclTax")</strong>
                                         </div>
                                     </div>
                                 }
-                                @if ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.ExcludingTax) && !String.IsNullOrEmpty(Model.OrderSubTotalDiscountExclTax))
+                                @if ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.ExcludingTax) && !string.IsNullOrEmpty(Model.OrderSubTotalDiscountExclTax))
                                 {
                                     <div class="col-md-10">
                                         <div class="form-text-row">
-                                            @Html.DisplayFor(model => model.OrderSubTotalDiscountExclTax) <strong>@T("Admin.Orders.Fields.OrderSubTotalDiscountExclTax")</strong>
+                                            @Model.OrderSubTotalDiscountExclTax <strong>@T("Admin.Orders.Fields.OrderSubTotalDiscountExclTax")</strong>
                                         </div>
                                     </div>
                                 }
@@ -298,7 +299,7 @@
                             {
                                 <div class="col-md-2">
                                     <div class="form-text-row">
-                                        @Html.DisplayFor(model => model.OrderShippingInclTax) <strong>@T("Admin.Orders.Fields.OrderShippingInclTax")</strong>
+                                        @Model.OrderShippingInclTax <strong>@T("Admin.Orders.Fields.OrderShippingInclTax")</strong>
                                     </div>
                                 </div>
                             }
@@ -306,15 +307,15 @@
                             {
                                 <div class="col-md-2">
                                     <div class="form-text-row">
-                                        @Html.DisplayFor(model => model.OrderShippingExclTax) <strong>@T("Admin.Orders.Fields.OrderShippingExclTax")</strong>
+                                        @Model.OrderShippingExclTax <strong>@T("Admin.Orders.Fields.OrderShippingExclTax")</strong>
                                     </div>
                                 </div>
                             }
                         </div>
                     </div>
                 </div>
-                @if (((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.IncludingTax) && !String.IsNullOrEmpty(Model.PaymentMethodAdditionalFeeInclTax)) ||
-                    ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.ExcludingTax) && !String.IsNullOrEmpty(Model.PaymentMethodAdditionalFeeExclTax)))
+                @if (((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.IncludingTax) && !string.IsNullOrEmpty(Model.PaymentMethodAdditionalFeeInclTax)) ||
+                    ((Model.AllowCustomersToSelectTaxDisplayType || Model.TaxDisplayType == TaxDisplayType.ExcludingTax) && !string.IsNullOrEmpty(Model.PaymentMethodAdditionalFeeExclTax)))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
@@ -331,7 +332,7 @@
                                 {
                                     <div class="col-md-2">
                                         <div class="form-text-row">
-                                            @Html.DisplayFor(model => model.PaymentMethodAdditionalFeeInclTax) <strong>@T("Admin.Orders.Fields.PaymentMethodAdditionalFeeInclTax")</strong>
+                                            @Model.PaymentMethodAdditionalFeeInclTax <strong>@T("Admin.Orders.Fields.PaymentMethodAdditionalFeeInclTax")</strong>
                                         </div>
                                     </div>
                                 }
@@ -339,7 +340,7 @@
                                 {
                                     <div class="col-md-2">
                                         <div class="form-text-row">
-                                            @Html.DisplayFor(model => model.PaymentMethodAdditionalFeeExclTax) <strong>@T("Admin.Orders.Fields.PaymentMethodAdditionalFeeExclTax")</strong>
+                                            @Model.PaymentMethodAdditionalFeeExclTax <strong>@T("Admin.Orders.Fields.PaymentMethodAdditionalFeeExclTax")</strong>
                                         </div>
                                     </div>
                                 }
@@ -353,7 +354,7 @@
                     {
                         <div class="form-group">
                             <div class="col-md-3">
-                                @Html.NopLabelFor(model => model.Tax) <span style="padding-top: 7px;margin-right: 5px;float: right;">@tr.Rate%</span>
+                                <nop-label asp-for="Tax" /> <span style="padding-top: 7px;margin-right: 5px;float: right;">@tr.Rate%</span>
                             </div>
                             <div class="col-md-9">
                                 @tr.Value
@@ -365,21 +366,21 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.Tax)
+                            <nop-label asp-for="Tax" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplayFor(model => model.Tax)
+                            <div class="form-text-row">@Model.Tax</div>
                         </div>
                     </div>
                 }
-                @if (!String.IsNullOrEmpty(Model.OrderTotalDiscount))
+                @if (!string.IsNullOrEmpty(Model.OrderTotalDiscount))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.OrderTotalDiscount)
+                            <nop-label asp-for="OrderTotalDiscount" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplayFor(model => model.OrderTotalDiscount)
+                            <div class="form-text-row">@Model.OrderTotalDiscount</div>
                         </div>
                     </div>
                 }
@@ -387,11 +388,11 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.GiftCards[0].CouponCode)
+                            <nop-label asp-for="@Model.GiftCards[0].CouponCode" />
                             <span style="padding-top: 7px;margin-right: 5px;float: right;">(@(gc.CouponCode))</span>
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplay(gc.Amount)
+                            <div class="form-text-row">@gc.Amount</div>
                         </div>
                     </div>
                 }
@@ -399,29 +400,29 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.RedeemedRewardPoints)
+                            <nop-label asp-for="RedeemedRewardPoints" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplay(Model.RedeemedRewardPoints + @T("Admin.Orders.Fields.RedeemedRewardPoints.Points").Text + "/" + Model.RedeemedRewardPointsAmount)
+                            <div class="form-text-row">@Model.RedeemedRewardPoints + @T("Admin.Orders.Fields.RedeemedRewardPoints.Points").Text + "/" + @Model.RedeemedRewardPointsAmount</div>
                         </div>
                     </div>
                 }
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.OrderTotal)
+                        <nop-label asp-for="OrderTotal" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopDisplayFor(model => model.OrderTotal)
+                        <div class="form-text-row">@Model.OrderTotal</div>
                     </div>
                 </div>
-                @if (!String.IsNullOrEmpty(Model.RefundedAmount))
+                @if (!string.IsNullOrEmpty(Model.RefundedAmount))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.RefundedAmount)
+                            <nop-label asp-for="RefundedAmount" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplayFor(model => model.RefundedAmount)
+                            <div class="form-text-row">@Model.RefundedAmount</div>
                         </div>
                     </div>
                 }
@@ -429,13 +430,13 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.UsedDiscounts)
+                            <nop-label asp-for="UsedDiscounts" />
                         </div>
                         <div class="col-md-9">
-                            @for (int i = 0; i < Model.UsedDiscounts.Count; i++)
+                            @for (var i = 0; i < Model.UsedDiscounts.Count; i++)
                             {
                                 var discount = Model.UsedDiscounts[i];
-                                <a href="@Url.Action("Edit", "Discount", new {id = discount.DiscountId})">@discount.DiscountName</a>
+                                <a asp-controller="Discount" asp-action="Edit" asp-route-id="@discount.DiscountId">@discount.DiscountName</a>
                                 if (i != Model.UsedDiscounts.Count - 1)
                                 {
                                     <text>,</text>
@@ -446,103 +447,103 @@
                 }
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.Profit)
+                        <nop-label asp-for="Profit" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopDisplayFor(model => model.Profit)
+                        <div class="form-text-row">@Model.Profit</div>
                     </div>
                 </div>
                 <div id="trEditOrderTotals">
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.OrderSubtotalInclTaxValue)
+                            <nop-label asp-for="OrderSubtotalInclTaxValue" />
                         </div>
                         <div class="col-md-9">
                             <div class="pull-left margin-r-10">
                                 @T("Admin.Orders.Fields.Edit.InclTax")
-                                @Html.NopEditorFor(model => model.OrderSubtotalInclTaxValue)
+                                <nop-editor asp-for="OrderSubtotalInclTaxValue" />
                             </div>
                             <div class="pull-left">
                                 @T("Admin.Orders.Fields.Edit.ExclTax")
-                                @Html.NopEditorFor(model => model.OrderSubtotalExclTaxValue)
+                                <nop-editor asp-for="OrderSubtotalExclTaxValue" />
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.OrderSubTotalDiscountInclTaxValue)
+                            <nop-label asp-for="OrderSubTotalDiscountInclTaxValue" />
                         </div>
                         <div class="col-md-9">
                             <div class="pull-left margin-r-10">
                                 @T("Admin.Orders.Fields.Edit.InclTax")
-                                @Html.NopEditorFor(model => model.OrderSubTotalDiscountInclTaxValue)
+                                <nop-editor asp-for="OrderSubTotalDiscountInclTaxValue" />
                             </div>
                             <div class="pull-left">
                                 @T("Admin.Orders.Fields.Edit.ExclTax")
-                                @Html.NopEditorFor(model => model.OrderSubTotalDiscountExclTaxValue)
+                                <nop-editor asp-for="OrderSubTotalDiscountExclTaxValue" />
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.OrderShippingInclTaxValue)
+                            <nop-label asp-for="OrderShippingInclTaxValue" />
                         </div>
                         <div class="col-md-9">
                             <div class="pull-left margin-r-10">
                                 @T("Admin.Orders.Fields.Edit.InclTax")
-                                @Html.NopEditorFor(model => model.OrderShippingInclTaxValue)
+                                <nop-editor asp-for="OrderShippingInclTaxValue" />
                             </div>
                             <div class="pull-left">
                                 @T("Admin.Orders.Fields.Edit.ExclTax")
-                                @Html.NopEditorFor(model => model.OrderShippingExclTaxValue)
+                                <nop-editor asp-for="OrderShippingExclTaxValue" />
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.PaymentMethodAdditionalFeeInclTaxValue)
+                            <nop-label asp-for="PaymentMethodAdditionalFeeInclTaxValue" />
                         </div>
                         <div class="col-md-9">
                             <div class="pull-left margin-r-10">
                                 @T("Admin.Orders.Fields.Edit.InclTax")
-                                @Html.NopEditorFor(model => model.PaymentMethodAdditionalFeeInclTaxValue)
+                                <nop-editor asp-for="PaymentMethodAdditionalFeeInclTaxValue" />
                             </div>
                             <div class="pull-left">
                                 @T("Admin.Orders.Fields.Edit.ExclTax")
-                                @Html.NopEditorFor(model => model.PaymentMethodAdditionalFeeExclTaxValue)
+                                <nop-editor asp-for="PaymentMethodAdditionalFeeExclTaxValue" />
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.TaxRatesValue)
+                            <nop-label asp-for="TaxRatesValue" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.TaxRatesValue)
+                            <nop-editor asp-for="TaxRatesValue" />
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.TaxValue)
+                            <nop-label asp-for="TaxValue" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.TaxValue)
+                            <nop-editor asp-for="TaxValue" />
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.OrderTotalDiscountValue)
+                            <nop-label asp-for="OrderTotalDiscountValue" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.OrderTotalDiscountValue)
+                            <nop-editor asp-for="OrderTotalDiscountValue" />
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.OrderTotalValue)
+                            <nop-label asp-for="OrderTotalValue" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.OrderTotalValue)
+                            <nop-editor asp-for="OrderTotalValue" />
                         </div>
                     </div>
                 </div>
@@ -555,7 +556,7 @@
                         <button type="submit" name="btnSaveOrderTotals" id="btnSaveOrderTotals" class="btn btn-primary">
                             @T("Admin.Orders.Fields.SaveOrderTotals")
                         </button>
-                        @Html.ActionConfirmation("btnSaveOrderTotals")
+                        <nop-action-confirmation asp-button-id="btnSaveOrderTotals" />
 
                         <button type="submit" name="btnCancelOrderTotals" onclick="toggleOrderTotals(false);return false;" id="btnCancelOrderTotals" class="btn bg-teal">
                             @T("Admin.Common.Cancel")
@@ -566,13 +567,13 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CardType)
+                            <nop-label asp-for="CardType" />
                         </div>
                         <div class="col-md-9">
                             <div id="lblCardType">
-                                @Html.NopDisplayFor(model => model.CardType)
+                                <div class="form-text-row">@Model.CardType</div>
                             </div>
-                            @Html.NopEditorFor(model => model.CardType)
+                            <nop-editor asp-for="CardType" />
                         </div>
                     </div>
                 }
@@ -580,27 +581,27 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CardName)
+                            <nop-label asp-for="CardName" />
                         </div>
                         <div class="col-md-9">
                             <div id="lblCardName">
-                                @Html.NopDisplayFor(model => model.CardName)
+                                <div class="form-text-row">@Model.CardName</div>
                             </div>
-                            @Html.NopEditorFor(model => model.CardName)
+                            <nop-editor asp-for="CardName" />
                         </div>
                     </div>
                 }
-                @if (Model.AllowStoringCreditCardNumber || !String.IsNullOrEmpty(Model.CardNumber))
+                @if (Model.AllowStoringCreditCardNumber || !string.IsNullOrEmpty(Model.CardNumber))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CardNumber)
+                            <nop-label asp-for="CardNumber" />
                         </div>
                         <div class="col-md-9">
                             <div id="lblCardNumber">
-                                @Html.NopDisplayFor(model => model.CardNumber)
+                                <div class="form-text-row">@Model.CardNumber</div>
                             </div>
-                            @Html.NopEditorFor(model => model.CardNumber)
+                            <nop-editor asp-for="CardNumber" />
                         </div>
                     </div>
                 }
@@ -608,13 +609,13 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CardCvv2)
+                            <nop-label asp-for="CardCvv2" />
                         </div>
                         <div class="col-md-9">
                             <div id="lblCardCvv2">
-                                @Html.NopDisplayFor(model => model.CardCvv2)
+                                <div class="form-text-row">@Model.CardCvv2</div>
                             </div>
-                            @Html.NopEditorFor(model => model.CardCvv2)
+                            <nop-editor asp-for="CardCvv2" />
                         </div>
                     </div>
                 }
@@ -622,13 +623,13 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CardExpirationMonth)
+                            <nop-label asp-for="CardExpirationMonth" />
                         </div>
                         <div class="col-md-9">
                             <div id="lblCardExpirationMonth">
-                                @Html.NopDisplayFor(model => model.CardExpirationMonth)
+                                <div class="form-text-row">@Model.CardExpirationMonth</div>
                             </div>
-                            @Html.NopEditorFor(model => model.CardExpirationMonth)
+                            <nop-editor asp-for="CardExpirationMonth" />
                         </div>
                     </div>
                 }
@@ -636,13 +637,13 @@
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CardExpirationYear)
+                            <nop-label asp-for="CardExpirationYear" />
                         </div>
                         <div class="col-md-9">
                             <div id="lblCardExpirationYear">
-                                @Html.NopDisplayFor(model => model.CardExpirationYear)
+                                <div class="form-text-row">@Model.CardExpirationYear</div>
                             </div>
-                            @Html.NopEditorFor(model => model.CardExpirationYear)
+                            <nop-editor asp-for="CardExpirationYear" />
                         </div>
                     </div>
                 }
@@ -657,7 +658,7 @@
                             <button type="submit" name="btnSaveCC" id="btnSaveCC" class="btn btn-primary">
                                 @T("Admin.Orders.Fields.SaveCC")
                             </button>
-                            @Html.ActionConfirmation("btnSaveCC")
+                            <nop-action-confirmation asp-button-id="btnSaveCC" />
 
                             <button type="submit" name="btnCancelCC" onclick="toggleCC(false);return false;" id="btnCancelCC" class="btn bg-teal">
                                 @T("Admin.Common.Cancel")
@@ -665,45 +666,45 @@
                         </div>
                     </div>
                 }
-                @if (!String.IsNullOrEmpty(Model.AuthorizationTransactionId))
+                @if (!string.IsNullOrEmpty(Model.AuthorizationTransactionId))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.AuthorizationTransactionId)
+                            <nop-label asp-for="AuthorizationTransactionId" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplayFor(model => model.AuthorizationTransactionId)
+                            <div class="form-text-row">@Model.AuthorizationTransactionId</div>
                         </div>
                     </div>
                 }
-                @if (!String.IsNullOrEmpty(Model.CaptureTransactionId))
+                @if (!string.IsNullOrEmpty(Model.CaptureTransactionId))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CaptureTransactionId)
+                            <nop-label asp-for="CaptureTransactionId" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplayFor(model => model.CaptureTransactionId)
+                            <div class="form-text-row">@Model.CaptureTransactionId</div>
                         </div>
                     </div>
                 }
-                @if (!String.IsNullOrEmpty(Model.SubscriptionTransactionId))
+                @if (!string.IsNullOrEmpty(Model.SubscriptionTransactionId))
                 {
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.SubscriptionTransactionId)
+                            <nop-label asp-for="SubscriptionTransactionId" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDisplayFor(model => model.SubscriptionTransactionId)
+                            <div class="form-text-row">@Model.SubscriptionTransactionId</div>
                         </div>
                     </div>
                 }
-                <div class="form-group">
+                <div class="form-group">                    
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.PaymentMethod)
+                        <nop-label asp-for="PaymentMethod" />
                     </div>
                     <div class="col-md-9">
-                        @Html.NopDisplayFor(model => model.PaymentMethod)
+                        <div class="form-text-row">@Model.PaymentMethod</div>
                     </div>
                 </div>
         </div>
@@ -713,10 +714,10 @@
         <div class="panel-body">
             <div class="form-group">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.PaymentStatus)
+                    <nop-label asp-for="PaymentStatus" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopDisplayFor(model => model.PaymentStatus)
+                    <div class="form-text-row">@Model.PaymentStatus</div>
                 </div>
             </div>
             @if (Model.CanCapture || Model.CanMarkOrderAsPaid || Model.CanRefund || Model.CanRefundOffline ||
@@ -732,7 +733,7 @@
                                     @T("Admin.Orders.Fields.Capture")
                                 </button>
                                 <text>&nbsp;</text>
-                                @Html.ActionConfirmation("captureorder")
+                                <nop-action-confirmation asp-button-id="captureorder" />
                             }
                             if (Model.CanMarkOrderAsPaid)
                             {
@@ -740,7 +741,7 @@
                                     @T("Admin.Orders.Fields.MarkAsPaid")
                                 </button>
                                 <text>&nbsp;</text>
-                                @Html.ActionConfirmation("markorderaspaid")
+                                <nop-action-confirmation asp-button-id="markorderaspaid" />
                             }
                             if (Model.CanRefund)
                             {
@@ -748,7 +749,7 @@
                                     @T("Admin.Orders.Fields.Refund")
                                 </button>
                                 <text>&nbsp;</text>
-                                @Html.ActionConfirmation("refundorder")
+                                <nop-action-confirmation asp-button-id="refundorder" />
                             }
                             if (Model.CanRefundOffline)
                             {
@@ -756,7 +757,7 @@
                                     @T("Admin.Orders.Fields.RefundOffline")
                                 </button>
                                 <text>&nbsp;</text>
-                                @Html.ActionConfirmation("refundorderoffline")
+                                <nop-action-confirmation asp-button-id="refundorderoffline" />
                             }
                             if (Model.CanPartiallyRefund)
                             {
@@ -778,7 +779,7 @@
                                     @T("Admin.Orders.Fields.Void")
                                 </button>
                                 <text>&nbsp;</text>
-                                @Html.ActionConfirmation("voidorder")
+                                <nop-action-confirmation asp-button-id="voidorder" />
                             }
                             if (Model.CanVoidOffline)
                             {
@@ -786,7 +787,7 @@
                                     @T("Admin.Orders.Fields.VoidOffline")
                                 </button>
                                 <text>&nbsp;</text>
-                                @Html.ActionConfirmation("voidorderoffline")
+                                <nop-action-confirmation asp-button-id="voidorderoffline" />
                             }
                         }
                     </div>
@@ -796,7 +797,7 @@
             {
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.CustomValues)
+                        <nop-label asp-for="CustomValues" />
                     </div>
                     <div class="col-md-9">
                         <div class="form-text-row">
@@ -814,12 +815,13 @@
             }
             <div class="form-group">
                 <div class="col-md-3">
-                    @Html.NopLabelFor(model => model.CreatedOn)
+                    <nop-label asp-for="CreatedOn" />
                 </div>
                 <div class="col-md-9">
-                    @Html.NopDisplayFor(model => model.CreatedOn)
+                    <div class="form-text-row">@Model.CreatedOn</div>
                 </div>
             </div>
         </div>
     </div>
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_order_details_info_bottom", additionalData = Model.Id })
 </div>

@@ -6,13 +6,14 @@
     Html.SetActiveMenuItemSystemName("Blog posts");
 }
 
-@using (Html.BeginForm())
-{
-    @Html.AntiForgeryToken()
+<form asp-controller="Blog" asp-action="Create" method="post">
     <div class="content-header clearfix">
         <h1 class="pull-left">
             @T("Admin.ContentManagement.Blog.BlogPosts.AddNew")
-            <small><i class="fa fa-arrow-circle-left"></i>@Html.ActionLink(T("Admin.ContentManagement.Blog.BlogPosts.BackToList").Text, "List")</small>
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Admin.ContentManagement.Blog.BlogPosts.BackToList")</a>
+            </small>
         </h1>
         <div class="pull-right">
             <button type="submit" name="save" class="btn bg-blue">
@@ -23,7 +24,8 @@
                 <i class="fa fa-floppy-o"></i>
                 @T("Admin.Common.SaveContinue")
             </button>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_blog_details_buttons" })
         </div>
     </div>
     @await Html.PartialAsync("_CreateOrUpdate", Model)
-}
+</form>

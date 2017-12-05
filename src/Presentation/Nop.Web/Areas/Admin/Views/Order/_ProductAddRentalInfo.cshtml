@@ -23,10 +23,10 @@
                         <div class="input-group input-group-required">
                             <input id="@(startDateControlId)" name="@(startDateControlId)" type="text" class="form-control" />
                             <div class="input-group-btn">
-                                @Html.RequiredHint()
+                                <nop-required />
                             </div>
                         </div>
-                        <script>
+                        <script type="text/javascript">
                             $(document).ready(function() {
                                 $("#@(startDateControlId)").datepicker({ dateFormat: "@datePickerFormat" });
                             });
@@ -45,10 +45,10 @@
                         <div class="input-group input-group-required">
                             <input id="@(endDateControlId)" name="@(endDateControlId)" type="text" class="form-control" />
                             <div class="input-group-btn">
-                                @Html.RequiredHint()
+                                <nop-required />
                             </div>
                         </div>
-                        <script>
+                        <script type="text/javascript">
                             $(document).ready(function() {
                                 $("#@(endDateControlId)").datepicker({ dateFormat: "@datePickerFormat" });
                             });

@@ -26,25 +26,30 @@ namespace Nop.Core.Domain.Orders
 
         #region Utilities
 
+        /// <summary>
+        /// Parse tax rates
+        /// </summary>
+        /// <param name="taxRatesStr"></param>
+        /// <returns></returns>
         protected virtual SortedDictionary<decimal, decimal> ParseTaxRates(string taxRatesStr)
         {
             var taxRatesDictionary = new SortedDictionary<decimal, decimal>();
-            if (String.IsNullOrEmpty(taxRatesStr))
+            if (string.IsNullOrEmpty(taxRatesStr))
                 return taxRatesDictionary;
 
-            string[] lines = taxRatesStr.Split(new [] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
+            var lines = taxRatesStr.Split(new [] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
             {
-                if (String.IsNullOrEmpty(line.Trim()))
+                if (string.IsNullOrEmpty(line.Trim()))
                     continue;
 
-                string[] taxes = line.Split(new [] { ':' });
+                var taxes = line.Split(':');
                 if (taxes.Length == 2)
                 {
                     try
                     {
-                        decimal taxRate = decimal.Parse(taxes[0].Trim(), CultureInfo.InvariantCulture);
-                        decimal taxValue = decimal.Parse(taxes[1].Trim(), CultureInfo.InvariantCulture);
+                        var taxRate = decimal.Parse(taxes[0].Trim(), CultureInfo.InvariantCulture);
+                        var taxValue = decimal.Parse(taxes[1].Trim(), CultureInfo.InvariantCulture);
                         taxRatesDictionary.Add(taxRate, taxValue);
                     }
                     catch (Exception exc)
@@ -425,11 +430,11 @@ namespace Nop.Core.Domain.Orders
         {
             get
             {
-                return (OrderStatus)this.OrderStatusId;
+                return (OrderStatus)OrderStatusId;
             }
             set
             {
-                this.OrderStatusId = (int)value;
+                OrderStatusId = (int)value;
             }
         }
 
@@ -440,11 +445,11 @@ namespace Nop.Core.Domain.Orders
         {
             get
             {
-                return (PaymentStatus)this.PaymentStatusId;
+                return (PaymentStatus)PaymentStatusId;
             }
             set
             {
-                this.PaymentStatusId = (int)value;
+                PaymentStatusId = (int)value;
             }
         }
 
@@ -455,11 +460,11 @@ namespace Nop.Core.Domain.Orders
         {
             get
             {
-                return (ShippingStatus)this.ShippingStatusId;
+                return (ShippingStatus)ShippingStatusId;
             }
             set
             {
-                this.ShippingStatusId = (int)value;
+                ShippingStatusId = (int)value;
             }
         }
 
@@ -470,11 +475,11 @@ namespace Nop.Core.Domain.Orders
         {
             get
             {
-                return (TaxDisplayType)this.CustomerTaxDisplayTypeId;
+                return (TaxDisplayType)CustomerTaxDisplayTypeId;
             }
             set
             {
-                this.CustomerTaxDisplayTypeId = (int)value;
+                CustomerTaxDisplayTypeId = (int)value;
             }
         }
 
@@ -485,7 +490,7 @@ namespace Nop.Core.Domain.Orders
         {
             get
             {
-                return ParseTaxRates(this.TaxRates);
+                return ParseTaxRates(TaxRates);
             }
         }
         

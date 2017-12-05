@@ -27,6 +27,14 @@ namespace Nop.Services.News
 
         #region Ctor
 
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="newsItemRepository">News item repository</param>
+        /// <param name="newsCommentRepository">News comment repository</param>
+        /// <param name="storeMappingRepository">Store mapping repository</param>
+        /// <param name="catalogSettings">Catalog settings</param>
+        /// <param name="eventPublisher">Event publisher</param>
         public NewsService(IRepository<NewsItem> newsItemRepository, 
             IRepository<NewsComment> newsCommentRepository,
             IRepository<StoreMapping> storeMappingRepository,
@@ -53,7 +61,7 @@ namespace Nop.Services.News
         public virtual void DeleteNews(NewsItem newsItem)
         {
             if (newsItem == null)
-                throw new ArgumentNullException("newsItem");
+                throw new ArgumentNullException(nameof(newsItem));
 
             _newsItemRepository.Delete(newsItem);
             
@@ -139,7 +147,7 @@ namespace Nop.Services.News
         public virtual void InsertNews(NewsItem news)
         {
             if (news == null)
-                throw new ArgumentNullException("news");
+                throw new ArgumentNullException(nameof(news));
 
             _newsItemRepository.Insert(news);
 
@@ -154,7 +162,7 @@ namespace Nop.Services.News
         public virtual void UpdateNews(NewsItem news)
         {
             if (news == null)
-                throw new ArgumentNullException("news");
+                throw new ArgumentNullException(nameof(news));
 
             _newsItemRepository.Update(news);
             
@@ -237,7 +245,7 @@ namespace Nop.Services.News
             var comments = query.ToList();
             //sort by passed identifiers
             var sortedComments = new List<NewsComment>();
-            foreach (int id in commentIds)
+            foreach (var id in commentIds)
             {
                 var comment = comments.Find(x => x.Id == id);
                 if (comment != null)
@@ -273,7 +281,7 @@ namespace Nop.Services.News
         public virtual void DeleteNewsComment(NewsComment newsComment)
         {
             if (newsComment == null)
-                throw new ArgumentNullException("newsComment");
+                throw new ArgumentNullException(nameof(newsComment));
 
             _newsCommentRepository.Delete(newsComment);
 
@@ -288,7 +296,7 @@ namespace Nop.Services.News
         public virtual void DeleteNewsComments(IList<NewsComment> newsComments)
         {
             if (newsComments == null)
-                throw new ArgumentNullException("newsComments");
+                throw new ArgumentNullException(nameof(newsComments));
 
             foreach (var newsComment in newsComments)
             {

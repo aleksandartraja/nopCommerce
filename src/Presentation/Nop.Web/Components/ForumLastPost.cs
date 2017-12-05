@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Factories;
-using System.Threading.Tasks;
 using Nop.Services.Forums;
+using Nop.Web.Factories;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class ForumLastPostViewComponent : ViewComponent
+    public class ForumLastPostViewComponent : NopViewComponent
     {
         private readonly IForumService _forumService;
         private readonly IForumModelFactory _forumModelFactory;
@@ -16,7 +16,7 @@ namespace Nop.Web.Components
             this._forumModelFactory = forumModelFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(int forumPostId, bool showTopic)
+        public IViewComponentResult Invoke(int forumPostId, bool showTopic)
         {
             var forumPost = _forumService.GetPostById(forumPostId);
             var model = _forumModelFactory.PrepareLastPostModel(forumPost, showTopic);

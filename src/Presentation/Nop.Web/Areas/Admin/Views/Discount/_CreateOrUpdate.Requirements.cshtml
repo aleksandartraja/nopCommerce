@@ -4,6 +4,7 @@
     Html.AddScriptParts("~/lib/jquery.tmpl.min.js");
 }
 <div class="panel-group">
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_discount_details_requirements_top", additionalData = Model.Id })
     @if (Model.Id > 0)
     {
         <p>
@@ -12,7 +13,7 @@
 
         <script type="text/javascript">
             $(document).ready(function() {
-                $("#@Html.FieldIdFor(model => model.AddDiscountRequirement)").change(loadNewRequirementBox);
+                $("#@Html.IdFor(model => model.AddDiscountRequirement)").change(loadNewRequirementBox);
 
                 //load add requirement box
                 loadNewRequirementBox();
@@ -22,7 +23,7 @@
 
                 //adding requirement event
                 $("#discountRequirementContainer").bind('nopnewdiscountruleadded', function(event, newRequirementId) {
-                    var parentId = $("#@Html.FieldIdFor(model => model.RequirementGroupId)").val();
+                    var parentId = $("#@Html.IdFor(model => model.RequirementGroupId)").val();
                     loadRequirements(newRequirementId, parentId);
                 });
             });
@@ -30,9 +31,9 @@
             //load HTML for adding requirement
             function loadNewRequirementBox() {
                 //load URL
-                var ruleSystemName = $("#@Html.FieldIdFor(model => model.AddDiscountRequirement)").val();
+                var ruleSystemName = $("#@Html.IdFor(model => model.AddDiscountRequirement)").val();
                 if (ruleSystemName) {
-                    var groupsElement = $("#@Html.FieldIdFor(model => model.RequirementGroupId)");
+                    var groupsElement = $("#@Html.IdFor(model => model.RequirementGroupId)");
                     if (groupsElement.find('option').length > 1) {
                         $("#pnlGroup").show();
                     }
@@ -102,12 +103,12 @@
                         loadRequirementBoxes(result.Requirements, "#discountRequirementContainer", true);
 
                         //set available groups
-                        var groupsElement = $("#@Html.FieldIdFor(model => model.RequirementGroupId)");
+                        var groupsElement = $("#@Html.IdFor(model => model.RequirementGroupId)");
                         groupsElement.html('');
                         $.each(result.AvailableGroups, function (id, option) {
                             groupsElement.append($('<option></option>').val(option.Value).html(option.Text));
                         });
-                        var ruleSystemName = $("#@Html.FieldIdFor(model => model.AddDiscountRequirement)").val();
+                        var ruleSystemName = $("#@Html.IdFor(model => model.AddDiscountRequirement)").val();
                         if (ruleSystemName && groupsElement.find('option').length > 1) {
                             $("#pnlGroup").show();
                         }
@@ -146,7 +147,7 @@
             function addNewGroup() {
                 var postData = {
                     discountId: @Model.Id,
-                    name: $("#@Html.FieldIdFor(model => model.GroupName)").val(),
+                    name: $("#@Html.IdFor(model => model.GroupName)").val(),
                 };
 
                 addAntiForgeryToken(postData);
@@ -239,30 +240,30 @@
             <div class="panel-body">
                 <div class="form-group">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.AddDiscountRequirement)
+                        <nop-label asp-for="AddDiscountRequirement"/>
                     </div>
                     <div class="col-md-9">
-                        @Html.NopDropDownListFor(model => model.AddDiscountRequirement, Model.AvailableDiscountRequirementRules)
-                        @Html.ValidationMessageFor(model => model.AddDiscountRequirement)
+                        <nop-select asp-for="AddDiscountRequirement" asp-items="Model.AvailableDiscountRequirementRules" />
+                        <span asp-validation-for="AddDiscountRequirement"></span>
                     </div>
                 </div>
                 <div class="form-group" id="pnlGroup" style="display: none">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.RequirementGroupId)
+                        <nop-label asp-for="RequirementGroupId"/>
                     </div>
                     <div class="col-md-9">
-                        @Html.NopDropDownListFor(model => model.RequirementGroupId, Model.AvailableRequirementGroups)
-                        @Html.ValidationMessageFor(model => model.RequirementGroupId)
+                        <nop-select asp-for="RequirementGroupId" asp-items="Model.AvailableRequirementGroups" />
+                        <span asp-validation-for="RequirementGroupId"></span>
                     </div>
                 </div>
                 <div id="addrequirementplaceholder"></div>
                 <div class="form-group" id="pnlGroupName" style="display: none">
                     <div class="col-md-3">
-                        @Html.NopLabelFor(model => model.GroupName)
+                        <nop-label asp-for="GroupName"/>
                     </div>
                     <div class="col-md-9">
-                        @Html.NopEditorFor(model => model.GroupName)
-                        @Html.ValidationMessageFor(model => model.GroupName)
+                        <nop-editor asp-for="GroupName"/>
+                        <span asp-validation-for="GroupName"></span>
                     </div>
                 </div>
                 <div class="form-group" id="pnlAddNewGroup" style="display: none">
@@ -281,4 +282,5 @@
             </div>
         </div>
     }
+    @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_discount_details_requirements_bottom", additionalData = Model.Id })
 </div>

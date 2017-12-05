@@ -10,13 +10,14 @@
     Html.SetActiveMenuItemSystemName("Recurring payments");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.RecurringPayments")
     </h1>
     <div class="pull-right">
         &nbsp;
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_reccuring_payment_list_buttons" })
     </div>
 </div>
 
@@ -30,7 +31,7 @@
                     </p>
                     <div id="recurringpayments-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#recurringpayments-grid").kendoGrid({
                                 dataSource: {

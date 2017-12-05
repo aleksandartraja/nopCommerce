@@ -1,12 +1,12 @@
 ﻿using System.Globalization;
 using FluentValidation;
-using Nop.Admin.Models.Localization;
+using Nop.Web.Areas.Admin.Models.Localization;
 using Nop.Core.Domain.Localization;
 using Nop.Data;
 using Nop.Services.Localization;
 using Nop.Web.Framework.Validators;
 
-namespace Nop.Admin.Validators.Localization
+namespace Nop.Web.Areas.Admin.Validators.Localization
 {
     public partial class LanguageValidator : BaseNopValidator<LanguageModel>
     {
@@ -20,7 +20,7 @@ namespace Nop.Admin.Validators.Localization
                               {
                                   //let's try to create a CultureInfo object
                                   //if "DisplayLocale" is wrong, then exception will be thrown
-                                  var culture = new CultureInfo(x);
+                                  var unused = new CultureInfo(x);
                                   return true;
                               }
                               catch
@@ -34,7 +34,6 @@ namespace Nop.Admin.Validators.Localization
             RuleFor(x => x.UniqueSeoCode).Length(2).WithMessage(localizationService.GetResource("Admin.Configuration.Languages.Fields.UniqueSeoCode.Length"));
 
             SetDatabaseValidationRules<Language>(dbContext, "UniqueSeoCode");
-
         }
     }
 }

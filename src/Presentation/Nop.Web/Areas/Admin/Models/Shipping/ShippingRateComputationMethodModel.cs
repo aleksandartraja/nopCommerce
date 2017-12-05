@@ -1,10 +1,7 @@
-﻿using Microsoft.AspNetCore.Routing;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
-using Nop.Web.Framework.Mvc.ModelBinding;
+﻿using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Shipping
+namespace Nop.Web.Areas.Admin.Models.Shipping
 {
     public partial class ShippingRateComputationMethodModel : BaseNopModel
     {
@@ -19,8 +16,11 @@ namespace Nop.Admin.Models.Shipping
 
         [NopResourceDisplayName("Admin.Configuration.Shipping.Providers.Fields.IsActive")]
         public bool IsActive { get; set; }
-
+        
         [NopResourceDisplayName("Admin.Configuration.Shipping.Providers.Fields.Logo")]
         public string LogoUrl { get; set; }
+
+        [NopResourceDisplayName("Admin.Configuration.Shipping.Providers.Configure")]
+        public string ConfigurationUrl { get; set; }
     }
 }

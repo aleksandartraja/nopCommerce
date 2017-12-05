@@ -1,14 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Nop.Core.Domain.Customers;
+﻿using System;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain;
+using Nop.Core.Domain.Customers;
 using Nop.Services.Common;
-using System;
+using Nop.Web.Framework.Components;
 
 namespace Nop.Web.Components
 {
-    public class EuCookieLawViewComponent : ViewComponent
+    public class EuCookieLawViewComponent : NopViewComponent
     {
         private readonly StoreInformationSettings _storeInformationSettings;
         private readonly IWorkContext _workContext;
@@ -23,7 +23,7 @@ namespace Nop.Web.Components
             this._storeContext = storeContext;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             if (!_storeInformationSettings.DisplayEuCookieLawWarning)
                 //disabled

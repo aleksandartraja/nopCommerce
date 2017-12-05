@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Admin.Extensions;
-using Nop.Admin.Models.Messages;
+using Nop.Web.Areas.Admin.Extensions;
+using Nop.Web.Areas.Admin.Models.Messages;
 using Nop.Core;
 using Nop.Core.Domain.Messages;
 using Nop.Services.Helpers;
@@ -14,7 +14,7 @@ using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Web.Framework.Mvc.Filters;
 
-namespace Nop.Admin.Controllers
+namespace Nop.Web.Areas.Admin.Controllers
 {
 	public partial class QueuedEmailController : BaseAdminController
 	{
@@ -61,10 +61,10 @@ namespace Nop.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageMessageQueue))
                 return AccessDeniedKendoGridJson();
 
-            DateTime? startDateValue = (model.SearchStartDate == null) ? null
+            var startDateValue = (model.SearchStartDate == null) ? null
                             : (DateTime?)_dateTimeHelper.ConvertToUtcTime(model.SearchStartDate.Value, _dateTimeHelper.CurrentTimeZone);
 
-            DateTime? endDateValue = (model.SearchEndDate == null) ? null 
+            var endDateValue = (model.SearchEndDate == null) ? null 
                             :(DateTime?)_dateTimeHelper.ConvertToUtcTime(model.SearchEndDate.Value, _dateTimeHelper.CurrentTimeZone).AddDays(1);
 
             var queuedEmails = _queuedEmailService.SearchEmails(model.SearchFromEmail, model.SearchToEmail, 
@@ -240,6 +240,5 @@ namespace Nop.Admin.Controllers
             SuccessNotification(_localizationService.GetResource("Admin.System.QueuedEmails.DeletedAll"));
             return RedirectToAction("List");
         }
-
 	}
 }

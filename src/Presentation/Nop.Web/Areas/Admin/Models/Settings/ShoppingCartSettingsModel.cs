@@ -1,15 +1,11 @@
-﻿using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
-using Nop.Web.Framework.Mvc.ModelBinding;
+﻿using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Settings
+namespace Nop.Web.Areas.Admin.Models.Settings
 {
     public partial class ShoppingCartSettingsModel : BaseNopModel
     {
         public int ActiveStoreScopeConfiguration { get; set; }
-
-
 
         [NopResourceDisplayName("Admin.Configuration.Settings.ShoppingCart.DisplayCartAfterAddingProduct")]
         public bool DisplayCartAfterAddingProduct { get; set; }

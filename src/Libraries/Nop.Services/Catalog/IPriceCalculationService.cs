@@ -26,6 +26,7 @@ namespace Nop.Services.Catalog
             decimal additionalCharge = decimal.Zero, 
             bool includeDiscounts = true, 
             int quantity = 1);
+
         /// <summary>
         /// Gets the final price
         /// </summary>
@@ -44,6 +45,7 @@ namespace Nop.Services.Catalog
             int quantity,
             out decimal discountAmount,
             out List<DiscountForCaching> appliedDiscounts);
+
         /// <summary>
         /// Gets the final price
         /// </summary>
@@ -67,8 +69,6 @@ namespace Nop.Services.Catalog
             out decimal discountAmount,
             out List<DiscountForCaching> appliedDiscounts);
 
-
-
         /// <summary>
         /// Gets the shopping cart unit price (one item)
         /// </summary>
@@ -77,6 +77,7 @@ namespace Nop.Services.Catalog
         /// <returns>Shopping cart unit price (one item)</returns>
         decimal GetUnitPrice(ShoppingCartItem shoppingCartItem,
             bool includeDiscounts = true);
+
         /// <summary>
         /// Gets the shopping cart unit price (one item)
         /// </summary>
@@ -89,6 +90,7 @@ namespace Nop.Services.Catalog
             bool includeDiscounts,
             out decimal discountAmount,
             out List<DiscountForCaching> appliedDiscounts);
+
         /// <summary>
         /// Gets the shopping cart unit price (one item)
         /// </summary>
@@ -96,7 +98,7 @@ namespace Nop.Services.Catalog
         /// <param name="customer">Customer</param>
         /// <param name="shoppingCartType">Shopping cart type</param>
         /// <param name="quantity">Quantity</param>
-        /// <param name="attributesXml">Product atrributes (XML format)</param>
+        /// <param name="attributesXml">Product attributes (XML format)</param>
         /// <param name="customerEnteredPrice">Customer entered price (if specified)</param>
         /// <param name="rentalStartDate">Rental start date (null for not rental products)</param>
         /// <param name="rentalEndDate">Rental end date (null for not rental products)</param>
@@ -114,6 +116,7 @@ namespace Nop.Services.Catalog
             bool includeDiscounts,
             out decimal discountAmount,
             out List<DiscountForCaching> appliedDiscounts);
+
         /// <summary>
         /// Gets the shopping cart item sub total
         /// </summary>
@@ -122,6 +125,7 @@ namespace Nop.Services.Catalog
         /// <returns>Shopping cart item sub total</returns>
         decimal GetSubTotal(ShoppingCartItem shoppingCartItem,
             bool includeDiscounts = true);
+
         /// <summary>
         /// Gets the shopping cart item sub total
         /// </summary>
@@ -144,9 +148,6 @@ namespace Nop.Services.Catalog
         /// <param name="attributesXml">Shopping cart item attributes in XML</param>
         /// <returns>Product cost (one item)</returns>
         decimal GetProductCost(Product product, string attributesXml);
-
-
-
         
         /// <summary>
         /// Get a price adjustment of a product attribute value

@@ -56,9 +56,10 @@ namespace Nop.Plugin.Payments.Manual
         /// <returns>Process payment result</returns>
         public ProcessPaymentResult ProcessPayment(ProcessPaymentRequest processPaymentRequest)
         {
-            var result = new ProcessPaymentResult();
-
-            result.AllowStoringCreditCardNumber = true;
+            var result = new ProcessPaymentResult
+            {
+                AllowStoringCreditCardNumber = true
+            };
             switch (_manualPaymentSettings.TransactMode)
             {
                 case TransactMode.Pending:
@@ -90,7 +91,7 @@ namespace Nop.Plugin.Payments.Manual
         /// <summary>
         /// Returns a value indicating whether payment method should be hidden during checkout
         /// </summary>
-        /// <param name="cart">Shoping cart</param>
+        /// <param name="cart">Shopping cart</param>
         /// <returns>true - hide; false - display.</returns>
         public bool HidePaymentMethod(IList<ShoppingCartItem> cart)
         {
@@ -147,9 +148,10 @@ namespace Nop.Plugin.Payments.Manual
         /// <returns>Process payment result</returns>
         public ProcessPaymentResult ProcessRecurringPayment(ProcessPaymentRequest processPaymentRequest)
         {
-            var result = new ProcessPaymentResult();
-
-            result.AllowStoringCreditCardNumber = true;
+            var result = new ProcessPaymentResult
+            {
+                AllowStoringCreditCardNumber = true
+            };
             switch (_manualPaymentSettings.TransactMode)
             {
                 case TransactMode.Pending:
@@ -188,7 +190,7 @@ namespace Nop.Plugin.Payments.Manual
         public bool CanRePostProcessPayment(Order order)
         {
             if (order == null)
-                throw new ArgumentNullException("order");
+                throw new ArgumentNullException(nameof(order));
 
             //it's not a redirection payment method. So we always return false
             return false;
@@ -247,14 +249,12 @@ namespace Nop.Plugin.Payments.Manual
         }
 
         /// <summary>
-        /// Gets a route for payment info
+        /// Gets a view component for displaying plugin in public store ("payment info" checkout step)
         /// </summary>
         /// <param name="viewComponentName">View component name</param>
-        /// <param name="viewComponentArguments">View component arguments</param>
-        public void GetPaymentInfoRoute(out string viewComponentName, out object viewComponentArguments)
+        public void GetPublicViewComponent(out string viewComponentName)
         {
             viewComponentName = "PaymentManual";
-            viewComponentArguments = null;
         }
 
         /// <summary>
@@ -270,6 +270,7 @@ namespace Nop.Plugin.Payments.Manual
             _settingService.SaveSetting(settings);
 
             //locales
+            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Manual.Instructions", "This payment method stores credit card information in database (it's not sent to any third-party processor). In order to store credit card information, you must be PCI compliant.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Manual.Fields.AdditionalFee", "Additional fee");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Manual.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
             this.AddOrUpdatePluginLocaleResource("Plugins.Payments.Manual.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
@@ -290,6 +291,7 @@ namespace Nop.Plugin.Payments.Manual
             _settingService.DeleteSetting<ManualPaymentSettings>();
 
             //locales
+            this.DeletePluginLocaleResource("Plugins.Payments.Manual.Instructions");
             this.DeletePluginLocaleResource("Plugins.Payments.Manual.Fields.AdditionalFee");
             this.DeletePluginLocaleResource("Plugins.Payments.Manual.Fields.AdditionalFee.Hint");
             this.DeletePluginLocaleResource("Plugins.Payments.Manual.Fields.AdditionalFeePercentage");

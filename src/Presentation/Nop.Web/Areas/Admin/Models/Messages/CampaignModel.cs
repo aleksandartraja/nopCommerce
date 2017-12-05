@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Messages;
-using Nop.Web.Framework;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Areas.Admin.Validators.Messages;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Messages
+namespace Nop.Web.Areas.Admin.Models.Messages
 {
     [Validator(typeof(CampaignValidator))]
     public partial class CampaignModel : BaseNopEntityModel
@@ -52,6 +50,7 @@ namespace Nop.Admin.Models.Messages
         public int EmailAccountId { get; set; }
         public IList<SelectListItem> AvailableEmailAccounts { get; set; }
 
+        [DataType(DataType.EmailAddress)]
         [NopResourceDisplayName("Admin.Promotions.Campaigns.Fields.TestEmail")]
         public string TestEmail { get; set; }
     }

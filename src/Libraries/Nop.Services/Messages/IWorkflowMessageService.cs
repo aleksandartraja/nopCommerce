@@ -11,6 +11,9 @@ using Nop.Core.Domain.Vendors;
 
 namespace Nop.Services.Messages
 {
+    /// <summary>
+    /// Workflow message service
+    /// </summary>
     public partial interface IWorkflowMessageService
     {
         #region Customer workflow
@@ -357,7 +360,6 @@ namespace Nop.Services.Messages
         /// <param name="languageId">Message language identifier</param>
         /// <returns>Queued email identifier</returns>
         int SendGiftCardNotification(GiftCard giftCard, int languageId);
-
 
         /// <summary>
         /// Sends a "quantity below" notification to a store owner

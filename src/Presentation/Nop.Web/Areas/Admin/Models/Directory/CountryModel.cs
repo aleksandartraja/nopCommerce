@@ -1,15 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Validators.Directory;
-using Nop.Web.Framework;
+using Nop.Web.Areas.Admin.Validators.Directory;
 using Nop.Web.Framework.Localization;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Directory
+namespace Nop.Web.Areas.Admin.Models.Directory
 {
     [Validator(typeof(CountryValidator))]
     public partial class CountryModel : BaseNopEntityModel, ILocalizedModel<CountryLocalizedModel>
@@ -21,6 +18,7 @@ namespace Nop.Admin.Models.Directory
             SelectedStoreIds = new List<int>();
             AvailableStores = new List<SelectListItem>();
         }
+
         [NopResourceDisplayName("Admin.Configuration.Countries.Fields.Name")]
         public string Name { get; set; }
 
@@ -48,18 +46,13 @@ namespace Nop.Admin.Models.Directory
         [NopResourceDisplayName("Admin.Configuration.Countries.Fields.DisplayOrder")]
         public int DisplayOrder { get; set; }
 
-
-
-
         [NopResourceDisplayName("Admin.Configuration.Countries.Fields.NumberOfStates")]
         public int NumberOfStates { get; set; }
 
         public IList<CountryLocalizedModel> Locales { get; set; }
 
-
         //store mapping
         [NopResourceDisplayName("Admin.Configuration.Countries.Fields.LimitedToStores")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedStoreIds { get; set; }
         public IList<SelectListItem> AvailableStores { get; set; }
     }

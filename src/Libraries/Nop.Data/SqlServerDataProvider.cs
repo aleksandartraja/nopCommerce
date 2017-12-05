@@ -12,20 +12,28 @@ using Nop.Data.Initializers;
 
 namespace Nop.Data
 {
+    /// <summary>
+    /// SQL Server data provider
+    /// </summary>
     public class SqlServerDataProvider : IDataProvider
     {
         #region Utilities
 
+        /// <summary>
+        /// Parse commands
+        /// </summary>
+        /// <param name="filePath">File path</param>
+        /// <param name="throwExceptionIfNonExists">Throw exception if the file doesn't exist</param>
+        /// <returns></returns>
         protected virtual string[] ParseCommands(string filePath, bool throwExceptionIfNonExists)
         {
             if (!File.Exists(filePath))
             {
                 if (throwExceptionIfNonExists)
-                    throw new ArgumentException(string.Format("Specified file doesn't exist - {0}", filePath));
+                    throw new ArgumentException($"Specified file doesn't exist - {filePath}");
                 
                 return new string[0];
             }
-
 
             var statements = new List<string>();
             using (var stream = File.OpenRead(filePath))
@@ -41,6 +49,11 @@ namespace Nop.Data
             return statements.ToArray();
         }
 
+        /// <summary>
+        /// Read the next statement from stream
+        /// </summary>
+        /// <param name="reader">Reader</param>
+        /// <returns>String</returns>
         protected virtual string ReadNextStatementFromStream(StreamReader reader)
         {
             var sb = new StringBuilder();

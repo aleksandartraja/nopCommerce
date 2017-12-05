@@ -29,7 +29,6 @@ using Nop.Services.Events;
 using Nop.Services.ExportImport;
 using Nop.Services.Forums;
 using Nop.Services.Helpers;
-using Nop.Services.Infrastructure;
 using Nop.Services.Installation;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -38,6 +37,7 @@ using Nop.Services.Messages;
 using Nop.Services.News;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
+using Nop.Services.Plugins;
 using Nop.Services.Polls;
 using Nop.Services.Security;
 using Nop.Services.Seo;
@@ -46,6 +46,7 @@ using Nop.Services.Shipping.Date;
 using Nop.Services.Stores;
 using Nop.Services.Tasks;
 using Nop.Services.Tax;
+using Nop.Services.Themes;
 using Nop.Services.Topics;
 using Nop.Services.Vendors;
 using Nop.Web.Framework.Mvc.Routing;
@@ -94,7 +95,7 @@ namespace Nop.Web.Framework.Infrastructure
 
             //repositories
             builder.RegisterGeneric(typeof(EfRepository<>)).As(typeof(IRepository<>)).InstancePerLifetimeScope();
-            
+
             //plugins
             builder.RegisterType<PluginFinder>().As<IPluginFinder>().InstancePerLifetimeScope();
             builder.RegisterType<OfficialFeedManager>().As<IOfficialFeedManager>().InstancePerLifetimeScope();
@@ -104,15 +105,12 @@ namespace Nop.Web.Framework.Infrastructure
 
             //static cache manager
             if (config.RedisCachingEnabled)
+            {
+                builder.RegisterType<RedisConnectionWrapper>().As<IRedisConnectionWrapper>().SingleInstance();
                 builder.RegisterType<RedisCacheManager>().As<IStaticCacheManager>().InstancePerLifetimeScope();
+            }
             else
                 builder.RegisterType<MemoryCacheManager>().As<IStaticCacheManager>().SingleInstance();
-
-            //machine name provider
-            if (config.RunOnAzureWebApps)
-                builder.RegisterType<AzureWebAppsMachineNameProvider>().As<IMachineNameProvider>().SingleInstance();
-            else
-                builder.RegisterType<DefaultMachineNameProvider>().As<IMachineNameProvider>().SingleInstance();
 
             //work context
             builder.RegisterType<WebWorkContext>().As<IWorkContext>().InstancePerLifetimeScope();
@@ -214,10 +212,10 @@ namespace Nop.Web.Framework.Infrastructure
             builder.RegisterType<ExportManager>().As<IExportManager>().InstancePerLifetimeScope();
             builder.RegisterType<ImportManager>().As<IImportManager>().InstancePerLifetimeScope();
             builder.RegisterType<PdfService>().As<IPdfService>().InstancePerLifetimeScope();
+            builder.RegisterType<UploadService>().As<IUploadService>().InstancePerLifetimeScope();
             builder.RegisterType<ThemeProvider>().As<IThemeProvider>().InstancePerLifetimeScope();
             builder.RegisterType<ThemeContext>().As<IThemeContext>().InstancePerLifetimeScope();
-            builder.RegisterType<ExternalAuthorizer>().As<IExternalAuthorizer>().InstancePerLifetimeScope();
-            builder.RegisterType<OpenAuthenticationService>().As<IOpenAuthenticationService>().InstancePerLifetimeScope();      
+            builder.RegisterType<ExternalAuthenticationService>().As<IExternalAuthenticationService>().InstancePerLifetimeScope();
             builder.RegisterType<RoutePublisher>().As<IRoutePublisher>().SingleInstance();
             builder.RegisterType<EventPublisher>().As<IEventPublisher>().SingleInstance();
             builder.RegisterType<SubscriptionService>().As<ISubscriptionService>().SingleInstance();
@@ -268,15 +266,24 @@ namespace Nop.Web.Framework.Infrastructure
     }
 
 
+    /// <summary>
+    /// Setting source
+    /// </summary>
     public class SettingsSource : IRegistrationSource
     {
         static readonly MethodInfo BuildMethod = typeof(SettingsSource).GetMethod(
             "BuildRegistration",
             BindingFlags.Static | BindingFlags.NonPublic);
 
+        /// <summary>
+        /// Registrations for
+        /// </summary>
+        /// <param name="service">Service</param>
+        /// <param name="registrations">Registrations</param>
+        /// <returns>Registrations</returns>
         public IEnumerable<IComponentRegistration> RegistrationsFor(
-                Service service,
-                Func<Service, IEnumerable<IComponentRegistration>> registrations)
+            Service service,
+            Func<Service, IEnumerable<IComponentRegistration>> registrations)
         {
             var ts = service as TypedService;
             if (ts != null && typeof(ISettings).IsAssignableFrom(ts.ServiceType))
@@ -304,6 +311,9 @@ namespace Nop.Web.Framework.Infrastructure
                 .CreateRegistration();
         }
 
+        /// <summary>
+        /// Is adapter for individual components
+        /// </summary>
         public bool IsAdapterForIndividualComponents { get { return false; } }
     }
 

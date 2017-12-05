@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Nop.Admin.Models.Home;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
@@ -8,10 +6,12 @@ using Nop.Services.Catalog;
 using Nop.Services.Customers;
 using Nop.Services.Orders;
 using Nop.Services.Security;
+using Nop.Web.Areas.Admin.Models.Home;
+using Nop.Web.Framework.Components;
 
-namespace Nop.Admin.Components
+namespace Nop.Web.Areas.Admin.Components
 {
-    public class CommonStatisticsViewComponent : ViewComponent
+    public class CommonStatisticsViewComponent : NopViewComponent
     {
         private readonly IPermissionService _permissionService;
         private readonly IProductService _productService;
@@ -35,7 +35,7 @@ namespace Nop.Admin.Components
             this._workContext = workContext;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync()
+        public IViewComponentResult Invoke()
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers) ||
                 !_permissionService.Authorize(StandardPermissionProvider.ManageOrders) ||
@@ -47,24 +47,25 @@ namespace Nop.Admin.Components
             if (_workContext.CurrentVendor != null)
                 return Content("");
 
-            var model = new CommonStatisticsModel();
-
-            model.NumberOfOrders = _orderService.SearchOrders(
+            var model = new CommonStatisticsModel
+            {
+                NumberOfOrders = _orderService.SearchOrders(
                 pageIndex: 0,
-                pageSize: 1).TotalCount;
+                pageSize: 1).TotalCount,
 
-            model.NumberOfCustomers = _customerService.GetAllCustomers(
+                NumberOfCustomers = _customerService.GetAllCustomers(
                 customerRoleIds: new[] { _customerService.GetCustomerRoleBySystemName(SystemCustomerRoleNames.Registered).Id },
                 pageIndex: 0,
-                pageSize: 1).TotalCount;
+                pageSize: 1).TotalCount,
 
-            model.NumberOfPendingReturnRequests = _returnRequestService.SearchReturnRequests(
+                NumberOfPendingReturnRequests = _returnRequestService.SearchReturnRequests(
                 rs: ReturnRequestStatus.Pending,
                 pageIndex: 0,
-                pageSize: 1).TotalCount;
+                pageSize: 1).TotalCount,
 
-            model.NumberOfLowStockProducts = _productService.GetLowStockProducts(0, 0, 1).TotalCount +
-                                             _productService.GetLowStockProductCombinations(0, 0, 1).TotalCount;
+                NumberOfLowStockProducts = _productService.GetLowStockProducts(0, 0, 1).TotalCount +
+                                             _productService.GetLowStockProductCombinations(0, 0, 1).TotalCount
+            };
 
             return View(model);
         }

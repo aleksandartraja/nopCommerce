@@ -1,17 +1,17 @@
-﻿@{
+﻿@inject Nop.Core.Domain.Common.AdminAreaSettings adminAreaSettings
+@{
     Layout = "_ConfigurePlugin";
+
+    var defaultGridPageSize = adminAreaSettings.DefaultGridPageSize;
+    var gridPageSizes = adminAreaSettings.GridPageSizes;
 }
 
-@using (Html.BeginForm(null, null, null, FormMethod.Post, null, new { id = "pickup-instore-form" }))
-{
-    @Html.AntiForgeryToken()
-
+<form asp-controller="PickupInStore" asp-action="Configure" method="post" id="pickup-instore-form">
     <div class="panel-group">
         <div class="panel panel-default">
             <div class="panel-body">
                 <div id="pickup-points-grid"></div>
-
-                <script>
+                <script type="text/javascript">
                     $(document).ready(function() {
                         $("#pickup-points-grid").kendoGrid({
                             dataSource: {
@@ -48,16 +48,15 @@
                                     // Cancel the changes
                                     this.cancelChanges();
                                 },
-                                serverPaging: true,
-                                serverFiltering: true,
-                                serverSorting: true
+                                    pageSize: @(defaultGridPageSize),
+                                    serverPaging: true,
+                                    serverFiltering: true,
+                                    serverSorting: true
                             },
                             pageable: {
                                 refresh: true,
-                                numeric: false,
-                                previousNext: false,
-                                info: false,
-                                @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_GridPagerMessages.cshtml")
+                                pageSizes: [@(gridPageSizes)],
+                                @await Html.PartialAsync("_GridPagerMessages")
                             },
                             editable: {
                                 confirmation: "@T("Admin.Common.DeleteConfirmation")",
@@ -74,8 +73,12 @@
                                 title: "@T("Plugins.Pickup.PickupInStore.Fields.OpeningHours")"
                             }, {
                                 field: "PickupFee",
-                                width: 150,
+                                width: 100,
                                 title: "@T("Plugins.Pickup.PickupInStore.Fields.PickupFee")"
+                            }, {
+                                field: "DisplayOrder",
+                                width: 100,
+                                title: "@T("Plugins.Pickup.PickupInStore.Fields.DisplayOrder")"
                             }, {
                                 field: "StoreName",
                                 width: 100,
@@ -102,7 +105,6 @@
                 <input type="submit" id="btnAddNewOption" class="btn btn-primary" value="@T("Plugins.Pickup.PickupInStore.AddNew")" onclick="javascript:OpenWindow('@(Url.Action("Create", "PickupInStore",  new { btnId = "btnRefresh", formId = "pickup-instore-form" }))', 800, 800, true); return false;"/>
                 <input type="submit" id="btnRefresh" class="btn btn-default" style="display: none" />
             </div>
-
             <script type="text/javascript">
                 $(document).ready(function () {
                     $('#btnRefresh').click(function () {
@@ -118,4 +120,4 @@
             </script>
         </div>
     </div>
-}
+</form>

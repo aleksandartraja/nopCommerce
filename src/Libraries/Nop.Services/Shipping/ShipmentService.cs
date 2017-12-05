@@ -55,7 +55,7 @@ namespace Nop.Services.Shipping
         public virtual void DeleteShipment(Shipment shipment)
         {
             if (shipment == null)
-                throw new ArgumentNullException("shipment");
+                throw new ArgumentNullException(nameof(shipment));
 
             _shipmentRepository.Delete(shipment);
 
@@ -88,13 +88,13 @@ namespace Nop.Services.Shipping
             int pageIndex = 0, int pageSize = int.MaxValue)
         {
             var query = _shipmentRepository.Table;
-            if (!String.IsNullOrEmpty(trackingNumber))
+            if (!string.IsNullOrEmpty(trackingNumber))
                 query = query.Where(s => s.TrackingNumber.Contains(trackingNumber));
             if (shippingCountryId > 0)
                 query = query.Where(s => s.Order.ShippingAddress.CountryId == shippingCountryId);
             if (shippingStateId > 0)
                 query = query.Where(s => s.Order.ShippingAddress.StateProvinceId == shippingStateId);
-            if (!String.IsNullOrWhiteSpace(shippingCity))
+            if (!string.IsNullOrWhiteSpace(shippingCity))
                 query = query.Where(s => s.Order.ShippingAddress.City.Contains(shippingCity));
             if (loadNotShipped)
                 query = query.Where(s => !s.ShippedDateUtc.HasValue);
@@ -106,18 +106,18 @@ namespace Nop.Services.Shipping
             if (vendorId > 0)
             {
                 var queryVendorOrderItems = from orderItem in _orderItemRepository.Table
-                                             where orderItem.Product.VendorId == vendorId
-                                             select orderItem.Id;
+                    where orderItem.Product.VendorId == vendorId
+                    select orderItem.Id;
 
                 query = from s in query
-                        where queryVendorOrderItems.Intersect(s.ShipmentItems.Select(si => si.OrderItemId)).Any()
-                        select s;
+                    where queryVendorOrderItems.Intersect(s.ShipmentItems.Select(si => si.OrderItemId)).Any()
+                    select s;
             }
             if (warehouseId > 0)
             {
                 query = from s in query
-                        where s.ShipmentItems.Any(si => si.WarehouseId == warehouseId)
-                        select s;
+                    where s.ShipmentItems.Any(si => si.WarehouseId == warehouseId)
+                    select s;
             }
             query = query.OrderByDescending(s => s.CreatedOnUtc);
 
@@ -141,7 +141,7 @@ namespace Nop.Services.Shipping
             var shipments = query.ToList();
             //sort by passed identifiers
             var sortedOrders = new List<Shipment>();
-            foreach (int id in shipmentIds)
+            foreach (var id in shipmentIds)
             {
                 var shipment = shipments.Find(x => x.Id == id);
                 if (shipment != null)
@@ -170,7 +170,7 @@ namespace Nop.Services.Shipping
         public virtual void InsertShipment(Shipment shipment)
         {
             if (shipment == null)
-                throw new ArgumentNullException("shipment");
+                throw new ArgumentNullException(nameof(shipment));
 
             _shipmentRepository.Insert(shipment);
 
@@ -185,15 +185,13 @@ namespace Nop.Services.Shipping
         public virtual void UpdateShipment(Shipment shipment)
         {
             if (shipment == null)
-                throw new ArgumentNullException("shipment");
+                throw new ArgumentNullException(nameof(shipment));
 
             _shipmentRepository.Update(shipment);
 
             //event notification
             _eventPublisher.EntityUpdated(shipment);
         }
-
-
         
         /// <summary>
         /// Deletes a shipment item
@@ -202,7 +200,7 @@ namespace Nop.Services.Shipping
         public virtual void DeleteShipmentItem(ShipmentItem shipmentItem)
         {
             if (shipmentItem == null)
-                throw new ArgumentNullException("shipmentItem");
+                throw new ArgumentNullException(nameof(shipmentItem));
 
             _siRepository.Delete(shipmentItem);
 
@@ -230,7 +228,7 @@ namespace Nop.Services.Shipping
         public virtual void InsertShipmentItem(ShipmentItem shipmentItem)
         {
             if (shipmentItem == null)
-                throw new ArgumentNullException("shipmentItem");
+                throw new ArgumentNullException(nameof(shipmentItem));
 
             _siRepository.Insert(shipmentItem);
 
@@ -245,16 +243,13 @@ namespace Nop.Services.Shipping
         public virtual void UpdateShipmentItem(ShipmentItem shipmentItem)
         {
             if (shipmentItem == null)
-                throw new ArgumentNullException("shipmentItem");
+                throw new ArgumentNullException(nameof(shipmentItem));
 
             _siRepository.Update(shipmentItem);
 
             //event notification
             _eventPublisher.EntityUpdated(shipmentItem);
         }
-
-
-
 
         /// <summary>
         /// Get quantity in shipments. For example, get planned quantity to be shipped
@@ -268,7 +263,7 @@ namespace Nop.Services.Shipping
             bool ignoreShipped, bool ignoreDelivered)
         {
             if (product == null)
-                throw new ArgumentNullException("product");
+                throw new ArgumentNullException(nameof(product));
 
             //only products with "use multiple warehouses" are handled this way
             if (product.ManageInventoryMethod != ManageInventoryMethod.ManageStock)
@@ -277,7 +272,6 @@ namespace Nop.Services.Shipping
                 return 0;
 
             const int cancelledOrderStatusId = (int)OrderStatus.Cancelled;
-
 
             var query = _siRepository.Table;
             query = query.Where(si => !si.Shipment.Order.Deleted);
@@ -300,7 +294,6 @@ namespace Nop.Services.Shipping
             var result = Convert.ToInt32(query.Sum(si => (int?)si.Quantity));
             return result;
         }
-
 
         #endregion
     }

@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
-using Microsoft.AspNetCore.Mvc;
 using System.Linq;
-using System.Threading.Tasks;
-using Nop.Admin.Models.Cms;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using Nop.Services.Cms;
+using Nop.Web.Areas.Admin.Models.Cms;
+using Nop.Web.Framework.Components;
 
-namespace Nop.Admin.Components
+namespace Nop.Web.Areas.Admin.Components
 {
-    public class AdminWidgetViewComponent : ViewComponent
+    public class AdminWidgetViewComponent : NopViewComponent
     {
         private readonly IWidgetService _widgetService;
 
@@ -16,14 +17,21 @@ namespace Nop.Admin.Components
             this._widgetService = widgetService;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(string widgetZone, object additionalData = null)
+        public IViewComponentResult Invoke(string widgetZone, object additionalData = null)
         {
             var model = new List<RenderWidgetModel>();
+
+            //add widget zone to view component arguments
+            additionalData = new RouteValueDictionary()
+            {
+                { "widgetZone", widgetZone },
+                { "additionalData", additionalData }
+            };
 
             var widgets = _widgetService.LoadActiveWidgetsByWidgetZone(widgetZone);
             foreach (var widget in widgets)
             {
-                widget.GetDisplayWidgetRoute(out string viewComponentName);
+                widget.GetPublicViewComponent(widgetZone, out string viewComponentName);
 
                 var widgetModel = new RenderWidgetModel
                 {

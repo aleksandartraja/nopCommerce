@@ -3,15 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Admin.Models.Settings;
-using Nop.Admin.Validators.Catalog;
-using Nop.Web.Framework;
+using Nop.Web.Areas.Admin.Models.Settings;
+using Nop.Web.Areas.Admin.Validators.Catalog;
 using Nop.Web.Framework.Localization;
-using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Mvc.Models;
 
-namespace Nop.Admin.Models.Catalog
+namespace Nop.Web.Areas.Admin.Models.Catalog
 {
     [Validator(typeof(ProductValidator))]
     public partial class ProductModel : BaseNopEntityModel, ILocalizedModel<ProductLocalizedModel>
@@ -34,7 +32,6 @@ namespace Nop.Admin.Models.Catalog
             AvailableDeliveryDates = new List<SelectListItem>();
             AvailableProductAvailabilityRanges = new List<SelectListItem>();
             AvailableWarehouses = new List<SelectListItem>();
-            AvailableProductAttributes = new List<SelectListItem>();
             ProductsTypesSupportedByProductTemplates = new Dictionary<int, IList<SelectListItem>>();
 
             AvailableVendors = new List<SelectListItem>();
@@ -66,7 +63,6 @@ namespace Nop.Admin.Models.Catalog
         public int ProductTypeId { get; set; }
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.ProductType")]
         public string ProductTypeName { get; set; }
-
 
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.AssociatedToProductName")]
         public int AssociatedToProductId { get; set; }
@@ -114,9 +110,6 @@ namespace Nop.Admin.Models.Catalog
 
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.ProductTags")]
         public string ProductTags { get; set; }
-
-
-
 
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.Sku")]
         public string Sku { get; set; }
@@ -327,7 +320,6 @@ namespace Nop.Admin.Models.Catalog
         public int BasepriceBaseUnitId { get; set; }
         public IList<SelectListItem> AvailableBasepriceBaseUnits { get; set; }
 
-
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.MarkAsNew")]
         public bool MarkAsNew { get; set; }
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.MarkAsNewStartDateTimeUtc")]
@@ -336,7 +328,6 @@ namespace Nop.Admin.Models.Catalog
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.MarkAsNewEndDateTimeUtc")]
         [UIHint("DateTimeNullable")]
         public DateTime? MarkAsNewEndDateTimeUtc { get; set; }
-
 
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.Weight")]
         public decimal Weight { get; set; }
@@ -369,36 +360,29 @@ namespace Nop.Admin.Models.Catalog
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.UpdatedOn")]
         public DateTime? UpdatedOn { get; set; }
 
-
         public string PrimaryStoreCurrencyCode { get; set; }
         public string BaseDimensionIn { get; set; }
         public string BaseWeightIn { get; set; }
 
         public IList<ProductLocalizedModel> Locales { get; set; }
 
-
-
         //ACL (customer roles)
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.AclCustomerRoles")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedCustomerRoleIds { get; set; }
         public IList<SelectListItem> AvailableCustomerRoles { get; set; }
 
         //store mapping
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.LimitedToStores")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedStoreIds { get; set; }
         public IList<SelectListItem> AvailableStores { get; set; }
 
         //categories
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.Categories")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedCategoryIds { get; set; }
         public IList<SelectListItem> AvailableCategories { get; set; }
 
         //manufacturers
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.Manufacturers")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedManufacturerIds { get; set; }
         public IList<SelectListItem> AvailableManufacturers { get; set; }
 
@@ -409,19 +393,18 @@ namespace Nop.Admin.Models.Catalog
 
         //discounts
         [NopResourceDisplayName("Admin.Catalog.Products.Fields.Discounts")]
-        [UIHint("MultiSelect")]
         public IList<int> SelectedDiscountIds { get; set; }
         public IList<SelectListItem> AvailableDiscounts { get; set; }
 
         //vendor
         public bool IsLoggedInAsVendor { get; set; }
 
-        //product attributes
-        public IList<SelectListItem> AvailableProductAttributes { get; set; }
-        
         //pictures
         public ProductPictureModel AddPictureModel { get; set; }
         public IList<ProductPictureModel> ProductPictureModels { get; set; }
+
+        //product attributes
+        public bool ProductAttributesExist { get; set; }
 
         //add specification attribute model
         public AddProductSpecificationAttributeModel AddSpecificationAttributeModel { get; set; }
@@ -539,6 +522,7 @@ namespace Nop.Admin.Models.Catalog
             [NopResourceDisplayName("Admin.Catalog.Products.RelatedProducts.Fields.DisplayOrder")]
             public int DisplayOrder { get; set; }
         }
+
         public partial class AddRelatedProductModel : BaseNopModel
         {
             public AddRelatedProductModel()
@@ -584,6 +568,7 @@ namespace Nop.Admin.Models.Catalog
             [NopResourceDisplayName("Admin.Catalog.Products.AssociatedProducts.Fields.DisplayOrder")]
             public int DisplayOrder { get; set; }
         }
+
         public partial class AddAssociatedProductModel : BaseNopModel
         {
             public AddAssociatedProductModel()
@@ -629,6 +614,7 @@ namespace Nop.Admin.Models.Catalog
             [NopResourceDisplayName("Admin.Catalog.Products.CrossSells.Fields.Product")]
             public string Product2Name { get; set; }
         }
+
         public partial class AddCrossSellProductModel : BaseNopModel
         {
             public AddCrossSellProductModel()
@@ -722,14 +708,21 @@ namespace Nop.Admin.Models.Catalog
             public int PlannedQuantity { get; set; }
         }
 
-
-        public partial class ProductAttributeMappingModel : BaseNopEntityModel
+        public partial class ProductAttributeMappingModel : BaseNopEntityModel, ILocalizedModel<ProductAttributeMappingLocalizedModel>
         {
+            public ProductAttributeMappingModel()
+            {
+                AvailableProductAttributes = new List<SelectListItem>();
+                Locales = new List<ProductAttributeMappingLocalizedModel>();
+            }
+
             public int ProductId { get; set; }
 
+            [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Fields.Attribute")]
             public int ProductAttributeId { get; set; }
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Fields.Attribute")]
             public string ProductAttribute { get; set; }
+            public IList<SelectListItem> AvailableProductAttributes { get; set; }
 
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Fields.TextPrompt")]
             public string TextPrompt { get; set; }
@@ -737,6 +730,7 @@ namespace Nop.Admin.Models.Catalog
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Fields.IsRequired")]
             public bool IsRequired { get; set; }
 
+            [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Fields.AttributeControlType")]
             public int AttributeControlTypeId { get; set; }
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Fields.AttributeControlType")]
             public string AttributeControlType { get; set; }
@@ -744,12 +738,7 @@ namespace Nop.Admin.Models.Catalog
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Fields.DisplayOrder")]
             public int DisplayOrder { get; set; }
 
-            public bool ShouldHaveValues { get; set; }
-            public int TotalValues { get; set; }
-
             //validation fields
-            [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.ValidationRules")]
-            public bool ValidationRulesAllowed { get; set; }
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.ValidationRules.MinLength")]
             [UIHint("Int32Nullable")]
             public int? ValidationMinLength { get; set; }
@@ -769,17 +758,19 @@ namespace Nop.Admin.Models.Catalog
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Condition")]
             public bool ConditionAllowed { get; set; }
             public string ConditionString { get; set; }
+            public ProductAttributeConditionModel ConditionModel { get; set; }
+
+            public IList<ProductAttributeMappingLocalizedModel> Locales { get; set; }
         }
-        public partial class ProductAttributeValueListModel : BaseNopModel
+
+        public partial class ProductAttributeMappingLocalizedModel : ILocalizedModelLocal
         {
-            public int ProductId { get; set; }
+            public int LanguageId { get; set; }
 
-            public string ProductName { get; set; }
-
-            public int ProductAttributeMappingId { get; set; }
-
-            public string ProductAttributeName { get; set; }
+            [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Fields.TextPrompt")]
+            public string TextPrompt { get; set; }
         }
+
         [Validator(typeof(ProductAttributeValueModelValidator))]
         public partial class ProductAttributeValueModel : BaseNopEntityModel, ILocalizedModel<ProductAttributeValueLocalizedModel>
         {
@@ -883,11 +874,12 @@ namespace Nop.Admin.Models.Catalog
                 //vendor
                 public bool IsLoggedInAsVendor { get; set; }
 
-
                 public int AssociatedToProductId { get; set; }
             }
+
             #endregion
         }
+
         public partial class ProductAttributeValueLocalizedModel : ILocalizedModelLocal
         {
             public int LanguageId { get; set; }
@@ -895,6 +887,7 @@ namespace Nop.Admin.Models.Catalog
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.Attributes.Values.Fields.Name")]
             public string Name { get; set; }
         }
+
         public partial class ProductAttributeCombinationModel : BaseNopEntityModel
         {
             public int ProductId { get; set; }
@@ -925,7 +918,6 @@ namespace Nop.Admin.Models.Catalog
 
             [NopResourceDisplayName("Admin.Catalog.Products.ProductAttributes.AttributeCombinations.Fields.NotifyAdminForQuantityBelow")]
             public int NotifyAdminForQuantityBelow { get; set; }
-
         }
 
         #region Stock quantity history

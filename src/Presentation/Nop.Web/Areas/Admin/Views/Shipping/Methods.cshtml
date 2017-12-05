@@ -1,20 +1,21 @@
-﻿@{    
+﻿@{
     //page title
     ViewBag.Title = T("Admin.Configuration.Shipping.Methods").Text;
     //active menu item (system name)
     Html.SetActiveMenuItemSystemName("Shipping providers");
 }
 
-@Html.AntiForgeryToken()
+<nop-antiforgery-token />
 <div class="content-header clearfix">
     <h1 class="pull-left">
         @T("Admin.Configuration.Shipping.Methods")
     </h1>
     <div class="pull-right">
-        <a href="@Url.Action("CreateMethod")" class="btn bg-blue">
+        <a asp-action="CreateMethod" class="btn bg-blue">
             <i class="fa fa-plus-square"></i>
             @T("Admin.Common.AddNew")
         </a>
+        @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_shipping_method_list_buttons" })
     </div>
 </div>
 
@@ -32,12 +33,11 @@
                     </div>
                 </div>
             </div>
-
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div id="shippingmethod-grid"></div>
 
-                    <script>
+                    <script type="text/javascript">
                         $(document).ready(function() {
                             $("#shippingmethod-grid").kendoGrid({
                                 dataSource: {

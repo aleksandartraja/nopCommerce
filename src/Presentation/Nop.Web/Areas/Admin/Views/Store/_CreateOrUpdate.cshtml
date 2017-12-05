@@ -1,16 +1,16 @@
 ﻿@model StoreModel
 
-@Html.ValidationSummary(true)
-@Html.HiddenFor(model => model.Id)
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
 
 <script type="text/javascript">
     $(document).ready(function () {
-        $("#@Html.FieldIdFor(model => model.SslEnabled)").click(toggleSslEnabled);
+        $("#@Html.IdFor(model => model.SslEnabled)").click(toggleSslEnabled);
         toggleSslEnabled();
     });
 
     function toggleSslEnabled() {
-        if ($('#@Html.FieldIdFor(model => model.SslEnabled)').is(':checked')) {
+        if ($('#@Html.IdFor(model => model.SslEnabled)').is(':checked')) {
             $('#pnlSecureUrl').show();
         } else {
             $('#pnlSecureUrl').hide();
@@ -21,131 +21,131 @@
 <div class="content">
     <div class="form-horizontal">
         <div class="panel-group">
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_store_details_top", additionalData = Model.Id })
             <div class="panel panel-default">
                 <div class="panel-body">
                     @(Html.LocalizedEditor<StoreModel, StoreLocalizedModel>("store-localized",
                     @<div>
                         <div class="form-group">
                             <div class="col-md-3">
-                                @Html.NopLabelFor(model => model.Locales[item].Name)
+                                <nop-label asp-for="@Model.Locales[item].Name" />
                             </div>
                             <div class="col-md-9">
-                                @Html.NopEditorFor(model => model.Locales[item].Name)
-                                @Html.ValidationMessageFor(model => model.Locales[item].Name)
+                                <nop-editor asp-for="@Model.Locales[item].Name" />
+                                <span asp-validation-for="@Model.Locales[item].Name"></span>
                             </div>
                         </div>
-                        @Html.HiddenFor(model => model.Locales[item].LanguageId)
+                        <input type="hidden" asp-for="@Model.Locales[item].LanguageId" />
                     </div>
-    ,
+                    ,
                     @<div>
                         <div class="form-group">
                             <div class="col-md-3">
-                                @Html.NopLabelFor(model => model.Name)
+                                <nop-label asp-for="Name" />
                             </div>
                             <div class="col-md-9">
-                                @Html.NopEditorFor(model => model.Name, required: true)
-                                @Html.ValidationMessageFor(model => model.Name)
+                                <nop-editor asp-for="Name" asp-required="true" />
+                                <span asp-validation-for="Name"></span>
                             </div>
                         </div>
                     </div>
-    ))
+                    ))
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.Url)
+                            <nop-label asp-for="Url" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.Url, required: true)
-                            @Html.ValidationMessageFor(model => model.Url)
+                            <nop-editor asp-for="Url" asp-required="true" />
+                            <span asp-validation-for="Url"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.SslEnabled)
+                            <nop-label asp-for="SslEnabled" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.SslEnabled)
-                            @Html.ValidationMessageFor(model => model.SslEnabled)
+                            <nop-editor asp-for="SslEnabled" />
+                            <div><em>@T("Admin.Configuration.Stores.Fields.SslEnabled.Hint2")</em></div>
+                            <span asp-validation-for="SslEnabled"></span>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="col-md-9 col-md-offset-3">
-                            <em>@T("Admin.Configuration.Stores.Fields.SslEnabled.Hint2")</em>
+                    <nop-nested-setting asp-for="SslEnabled">
+                        <div class="form-group" id="pnlSecureUrl">
+                            <div class="col-md-3">
+                                <nop-label asp-for="SecureUrl" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="SecureUrl" />
+                                <span asp-validation-for="SecureUrl"></span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group" id="pnlSecureUrl">
-                        <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.SecureUrl)
-                        </div>
-                        <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.SecureUrl)
-                            @Html.ValidationMessageFor(model => model.SecureUrl)
-                        </div>
-                    </div>
+                    </nop-nested-setting>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.Hosts)
+                            <nop-label asp-for="Hosts" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.Hosts)
-                            @Html.ValidationMessageFor(model => model.Hosts)
+                            <nop-editor asp-for="Hosts" />
+                            <span asp-validation-for="Hosts"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.DefaultLanguageId)
+                            <nop-label asp-for="DefaultLanguageId" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopDropDownListFor(model => model.DefaultLanguageId, Model.AvailableLanguages)
-                            @Html.ValidationMessageFor(model => model.DefaultLanguageId)
+                            <nop-select asp-for="DefaultLanguageId" asp-items="Model.AvailableLanguages" />
+                            <span asp-validation-for="DefaultLanguageId"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.DisplayOrder)
+                            <nop-label asp-for="DisplayOrder" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.DisplayOrder)
-                            @Html.ValidationMessageFor(model => model.DisplayOrder)
+                            <nop-editor asp-for="DisplayOrder" />
+                            <span asp-validation-for="DisplayOrder"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CompanyName)
+                            <nop-label asp-for="CompanyName" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.CompanyName)
-                            @Html.ValidationMessageFor(model => model.CompanyName)
+                            <nop-editor asp-for="CompanyName" />
+                            <span asp-validation-for="CompanyName"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CompanyAddress)
+                            <nop-label asp-for="CompanyAddress" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.CompanyAddress)
-                            @Html.ValidationMessageFor(model => model.CompanyAddress)
+                            <nop-editor asp-for="CompanyAddress" />
+                            <span asp-validation-for="CompanyAddress"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CompanyPhoneNumber)
+                            <nop-label asp-for="CompanyPhoneNumber" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.CompanyPhoneNumber)
-                            @Html.ValidationMessageFor(model => model.CompanyPhoneNumber)
+                            <nop-editor asp-for="CompanyPhoneNumber" />
+                            <span asp-validation-for="CompanyPhoneNumber"></span>
                         </div>
                     </div>
                     <div class="form-group">
                         <div class="col-md-3">
-                            @Html.NopLabelFor(model => model.CompanyVat)
+                            <nop-label asp-for="CompanyVat" />
                         </div>
                         <div class="col-md-9">
-                            @Html.NopEditorFor(model => model.CompanyVat)
-                            @Html.ValidationMessageFor(model => model.CompanyVat)
+                            <nop-editor asp-for="CompanyVat" />
+                            <span asp-validation-for="CompanyVat"></span>
                         </div>
                     </div>
                 </div>
             </div>
+            @await Component.InvokeAsync("AdminWidget", new { widgetZone = "admin_store_details_bottom", additionalData = Model.Id })
         </div>
     </div>
 </div>
